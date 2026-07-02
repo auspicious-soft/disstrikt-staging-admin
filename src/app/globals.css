@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+:root {
+  --background: #171717; /* Matches Tailwind's neutral-900 */
+  --foreground: #ededed; /* Matches Tailwind's stone-200 for text */
+  --font-body: "Google Sans Flex", "Segoe UI", Arial, sans-serif;
+  --font-ovo: "Ovo", Georgia, serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #171717; /* Consistent with bg-neutral-900 */
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease; /* Added transition to body */
+}
+
+.ovo-font,
+.ovo,
+[class*="ovo"] {
+  font-family: var(--font-ovo) !important;
+}
+
+/* Apply background and transition to the content area */
+.content-area {
+  background-color: var(--background); /* Inherit from root */
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Background blur glow */
+.bg-blur-glow {
+  position: absolute;
+  width: 916px;
+  height: 916px;
+  top: 54px;
+  left: 262px;
+  background-color: rgba(
+    254,
+    202,
+    202,
+    0.2
+  ); /* Matches Tailwind's rose-200/20 */
+  filter: blur(250px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dark mode overrides */
+.dark {
+  background-color: var(--background); /* Use #171717 instead of #0f1416 */
+  color: var(--foreground);
+}
+/* Font face declarations */
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("/fonts/GoogleSansFlex_24pt-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Ovo";
+  src: url("/fonts/Ovo-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-LightItalic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-MediumItalic.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-SemiBoldItalic.ttf") format("truetype");
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-ExtraLightItalic.ttf") format("truetype");
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Kodchasan";
+  src: url("/fonts/Kodchasan-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Minork Sans";
+  src: url("/fonts/minorksans-extrabold.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Minork Sans";
+  src: url("/fonts/minorksans-extrabolditalic.otf") format("opentype");
+  font-weight: 800;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Minork Sans";
+  src: url("/fonts/minorksans-light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Minork Sans";
+  src: url("/fonts/minorksans-lightitalic.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+}
+
+/* Hide time picker icon (Chrome, Edge, Opera) */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Optional: Firefox-specific (not needed in most cases) */
+input[type="time"] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Remove native styles in Firefox */
+input[type="date"] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+@media (min-width: 400px) {
+  .flex-row-400 {
+    flex-direction: row;
+  }
+}
+
+.flex-col-default {
+  flex-direction: column;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Hide default Actions text */
+.cancelled-actions-table thead th:last-child {
+  font-size: 0;
+}
+
+/* Inject custom heading */
+.cancelled-actions-table thead th:last-child::after {
+  content: "View Comment";
+  font-size: 14px;
+  font-weight: 500;
+  color: #e5e5e5; /* stone-200 */
+  font-family: Kodchasan, sans-serif;
+}

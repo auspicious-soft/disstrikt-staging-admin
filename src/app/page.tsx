@@ -88,7 +88,7 @@ export default function LoginPage() {
             </div>
 
             {/* Auth section */}
-            <div className="relative z-10 flex w-full max-w-[500px] mx-auto md:mx-0 md:mr-auto bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
+            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
               {/* Left side: Image */}
 
               {/* Right side: Login form */}
@@ -164,7 +164,11 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    <ArrowButton type="submit" text="Login" />
+                    <ArrowButton
+                      type="submit"
+                      text="Login"
+                      disabled={loading || isPending}
+                    />
 
                     <div className="flex justify-center mt-4 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">
                       <label className="flex items-center gap-2"></label>

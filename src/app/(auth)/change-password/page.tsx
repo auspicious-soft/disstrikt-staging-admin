@@ -1,8 +1,7 @@
 "use client";
 import Image from "next/image";
 import ArrowButton from "@/app/components/Button";
-import LoginImg from "../../../../public/assets/curvedMainImg.png";
-import AuthBackground from "../../../../public/assets/LoginImg.jpg";
+import AuthBackground from "../../../../public/assets/AuthImage.png";
 import logo from "../../../assets/images/Logo2.png";
 import { Eye, EyeOff } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -99,7 +98,7 @@ export default function Home() {
         <Loader />
       ) : (
         <>
-          <div className="w-full h-screen bg-neutral-900 relative overflow-hidden font-body flex justify-center items-center">
+          <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
             <div className="absolute inset-0">
               <Image
                 src={AuthBackground}
@@ -108,76 +107,98 @@ export default function Home() {
                 className="object-cover"
                 priority
               />
-
             </div>
-            <div className="absolute w-[916px] h-[916px] left-1/2 top-[54px] -translate-x-1/2 bg-rose-200/20 blur-[250px]" />
-            <div className="relative z-10 flex w-full max-w-6xl bg-black/20 backdrop-blur-md border border-white/10 shadow-2xl rounded-xl overflow-hidden flex-col md:flex-row-reverse h-full md:h-[550px] md:p-6 gap-x-16">
-              <div className="hidden md:flex flex-1 relative w-full h-auto overflow-hidden rounded-xl">
-                <Image
-                  src={LoginImg}
-                  alt="Illustration"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
+
+            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
               <form
                 onSubmit={handleChangePassword}
-                className="flex-1 flex flex-col justify-center gap-5 px-6 sm:px-8 py-10 w-full"
+                className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full"
               >
                 <div className="w-full flex justify-start">
                   <Image
                     src={logo}
                     alt="logo"
-                    className="w-30 h-20 sm:w-30 sm:h-20 md:w-30 md:h-20 transition-all"
+                    className="w-28 h-10 sm:w-28 sm:h-14 md:w-46 md:h-16 transition-all"
                   />
                 </div>
-                {/* Heading */}
+
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-stone-200 text-3xl font-extrabold font-heading capitalize">
+                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-4xl font-normal font-heading capitalize">
                     Update Password
                   </h1>
-                  <p className="text-zinc-400 text-base font-normal">
+                  <p className="text-black/50 text-sm sm:text-base font-normal">
                     Please enter new password and confirm it.
                   </p>
                 </div>
-                {/* Form */}
-                <div className="flex flex-col gap-5">
-                  <InputField
-                    type={showPassword ? "text" : "password"}
-                    placeholder="New password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="relative w-full">
-                  <InputField
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pr-12"
-                  />
-                  <div
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  <div className="relative w-full">
+                    <InputField
+                      type={showPassword ? "text" : "password"}
+                      placeholder="New password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-12 pr-12 bg-white"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="w-4 h-4"
+                      >
+                        <rect x="4" y="9" width="16" height="11" rx="2" />
+                        <path d="M8 9V7a4 4 0 1 1 8 0v2" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div className="relative w-full">
+                    <InputField
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-12 pr-12 bg-white"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="w-4 h-4"
+                      >
+                        <rect x="4" y="9" width="16" height="11" rx="2" />
+                        <path d="M8 9V7a4 4 0 1 1 8 0v2" />
+                      </svg>
+                    </div>
+                    <div
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </div>
                   </div>
                 </div>
 
-                <ArrowButton text="Update Password" type="submit" />
+                <ArrowButton
+                  text="Update Password"
+                  type="submit"
+                  disabled={loading || isPending}
+                />
 
                 <UpdatePasswordModal
                   isOpen={isModalOpen}
                   onClose={handleCloseModalWithNavigation}
                 />
 
-                <div className="flex items-center justify-center gap-2  mt-[-4px] font-normal">
-                  <span> Remember Password? </span>
+                <div className="flex justify-center mt-2 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">
+                  <span className="text-black/60">Remember Password?</span>
                   <Link
                     href="/"
-                    className="text-m text-[#ffccd3] underline-offset-2 hover:underline"
+                    className="underline text-[#A93E58] hover:opacity-90 transition duration-200 ease-in-out cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffccd3]"
                   >
                     Login
                   </Link>

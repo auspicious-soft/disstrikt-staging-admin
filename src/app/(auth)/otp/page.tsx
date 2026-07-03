@@ -1,8 +1,7 @@
 "use client";
 import Image from "next/image";
 import ArrowButton from "@/app/components/Button";
-import LoginImg from "../../../../public/assets/curvedMainImg.png";
-import AuthBackground from "../../../../public/assets/LoginImg.jpg";
+import AuthBackground from "../../../../public/assets/AuthImage.png";
 import logo from "../../../assets/images/Logo2.png";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -111,7 +110,7 @@ export default function Home() {
         <Loader />
       ) : (
         <>
-          <div className="w-full h-screen bg-neutral-900 relative overflow-hidden font-body flex justify-center items-center">
+          <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
             <div className="absolute inset-0">
               <Image
                 src={AuthBackground}
@@ -121,48 +120,30 @@ export default function Home() {
                 priority
               />
             </div>
-            {/* Blurred glow background */}
-            <div className="absolute w-[916px] h-[916px] left-1/2 top-[54px] -translate-x-1/2 bg-rose-200/20 blur-[250px]" />
 
-            {/* Auth section */}
-            <div className="relative z-10 flex w-full max-w-6xl bg-black/20 backdrop-blur-md border border-white/10 shadow-2xl rounded-xl overflow-hidden flex-col md:flex-row-reverse h-full md:h-[550px] md:p-6 gap-x-16">
-              {/* Left side: Image */}
-              <div className="hidden md:flex flex-1 relative w-full h-auto overflow-hidden rounded-xl">
-                <Image
-                  src={LoginImg}
-                  alt="Illustration"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-
-              {/* Right side: OTP Form */}
+            <div className="relative z-10 flex w-full max-w-[500px] mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
               <form
                 onSubmit={handleFogetPassword}
-                className="flex-1 flex flex-col justify-center gap-5 px-6 sm:px-8 py-10 w-full"
+                className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full"
               >
-                {/* Logo */}
                 <div className="w-full flex justify-start">
                   <Image
                     src={logo}
                     alt="logo"
-                    className="w-30 h-20 sm:w-30 sm:h-20 md:w-30 md:h-20 transition-all"
+                    className="w-28 h-10 sm:w-28 sm:h-14 md:w-46 md:h-16 transition-all"
                   />
                 </div>
 
-                {/* Heading */}
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-stone-200 text-3xl font-extrabold font-heading capitalize">
+                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-4xl font-normal font-heading capitalize">
                     Enter OTP
                   </h1>
-                  <p className="text-zinc-400 text-base font-normal">
-                    Please enter the OTP received on your email.{" "}
+                  <p className="text-black/50 text-sm sm:text-base font-normal">
+                    Please enter the OTP received on your email.
                   </p>
                 </div>
 
-                {/* OTP Input Boxes */}
-                <div className="self-stretch inline-flex justify-start items-start gap-5">
+                <div className="self-stretch inline-flex justify-start items-start gap-2 sm:gap-3">
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <div key={idx} className="flex-1">
                       <input
@@ -174,20 +155,23 @@ export default function Home() {
                         }}
                         onChange={(e) => handleChange(e, idx)}
                         onKeyDown={(e) => handleKeyDown(e, idx)}
-                        className="w-full text-center px-3 py-5 bg-zinc-900/80 rounded-[10px] outline outline-offset-[-1px] outline-neutral-700 text-zinc-400 placeholder-zinc-400 text-base font-light "
+                        className="w-full text-center px-2 py-4 sm:px-3 sm:py-5 bg-white rounded-[10px] outline outline-rose-100 text-[#815753] placeholder-zinc-400 text-base font-light focus:outline-none focus:ring-2 focus:ring-rose-300"
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* Next Button */}
-                <ArrowButton text="Next" type="submit" />
+                <ArrowButton
+                  text="Next"
+                  type="submit"
+                  disabled={loading || isPending}
+                />
 
-                <div className="flex items-center justify-center gap-2  mt-[-4px] font-normal">
-                  <span> Remember Password? </span>
+                <div className="flex justify-center mt-2 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">
+                  <span className="text-black/60">Remember Password?</span>
                   <Link
                     href="/"
-                    className="text-m text-[#ffccd3] underline-offset-2 hover:underline"
+                    className="underline text-[#A93E58] hover:opacity-90 transition duration-200 ease-in-out cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffccd3]"
                   >
                     Login
                   </Link>

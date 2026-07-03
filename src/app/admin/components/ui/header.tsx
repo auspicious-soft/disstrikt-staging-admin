@@ -139,7 +139,7 @@ export function AppHeader() {
           orientation="vertical"
           className="!h-4 sm:!h-5 md:!h-6 lg:!h-7"
         />
-        <h1 className="text-stone-200 text-xl sm:text-2xl md:text-3xl font-extrabold  capitalize truncate max-w-[50vw] sm:max-w-[60vw] md:max-w-[70vw]">
+        <h1 className="text-stone-200 text-xl font-ovo sm:text-2xl md:text-3xl font-extrabold  capitalize truncate max-w-[50vw] sm:max-w-[60vw] md:max-w-[70vw]">
           {pageName}
         </h1>
       </div>

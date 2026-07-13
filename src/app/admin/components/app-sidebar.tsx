@@ -16,6 +16,7 @@ import {
   ReviewtaskIcon,
   UserIcon,
   SettingsIcon,
+  UsersIcon,
 } from "../../../lib/icons";
 import TaskLogo from "../././../../assets/icons/Task.png";
 import subscptionLogo from "../././../../assets/icons/Subscription.png";
@@ -64,6 +65,11 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
             title: "Dashboard",
             url: "/admin/dashboard",
             icon: () => <DashboardIcon />,
+          },
+          {
+            title: "Model Mansion",
+            url: "/admin/model-mansion",
+            icon: () => <UsersIcon />,
           },
           {
             title: "Employee Management",

@@ -18,6 +18,7 @@ interface DynamicTableProps {
   renderCell?: (row: TableRow, key: string) => React.ReactNode;
   isEyeShow?: boolean; // Default true
   renderActions?: (row: TableRow) => React.ReactNode; // ✅ NEW
+  showActionsHeaderLabel?: boolean;
 }
 
 const DynamicTable: React.FC<DynamicTableProps> = ({
@@ -28,6 +29,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   renderActions,
   renderCell,
   isEyeShow = true,
+  showActionsHeaderLabel = true,
 }) => {
   const columnCount =
     headers.length + ((rowIcon && isEyeShow) || renderActions ? 1 : 0);
@@ -64,8 +66,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           ))}
 
           {(rowIcon && isEyeShow) || renderActions ? (
-            <th className="w-32 px-2 py-px text-center font-medium text-stone-200 text-sm  leading-tight">
-              Actions
+            <th
+              aria-label="Actions"
+              className="w-32 px-2 py-px text-center font-medium text-stone-200 text-sm  leading-tight"
+            >
+              {showActionsHeaderLabel ? "Actions" : null}
             </th>
           ) : null}
         </tr>

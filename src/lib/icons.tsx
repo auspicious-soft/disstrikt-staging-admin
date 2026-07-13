@@ -40,3 +40,13 @@ export const Lock = ()=>(
 </svg>
 
 )
+
+export const UsersIcon = ()=>(
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0.916668 18.3333V17.4167C0.916668 13.8728 3.78951 11 7.33334 11C10.8772 11 13.75 13.8728 13.75 17.4167V18.3333" stroke="white" stroke-width="1.375" stroke-linecap="round"/>
+<path d="M11.9167 12.8333C11.9167 10.302 13.9687 8.25 16.5 8.25C19.0313 8.25 21.0833 10.302 21.0833 12.8333V13.2917" stroke="white" stroke-width="1.375" stroke-linecap="round"/>
+<path d="M7.33333 11.0001C9.35838 11.0001 11 9.35846 11 7.33342C11 5.30837 9.35838 3.66675 7.33333 3.66675C5.30829 3.66675 3.66667 5.30837 3.66667 7.33342C3.66667 9.35846 5.30829 11.0001 7.33333 11.0001Z" stroke="white" stroke-width="1.375" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16.5 8.25C18.0188 8.25 19.25 7.01878 19.25 5.5C19.25 3.98122 18.0188 2.75 16.5 2.75C14.9812 2.75 13.75 3.98122 13.75 5.5C13.75 7.01878 14.9812 8.25 16.5 8.25Z" stroke="white" stroke-width="1.375" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+)

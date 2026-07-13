@@ -100,6 +100,7 @@ export function AppHeader() {
     "/admin/user-management",
     // "/admin/review-tasks",
     "/admin/job-management",
+    "/admin/model-mansion",
     // "/admin/revenue",
   ].some((path) => pathname === path || pathname === `${path}/`);
 
@@ -123,7 +124,7 @@ export function AppHeader() {
     parentPath = "/" + pathSegments.slice(0, -1).join("/");
   }
   return (
-    <header className="flex flex-col shrink-0 min-[400px]:flex-row items-start gap-2 sm:gap-3 md:gap-4 lg:gap-5 transition-all ease-linear py-2 px-3 sm:py-3 sm:px-4 md:py-4 md:px-6 lg:py-5 lg:px-8 bg-neutral-900 justify-between w-full">
+    <header className="flex flex-col shrink-0 min-[400px]:flex-row items-start gap-2 sm:gap-3 md:gap-4 lg:gap-5 transition-all ease-linear py-2 px-3 sm:py-3 sm:px-4 md:py-4 md:px-6 lg:py-5 lg:px-8 bg-none justify-between w-full">
       <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-5">
         {isMobile && <SidebarTrigger className="-ml-1 sm:-ml-2" />}
 
@@ -140,7 +141,7 @@ export function AppHeader() {
           className="!h-4 sm:!h-5 md:!h-6 lg:!h-7"
         />
         <h1 className="text-stone-200 text-xl font-ovo sm:text-2xl md:text-3xl font-extrabold  capitalize truncate max-w-[50vw] sm:max-w-[60vw] md:max-w-[70vw]">
-          {pageName}
+          {(pageName).toUpperCase()}
         </h1>
       </div>
       {showInputField && (

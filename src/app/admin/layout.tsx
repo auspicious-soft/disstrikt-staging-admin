@@ -27,10 +27,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  console.log("session: ", session);
   if (!session) {
     redirect("/");
-  } 
+  }
 
   return (
     <html lang="en">
@@ -41,26 +40,27 @@ export default async function RootLayout({
           "antialiased",
           "overflow-auto",
           "overflow-custom",
-          "bg-neutral-900"
+          "bg-neutral-900",
         )}
       >
         {" "}
         <SidebarProvider>
-           <AppSidebar session={session} /> 
+          <AppSidebar session={session} />
           <SidebarInset>
-            <div className="min-h-screen flex flex-col bg-neutral-900">
+            <div className="min-h-screen flex flex-col bg-none"
+            style={{
+                    background:
+                      "radial-gradient(circle at center, rgba(100,60,94,0.25) 0%, rgba(160,63,94,0.15) 0%, transparent 70%)",
+                  }}
+            >
               <AppHeader />
               <div className="relative flex-1 flex flex-col gap-4 py-6 px-4 md:py-8 md:px-7 md:gap-7">
                 <div
                   aria-hidden
-                  className="
-          pointer-events-none
-          absolute 
-          h-full w-full
-          left-1/2 top-[10px] -translate-x-1/2 bg-rose-200/20 blur-[250px]
-        "
+                  className="pointer-events-none absolute inset-0"
+                  
                 />
-                {/* Content Layer */}
+
                 <div className="relative z-10">{children}</div>
               </div>
             </div>

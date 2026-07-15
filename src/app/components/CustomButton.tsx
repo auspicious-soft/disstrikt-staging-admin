@@ -34,10 +34,6 @@ const CustomButton: React.FC<CustomButtonProps> = ({
     Default: '',
     Disabled: 'opacity-50 cursor-not-allowed',
   };
-  const styleStyles = {
-    Default: 'font-["Kodchasan"] font-normal',
-    'New York': 'font-["Inter"] font-medium leading-none',
-  };
 
   return (
     <div
@@ -45,7 +41,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       data-state={state}
       data-style={style}
       data-variant={variant}
-      className={`flex justify-center cursor-pointer items-center gap-2 ${variantStyles[variant]} ${sizeStyles[size]} ${stateStyles[state]} ${styleStyles[style]} ${textColor}`}
+      className={`flex justify-center cursor-pointer items-center gap-2 ${variantStyles[variant]} ${sizeStyles[size]} ${stateStyles[state]} ${textColor}`}
       onClick={state !== 'Disabled' ? onClick : null}
     >
       <span>{label}</span>

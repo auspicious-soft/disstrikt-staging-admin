@@ -46,22 +46,24 @@ export default async function RootLayout({
         {" "}
         <SidebarProvider>
           <AppSidebar session={session} />
-          <SidebarInset>
-            <div className="min-h-screen flex flex-col bg-none"
+          <SidebarInset className="min-w-0 overflow-x-hidden">
+            <div className="min-h-screen min-w-0 flex flex-col bg-none"
             style={{
                     background:
                       "radial-gradient(circle at center, rgba(100,60,94,0.25) 0%, rgba(160,63,94,0.15) 0%, transparent 70%)",
                   }}
             >
               <AppHeader />
-              <div className="relative flex-1 flex flex-col gap-4 py-6 px-4 md:py-8 md:px-7 md:gap-7">
+              <div className="relative min-w-0 flex-1 flex flex-col gap-4 py-6 px-4 md:py-8 md:px-7 md:gap-7">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0"
                   
                 />
 
-                <div className="relative z-10">{children}</div>
+                <div className="relative z-10 min-w-0 max-w-full">
+                  {children}
+                </div>
               </div>
             </div>
           </SidebarInset>

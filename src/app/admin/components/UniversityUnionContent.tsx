@@ -1,5 +1,5 @@
 "use client";
-import { NavArrowDown } from "iconoir-react"
+import { NavArrowDownSolid } from "iconoir-react";
 
 const progress = [
   {
@@ -67,7 +67,7 @@ export default function UniversityUnionContent() {
       >
         <summary className="flex h-11 cursor-pointer items-center justify-between border-b border-stone-700 bg-white/10 px-4 text-sm font-medium text-white list-none">
           Progress Details
-          <NavArrowDown className="h-4 w-4" />
+          <NavArrowDownSolid className="h-4 w-4" />
         </summary>
 
         <div className="grid grid-cols-2 gap-y-6 gap-x-8 p-5 md:grid-cols-4">
@@ -93,7 +93,7 @@ export default function UniversityUnionContent() {
       >
         <summary className="flex h-11 cursor-pointer items-center justify-between border-b border-stone-700 bg-white/10 px-4 text-sm font-medium text-white list-none">
           Submitted Answers
-          <NavArrowDown className="h-4 w-4" />
+          <NavArrowDownSolid className="h-4 w-4" />
         </summary>
 
         <div className="p-4">

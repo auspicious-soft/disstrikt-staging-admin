@@ -12,10 +12,10 @@ interface TableHeader {
 
 interface DynamicTableProps {
   headers: TableHeader[];
-  data: TableRow[];
+  data: any[];
   rowIcon?: string | React.ReactElement; // View icon
   onclickFunction?: (id: string) => void; // For view
-  renderCell?: (row: TableRow, key: string) => React.ReactNode;
+  renderCell?: (row: any, key: any) => React.ReactNode;
   isEyeShow?: boolean; // Default true
   renderActions?: (row: TableRow) => React.ReactNode; // ✅ NEW
   showActionsHeaderLabel?: boolean;
@@ -34,9 +34,14 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   const columnCount =
     headers.length + ((rowIcon && isEyeShow) || renderActions ? 1 : 0);
   const defaultWidth = `${100 / columnCount}%`;
+  const minTableWidth = Math.max(640, columnCount * 128);
 
   return (
-    <table className="w-full rounded-md outline-1 outline-offset-[-1px] outline-stone-700 border-collapse table-fixed">
+    <div className="w-full max-w-full overflow-x-auto rounded-md">
+    <table
+      className="w-full rounded-md outline-1 outline-offset-[-1px] outline-stone-700 border-collapse table-fixed"
+      style={{ minWidth: `${minTableWidth}px` }}
+    >
       <thead>
         <tr className="h-10 border-b border-stone-700">
           {headers.map((header, index) => (
@@ -83,18 +88,31 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
               key={rowIndex}
               className="h-12 border-b border-stone-700 last:border-b-0"
             >
-              {headers.map((header, colIndex) => (
-                <td
-                  key={colIndex}
-                  className={`px-5 py-2 text-${header.align || "start"} ${
-                    header.width || defaultWidth
-                  } text-stone-200 text-sm ${
-                    header.fontWeight || "font-normal"
-                  }  leading-tight align-middle truncate`}
-                >
-                  {renderCell ? renderCell(row, header.key) : row[header.key]}
-                </td>
-              ))}
+              {headers.map((header, colIndex) => {
+                const cellContent = renderCell
+                  ? renderCell(row, header.key)
+                  : row[header.key];
+                const shouldTruncate =
+                  typeof cellContent === "string" ||
+                  typeof cellContent === "number";
+
+                return (
+                  <td
+                    key={colIndex}
+                    className={`px-5 py-2 text-${header.align || "start"} ${
+                      header.width || defaultWidth
+                    } text-stone-200 text-sm ${
+                      header.fontWeight || "font-normal"
+                    }  leading-tight align-middle`}
+                  >
+                    {shouldTruncate ? (
+                      <span className="block truncate">{cellContent}</span>
+                    ) : (
+                      cellContent
+                    )}
+                  </td>
+                );
+              })}
 
               {(rowIcon && isEyeShow) || renderActions ? (
                 <td className="w-32 px-2 py-2 text-center align-middle">
@@ -141,6 +159,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
         )}
       </tbody>
     </table>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowSeparateVertical, Copy, NavArrowDown } from "iconoir-react";
+import { ArrowSeparateVertical, Copy, NavArrowDownSolid } from "iconoir-react";
 
 const NotificationsContent = () => {
   return (

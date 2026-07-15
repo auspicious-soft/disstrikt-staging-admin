@@ -251,3 +251,6 @@ input[type="number"] {
   color: #e5e5e5; /* stone-200 */
   font-family: Kodchasan, sans-serif;
 }
+button , select{
+  cursor: pointer;
+}

@@ -72,38 +72,33 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
             icon: () => <UsersIcon />,
           },
           {
-            title: "Employee Management",
-            url: "/admin/employee-management",
+            title: "Job Junction",
+            url: "/admin/job-junction",
             icon: () => <UserIcon />,
           },
           {
-            title: "Review Tasks",
-            url: "/admin/review-tasks",
+            title: "Training Theater",
+            url: "/admin/training-theater",
             icon: () => <ReviewtaskIcon />,
           },
           {
-            title: "User Management",
-            url: "/admin/user-management",
+            title: "Shoot Studio",
+            url: "/admin/shoot-studio",
             icon: () => <UserIcon />,
           },
           {
-            title: "Job Management",
-            url: "/admin/job-management",
+            title: "University Union",
+            url: "/admin/university-union",
             icon: () => <img src={FrameLogo.src} alt="Job" />,
           },
           {
-            title: "Task Management",
-            url: "/admin/task-management",
+            title: "Model Market",
+            url: "/admin/model-market",
             icon: () => <img src={TaskLogo.src} alt="Task" />,
           },
           {
-            title: "Revenue",
-            url: "/admin/revenue",
-            icon: () => <img src={Revenue.src} alt="Revenue" />,
-          },
-          {
-            title: "Job Applicants",
-            url: "/admin/job-applicants",
+            title: "Celebration Cruise",
+            url: "/admin/celebration-cruise",
             icon: () => <img src={Revenue.src} alt="Revenue" />,
           },
           {
@@ -116,6 +111,11 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
                 className="hover:invert"
               />
             ),
+          },
+           {
+            title: "Studio Management",
+            url: "/admin/studio-management",
+            icon: () => <img src={Revenue.src} alt="Revenue" />,
           },
           {
             title: "Manage Studios",
@@ -257,7 +257,7 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
         <Loader />
       ) : (
         <>
-          <div className="relative">
+          <div className="relative shrink-0">
             <Sidebar
               collapsible="icon"
               {...props}

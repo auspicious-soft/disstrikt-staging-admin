@@ -16,7 +16,7 @@ const Pagination = ({ currentPage = 1, totalPages = 1, onPageChange }) => {
   };
 
   return (
-    <div className="self-stretch py-4 inline-flex justify-between items-center">
+    <div className="self-stretch py-4 inline-flex justify-between w-full items-center">
       <div className="flex justify-start items-start gap-2.5">
         <span className="text-zinc-500 text-sm font-normal font-['Inter'] leading-tight">
           Page {currentPage} of {totalPages}

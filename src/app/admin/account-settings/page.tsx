@@ -20,7 +20,6 @@ const AccountSettings = () => {
     password: "",
     file: "", // for preview or stored URL
   });
-  const [fileKey, setFileKey] = useState("");
   const [file, setFile] = useState<File | null>(null); // keep original file for upload
   const [loading, setLoading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -40,123 +39,14 @@ const AccountSettings = () => {
     }
   };
 
-  const uploadFile = async (file: File) => {
-    if (!file) {
-      toast.error("No file selected for upload");
-      throw new Error("No file selected");
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    setLoading(true);
-    try {
-      const response = await uploadAnything(
-        ADMIN_URLS.UPLOAD_ANYTHING,
-        formData,
-      );
-
-      if (response.status === 201) {
-        toast.success("File uploaded successfully");
-        const fileData = response.data.data.key;
-        setFileKey(fileData);
-        return fileData; // Return the URL key
-      } else {
-        throw new Error("Failed to upload file");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error("Failed to upload file");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Fetch Admin Data
-  const getAdminData = async () => {
-    setLoading(true);
-    try {
-      const response = await getAdminDataaa(`${ADMIN_URLS.GET_ADMIN_DATA}`);
-      if (response.status === 200) {
-        const resData = response.data.data;
-        setFormData({
-          fullName: resData.fullName || "",
-          email: resData.email || "",
-          countryCode: resData.countryCode || "",
-          phoneNumber: resData.phoneNumber || "",
-          oldPassword: "",
-          password: "",
-          file: resData.image || null,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch admin data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ✅ Update Admin Data
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      let uploadedKey: string | null = null;
-
-      // ✅ Upload file if new one is selected
-      if (file) {
-        uploadedKey = await uploadFile(file);
-      }
-
-      // ✅ Build payload
-      const payload: any = {
-        fullName: formData.fullName,
-        email: formData.email,
-        countryCode: formData.countryCode,
-        phoneNumber: formData.phoneNumber,
-      };
-
-      if (uploadedKey) {
-        payload.image = uploadedKey; // send uploaded file key
-      } else if (formData.file && typeof formData.file === "string") {
-        payload.image = formData.file; // existing image
-      }
-
-      // ✅ Password update logic
-      if (formData.oldPassword && formData.password) {
-        payload.oldPassword = formData.oldPassword; // assuming confirm is old one (if you want separate field, adjust)
-        payload.password = formData.password;
-      }
-
-      // ✅ Call API
-      const response = await UpdateAdminData(
-        `${ADMIN_URLS.UPDATE_ADMIN_DATA}`,
-        payload,
-      );
-
-      if (response.status === 200) {
-        toast.success("Details updated successfully!");
-        getAdminData(); // refresh UI
-      } else {
-        toast.error(response.message);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error(error?.response?.data?.message || "Error while Updating");
-    } finally {
-      setLoading(false);
-    }
   };
 
-  // ✅ Fetch data on mount
-  useEffect(() => {
-    getAdminData();
-  }, []);
-
-  console.log(formData.file, "fileeeeee");
-  return (
+ return (
     <>
       {loading ? (
         <Loader />

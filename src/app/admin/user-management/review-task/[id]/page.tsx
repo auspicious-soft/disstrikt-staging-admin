@@ -4,7 +4,6 @@ import { useRouter, useParams } from "next/navigation";
 import { getUserTaskById, rateTask } from "@/services/admin-services";
 import { ADMIN_URLS, BASE_IMG_URL } from "@/constants/apiUrls";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 interface TaskData {
@@ -36,9 +35,8 @@ const ReviewTaskById: React.FC = () => {
   const [taskData, setTaskData] = useState<TaskData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mainRole, setMainRole] = useState("");
+  const [mainRole] = useState("ADMIN");
   const [isSaving, setIsSaving] = useState(false);
-  const { data: session } = useSession();
   useEffect(() => {
     const fetchTaskData = async () => {
       if (!taskId) {
@@ -72,11 +70,6 @@ const ReviewTaskById: React.FC = () => {
   const handleCancel = () => {
     router.back();
   };
-
-  useEffect(() => {
-    const role = session?.user?.role;
-    setMainRole(role);
-  }, []);
 
   const handleSave = async () => {
     if (!rating) {

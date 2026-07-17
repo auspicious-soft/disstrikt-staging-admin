@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { LogOutIcon, PanelLeftIcon } from "lucide-react";
 
 import AppLogo from "./app-logo";
@@ -144,7 +143,7 @@ export function SidebarTrigger({
   );
 }
 
-export function NewAppSidebar({ session }: { session?: any }) {
+export function NewAppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { state, openMobile, setOpenMobile } = useSidebar();
@@ -152,7 +151,7 @@ export function NewAppSidebar({ session }: { session?: any }) {
   const [loading, setLoading] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
-  const userRole = session?.user?.role || "";
+  const userRole = "ADMIN";
   const isExpanded = state === "expanded" || openMobile;
   const fr = searchParams.get("fr");
 
@@ -274,7 +273,7 @@ export function NewAppSidebar({ session }: { session?: any }) {
 
     try {
       localStorage.removeItem("token");
-      await signOut({ callbackUrl: "/" });
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout failed", error);
     } finally {

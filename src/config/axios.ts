@@ -1,6 +1,5 @@
 import axios from "axios";
 import { getTokenCustom } from "@/actions";
-import { signOut } from "next-auth/react";
 
 export const axiosInstance = axios.create({
     baseURL: `${process.env.NEXT_PUBLIC_BACKEND_URL}`,
@@ -18,8 +17,10 @@ axiosInstance.interceptors.response.use(
       // Handle unauthorized -> logout
       console.warn("Unauthorized: Logging out user...");
       try {
-        // If using next-auth
-        await signOut({ callbackUrl: "/login" });
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        }
 
         // If using custom logout
         // localStorage.clear();
@@ -38,7 +39,10 @@ const attachInterceptor = (instance: any) => {
     async (error: any) => {
       if (error.response?.status === 401) {
         console.warn("Unauthorized: Logging out user...");
-        await signOut({ callbackUrl: "/" }); 
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        }
         // or custom logout
       }
       return Promise.reject(error);

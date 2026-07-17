@@ -24,18 +24,13 @@ import FrameLogo from "../././../../assets/icons/Frame.png";
 import Revenue from "../././../../assets/icons/revenue.png";
 import TripleDotIcon from "../././../../assets/icons/ThreeDots.png";
 import { NavProjects } from "./nav-projects";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import SettingsModal from "../../components/SettingsModal";
 import { LogOutIcon } from "lucide-react";
 import Loader from "./ui/Loader";
 import { Building, Camera, ColorWheel, CreditCard, GraduationCap, HomeSimple, ListSelect, ShoppingBag } from "iconoir-react";
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  session?: any; // Add session as a prop
-}
-
-export function AppSidebar({ session, ...props }: AppSidebarProps) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const { isMobile, state, setOpen, setOpenMobile } = useSidebar();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -43,11 +38,7 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
   const [loading, setLoading] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
-  console.log("Session in AppSidebar:", session);
-
-  // Get userRole directly from session prop
-  const userRole = session?.user?.role || "";
-  console.log("Current userRole:", userRole);
+  const userRole = "ADMIN";
 
   // Use useMemo to recalculate dataa whenever userRole changes
   const dataa = React.useMemo(() => {
@@ -231,7 +222,7 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
     setLoading(true);
     try {
       localStorage.removeItem("token");
-      await signOut({ callbackUrl: "/" }); // Let NextAuth handle the redirect
+      router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
     } finally {

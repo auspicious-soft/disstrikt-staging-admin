@@ -36,7 +36,7 @@ const selectClass =
   "h-10 w-full appearance-none rounded-md border border-stone-700 bg-stone-900 px-3 pr-8 text-xs text-stone-200 outline-none focus:border-rose-400";
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <span className="mb-1.5 block text-[11px] font-medium text-stone-200">
+  <span className="mb-1 block text-xs font-medium text-stone-200">
     {children}
   </span>
 );
@@ -145,7 +145,7 @@ const MultiSelectField = ({ label }: { label: string }) => {
 };
 
 const LabelWithInfo = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-1.5 flex items-center justify-between">
+  <div className="flex items-center justify-between">
     <FieldLabel>{children}</FieldLabel>
 
     <InfoCircle className="h-4 w-4 cursor-pointer text-stone-400 hover:text-white" />
@@ -233,7 +233,7 @@ const SubscriptionPlans = () => {
         </section>
 
         <div className="grid gap-2 md:grid-cols-2">
-          <SelectField label="Tasks Per Month" value="300" />
+          <SelectField label="Tasks Permitted" value="300" />
           <SelectField label="Picture Upload Limit" value="2000" />
         </div>
 

@@ -200,9 +200,8 @@ const dummyUsers: TableRow[] = [
 
   return (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
-      <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
-        <div className="flex flex-col sm:flex-row justify-end items-end gap-2.5 w-full">
-          <div className="flex flex-col sm:flex-row justify-end items-center gap-2.5 sm:w-auto">
+      <div className="self-stretch flex flex-col justify-start items-end gap-4">
+        <div className="flex flex-wrap justify-end items-end gap-3 w-full">
             <div className="w-full sm:w-auto">
               <CustomInput
                 placeholder="Search"
@@ -233,10 +232,10 @@ const dummyUsers: TableRow[] = [
                 }
               />
             </div>
-          </div>
+        
         </div>
 
-        <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
+        {/* <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700"> */}
           <DynamicTable
             headers={headers}
             data={paginatedUsers}
@@ -254,7 +253,7 @@ const dummyUsers: TableRow[] = [
             )}
             showActionsHeaderLabel={true}
           />
-        </div>
+        {/* </div> */}
 
         {totalPages > 1 && (
           <Pagination

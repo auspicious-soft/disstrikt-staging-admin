@@ -293,43 +293,43 @@ const PrivacyPolicyPage: React.FC = () => {
       <div className="self-stretch flex flex-col justify-start items-start gap-5">
         <div className="self-stretch inline-flex justify-between items-center">
           <div className="flex-1 flex justify-between items-center">
-            <div className="p-[3px] bg-neutral-900 rounded-[50px] flex overflow-x-auto no-scrollbar gap-2.5">
-              <button
-                className={`flex-shrink-0 w-40 p-2.5 rounded-[50px] flex justify-center items-center gap-2.5 ${
-                  activeTab === "privacy"
-                    ? "bg-rose-500 text-white"
-                    : "text-stone-200"
-                }`}
-                onClick={() => setActiveTab("privacy")}
-              >
-                <span className="text-center text-xs font-normal ">
-                  Privacy Policy
-                </span>
-              </button>
-              <button
-                className={`flex-shrink-0 w-40 p-2.5 rounded-[50px] flex justify-center items-center gap-2.5 ${
-                  activeTab === "terms"
-                    ? "bg-rose-500 text-white"
-                    : "text-stone-200"
-                }`}
-                onClick={() => setActiveTab("terms")}
-              >
-                <span className="text-center text-xs font-normal ">
-                  Terms & Conditions
-                </span>
-              </button>
-              <button
-                className={`flex-shrink-0 w-40 p-2.5 rounded-[50px] flex justify-center items-center gap-2.5 ${
-                  activeTab === "contact"
-                    ? "bg-rose-500 text-white"
-                    : "text-stone-200"
-                }`}
-                onClick={() => setActiveTab("contact")}
-              >
-                <span className="text-center text-xs font-normal ">
-                  Contact/Support
-                </span>
-              </button>
+            <div className="w-full overflow-x-auto no-scrollbar">
+              <div className="inline-flex min-w-max gap-2.5 rounded-[50px] bg-neutral-900 p-[3px]">
+                <button
+                  className={`flex-shrink-0 whitespace-nowrap rounded-[50px] px-6 py-2.5 ${
+                    activeTab === "privacy"
+                      ? "bg-rose-500 text-white"
+                      : "text-stone-200"
+                  }`}
+                  onClick={() => setActiveTab("privacy")}
+                >
+                  <span className="text-xs font-normal">Privacy Policy</span>
+                </button>
+
+                <button
+                  className={`flex-shrink-0 whitespace-nowrap rounded-[50px] px-6 py-2.5 ${
+                    activeTab === "terms"
+                      ? "bg-rose-500 text-white"
+                      : "text-stone-200"
+                  }`}
+                  onClick={() => setActiveTab("terms")}
+                >
+                  <span className="text-xs font-normal">
+                    Terms & Conditions
+                  </span>
+                </button>
+
+                <button
+                  className={`flex-shrink-0 whitespace-nowrap rounded-[50px] px-6 py-2.5 ${
+                    activeTab === "contact"
+                      ? "bg-rose-500 text-white"
+                      : "text-stone-200"
+                  }`}
+                  onClick={() => setActiveTab("contact")}
+                >
+                  <span className="text-xs font-normal">Contact/Support</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

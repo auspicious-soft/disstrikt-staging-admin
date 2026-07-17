@@ -20,14 +20,14 @@ const CreateCelebrationCruiseEvent = () => {
           </h2>
 
           <div className="grid gap-4 lg:grid-cols-2 mb-3">
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-normal text-stone-100">
                 Name of Event
               </span>
               <input className={fieldBase} placeholder="Title" type="text" />
             </label>
 
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-medium text-stone-100">
                 Number Of Tickets
               </span>
@@ -35,7 +35,7 @@ const CreateCelebrationCruiseEvent = () => {
             </label>
           </div>
           <div className="grid gap-4 lg:grid-cols-3 mb-3">
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-normal text-stone-100">
                 Select Currency
               </span>
@@ -52,14 +52,14 @@ const CreateCelebrationCruiseEvent = () => {
               </div>
             </label>
 
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-medium text-stone-100">
                 Ticket Price
               </span>
               <input className={fieldBase} placeholder="500" type="number" />
             </label>
 
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-medium text-stone-100">
                 Upload Image
               </span>
@@ -80,7 +80,7 @@ const CreateCelebrationCruiseEvent = () => {
               </div>
             </label>
           </div>
-          <label className="space-y-2 lg:col-span-2">
+          <label className="space-y-1 lg:col-span-2">
             <span className="block text-xs font-normal text-stone-100">
               Description
             </span>
@@ -97,7 +97,7 @@ const CreateCelebrationCruiseEvent = () => {
           </h2>
 
           <div className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr_0.65fr_auto]">
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-normal text-stone-100">
                 Date
               </span>
@@ -107,7 +107,7 @@ const CreateCelebrationCruiseEvent = () => {
               </div>
             </label>
 
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-normal text-stone-100">
                 Start Time
               </span>
@@ -123,7 +123,7 @@ const CreateCelebrationCruiseEvent = () => {
               </div>
             </label>
 
-            <label className="space-y-2">
+            <label className="space-y-1">
               <span className="block text-xs font-normal text-stone-100">
                 End Time
               </span>
@@ -149,7 +149,7 @@ const CreateCelebrationCruiseEvent = () => {
               </button>
             </div>
 
-            <label className="space-y-2 lg:col-span-2">
+            <label className="space-y-1 lg:col-span-2">
               <span className="block text-xs font-normal text-stone-100">
                 Country
               </span>
@@ -166,7 +166,7 @@ const CreateCelebrationCruiseEvent = () => {
               </div>
             </label>
 
-            <label className="space-y-2 lg:col-span-2">
+            <label className="space-y-1 lg:col-span-2">
               <span className="block text-xs font-normal text-stone-100">
                 City
               </span>
@@ -188,13 +188,13 @@ const CreateCelebrationCruiseEvent = () => {
         <div className="grid gap-6 sm:grid-cols-[minmax(180px,310px)_1fr]">
           <button
             type="button"
-            className="h-14 rounded-md border border-stone-200/70 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10"
+            className="h-12 rounded-md border border-stone-200/70 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="h-14 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400"
+            className="h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400"
           >
             Add Event
           </button>

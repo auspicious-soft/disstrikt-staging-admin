@@ -114,6 +114,11 @@ export function AppHeader() {
     pathSegments.length === 2
   ) {
     pageName = "Subscription Plan";
+  } else if (
+    pathname.startsWith("/admin/job-junction") &&
+    pathSegments.length > 2
+  ) {
+    pageName = "Job Junction";
   } else {
     pageName = pathSegments.pop()?.replace(/-/g, " ") ?? "";
   }

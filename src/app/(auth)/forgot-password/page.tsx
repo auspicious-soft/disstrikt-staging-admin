@@ -5,11 +5,10 @@ import AuthBackground from "../../../../public/assets/AuthImage.png";
 import logo from "../../../assets/images/Logo2.png";
 import InputField from "../../components/InputField";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { useDataContext } from "@/app/components/DataContext";
 import Loader from "@/app/admin/components/ui/Loader";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Email } from "@/lib/icons";
 

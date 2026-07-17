@@ -15,39 +15,15 @@ import { Eye } from "iconoir-react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isPending, startTransition] = React.useTransition();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-
-  if (!email.trim()) {
-    toast.error("Email is required");
-    return;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
-    toast.error("Please enter a valid email address");
-    return;
-  }
-
-  if (!password.trim()) {
-    toast.error("Password is required");
-    return;
-  }
-
-  if (password.length < 6) {
-    toast.error("Password must be at least 6 characters");
-    return;
-  }
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     toast.success("Login successful");
-
-   window.location.replace("/admin/dashboard");
-};
+    window.location.href = "/admin/dashboard";
+  };
 
   return (
     <>
@@ -152,7 +128,7 @@ export default function LoginPage() {
                     <ArrowButton
                       type="submit"
                       text="Login"
-                      disabled={loading || isPending}
+                      disabled={loading}
                     />
 
                     <div className="flex justify-center mt-4 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap ">

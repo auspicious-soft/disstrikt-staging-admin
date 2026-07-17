@@ -2,7 +2,6 @@
 import * as React from "react";
 import { File, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { BellNotification, Notes } from "iconoir-react";
 import Loader from "@/app/admin/components/ui/Loader";
 
@@ -50,7 +49,8 @@ export default function SettingsModal({ isOpen, onClose }) {
     setLoading(true);
     try {
       localStorage.removeItem("token");
-      await signOut({ callbackUrl: "/" }); // Let NextAuth handle the redirect
+      router.push("/");
+      onClose();
     } catch (error) {
       console.error("Logout failed", error);
     } finally {

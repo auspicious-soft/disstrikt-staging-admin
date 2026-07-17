@@ -13,7 +13,6 @@ import {
 import AppLogo from "./app-logo";
 import { SettingsIcon, UsersIcon } from "../../../lib/icons";
 import TripleDotIcon from "../././../../assets/icons/ThreeDots.png";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Loader from "./ui/Loader";
 import {
@@ -31,18 +30,13 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../../../assets/images/Logo.png";
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  session?: any; // Add session as a prop
-}
-
-export function AppSidebar({ session, ...props }: AppSidebarProps) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const { isMobile, state, setOpen, setOpenMobile } = useSidebar();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
-  // Get userRole directly from session prop
-  const userRole = session?.user?.role || "";
+  const userRole = "ADMIN";
   // Use useMemo to recalculate dataa whenever userRole changes
   const dataa = React.useMemo(() => {
     return {
@@ -106,7 +100,7 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
     setLoading(true);
     try {
       localStorage.removeItem("token");
-      await signOut({ callbackUrl: "/" }); // Let NextAuth handle the redirect
+      router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
     } finally {

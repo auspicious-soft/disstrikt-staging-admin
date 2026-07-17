@@ -1,6 +1,5 @@
 "use server";
 
-import { signIn, signOut } from "@/auth";
 import { loginService } from "@/services/admin-services";
 import { cookies } from "next/headers";
 import { createS3Client } from "@/config/s3";
@@ -14,18 +13,6 @@ export const loginAction = async (payload: any) => {
        console.log("LOGIN RESPONSE:", res?.data);
     const user = res?.data?.data;
     console.log('user: ', user);
-    if (res && res?.data?.success) {
-      await signIn("credentials", {
-        fullName:  res?.data?.data?.fullName,
-        email: res?.data?.data?.email,
-        _id: res?.data?.data?._id,
-        role: res?.data?.data?.role,
-        image: res?.data?.data?.image,
-        country: res?.data?.data?.country,
-        language: res?.data?.data?.language,
-        redirect: false,
-      });
-    }
     return res.data;
   } catch (error: any) {
        console.error("LOGIN ERROR:", error?.response?.data || error);
@@ -34,20 +21,12 @@ export const loginAction = async (payload: any) => {
 };
 
 export const logoutAction = async () => {
-  try {
-    await signOut();
-  } catch (error: any) {
-    return error?.response?.data;
-  }
+  return { success: true };
 };
 
 export const getTokenCustom = async () => {
-  const jwtSalt = process.env.JWT_SALT;
-  if (!jwtSalt) {
-    throw new Error("JWT_SALT environment variable is not set");
-  }
-  const cookiesOfNextAuth = await cookies();
-  return cookiesOfNextAuth?.get(jwtSalt)?.value;
+  const cookieStore = await cookies();
+  return cookieStore.get("token")?.value || "";
 };
 
 export const generateSignedUrlToUploadOn = async (fileName: string, fileType: string) => {

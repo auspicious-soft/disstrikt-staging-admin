@@ -248,7 +248,7 @@ const TrainingTheater: React.FC = () => {
   return (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
       <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
-        <div className="flex flex-col sm:flex-row justify-between items-end gap-2.5 w-full">
+        <div className="flex flex-wrap justify-between items-end gap-2.5 w-full">
           <div className="w-fit max-w-full overflow-x-auto">
             <div className="flex min-w-max rounded-full bg-white/10 p-1">
               {filters.map((filter) => (

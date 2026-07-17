@@ -117,7 +117,7 @@ const ReviewActivityPage = () => {
   return (
     <div className="w-full space-y-5 text-stone-100">
       <div className="grid grid-cols-12 items-stretch gap-x-2 gap-y-6">
-        <div className="col-span-12 space-y-4 md:col-span-8">
+        <div className="col-span-12 space-y-4 lg:col-span-8">
           <Panel title="Model Details" collapsible className="h-full">
             <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-2">
               <DetailItem label="Model Name" value="Naomi" />
@@ -130,7 +130,7 @@ const ReviewActivityPage = () => {
             </div>
           </Panel>
         </div>
-        <div className="col-span-12 space-y-4 md:col-span-4">
+        <div className="col-span-12 space-y-4 lg:col-span-4">
           <section className="h-full overflow-hidden rounded-md border border-stone-700 bg-black/10">
             <div className="flex h-10 items-center justify-between bg-white/10 px-4">
               <h2 className="text-sm font-medium text-stone-100">

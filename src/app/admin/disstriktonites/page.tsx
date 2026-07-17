@@ -174,14 +174,14 @@ const DisstriktonitesPage = () => {
   return (
     <main className="w-full">
       <div className="flex w-full flex-col gap-2.5">
-        <div className="flex flex-col items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
+        <div className="flex flex-wrap items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
           <CustomInput
             placeholder="Search"
             icon={<Search className="h-4 w-4" />}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <div className="max-w-fit">
+          <div className="max-w-full md:max-w-fit">
           <CustomButton
             label="Manage Roles"
             size="Medium"
@@ -190,7 +190,7 @@ const DisstriktonitesPage = () => {
             onClick={() => router.push("/admin/disstriktonites/manage-roles")}
           />
           </div>
-          <div className="max-w-fit">
+          <div className="max-w-full md:max-w-fit">
           <CustomButton
             label="Add Disstriktonites"
             size="Medium"
@@ -228,6 +228,7 @@ const DisstriktonitesPage = () => {
                   type="button"
                   className="flex h-8 w-8 items-center justify-center rounded-md bg-neutral-800 text-stone-300 transition-colors hover:bg-neutral-700 hover:text-white"
                   aria-label="Edit"
+                  onClick={()=> router.push("/admin/disstriktonites/manage-roles")}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>

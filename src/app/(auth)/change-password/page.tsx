@@ -4,13 +4,12 @@ import ArrowButton from "@/app/components/Button";
 import AuthBackground from "../../../../public/assets/AuthImage.png";
 import logo from "../../../assets/images/Logo2.png";
 import { Eye, EyeOff } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import InputField from "../../components/InputField";
 import UpdatePasswordModal from "@/app/components/UpdatePasswordModal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Loader from "@/app/admin/components/ui/Loader";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function Home() {

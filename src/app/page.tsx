@@ -4,13 +4,13 @@ import ArrowButton from "@/app/components/Button";
 import AuthBackground from "../../public/assets/AuthImage.png";
 import logo from "../assets/images/Logo2.png";
 import { EyeOff } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import InputField from "./components/InputField";
 import { useRouter } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Loader from "./admin/components/ui/Loader";
-import { Email, Eye, Lock } from "@/lib/icons";
+import { Email,  Lock } from "@/lib/icons";
+import { Eye } from "iconoir-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,6 +19,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+
+  if (!email.trim()) {
+    toast.error("Email is required");
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    toast.error("Please enter a valid email address");
+    return;
+  }
+
+  if (!password.trim()) {
+    toast.error("Password is required");
+    return;
+  }
+
+  if (password.length < 6) {
+    toast.error("Password must be at least 6 characters");
+    return;
+  }
+    toast.success("Login successful");
+
+   window.location.replace("/admin/dashboard");
+};
 
   return (
     <>
@@ -38,13 +67,13 @@ export default function LoginPage() {
             </div>
 
             {/* Auth section */}
-            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
+            <div className="relative z-10 flex w-full max-w-[510px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
               {/* Left side: Image */}
 
               {/* Right side: Login form */}
-              <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full">
+              <div className="flex-1 flex flex-col justify-center gap-3 p-1 w-full">
                 {/* Logo */}
-                <div className="w-full flex justify-start">
+                <div className="w-full flex justify-start mb-2">
                   <Image
                     src={logo}
                     alt="logo"
@@ -54,25 +83,27 @@ export default function LoginPage() {
 
                 {/* Heading */}
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-4xl font-normal font-heading capitalize">
+                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal font-heading capitalize">
                     LOGIN TO YOUR ID
                   </h1>
-                  <p className="text-black/50 text-sm sm:text-base font-normal">
+                  <p className="text-black/50 text-sm sm:text-base md:text-base lg:text-lg font-normal">
                     Kindly provide your login details to access your account!
                   </p>
                 </div>
 
                 {/* Form */}
-                <form >
-                  <div className="flex flex-col gap-2 sm:gap-2">
+                <form onSubmit={handleLogin}>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
                     <label
-                      htmlFor=""
-                      className="text-[#00000080] text-xs sm:text-base font-normal"
+                      htmlFor="email"
+                      className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
                     >
                       Email Address <span className="text-[#EA3838] ">*</span>
                     </label>
                     <div className="relative w-full">
                       <InputField
+                        id="email"
                         value={email}
                         name="email"
                         onChange={(e) => setEmail(e.target.value)}
@@ -84,14 +115,17 @@ export default function LoginPage() {
                         <Email />
                       </div>
                     </div>
+                    </div>
+                    <div className="flex flex-col">
                     <label
-                      htmlFor=""
-                      className="text-[#00000080] text-xs sm:text-base font-normal"
+                      htmlFor="password"
+                      className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
                     >
                       Password <span className="text-[#EA3838] ">*</span>
                     </label>
                     <div className="relative w-full">
                       <InputField
+                        id="password"
                         value={password}
                         name="password"
                         onChange={(e) => setPassword(e.target.value)}
@@ -107,11 +141,12 @@ export default function LoginPage() {
                         onClick={() => setShowPassword((prev) => !prev)}
                       >
                         {showPassword ? (
-                          <EyeOff size={15} color="#00000080" />
+                          <EyeOff className="h-4 text-zinc-500" />
                         ) : (
-                          <Eye />
+                          <Eye className="h-5 text-zinc-500" />
                         )}
                       </div>
+                    </div>
                     </div>
 
                     <ArrowButton
@@ -120,8 +155,7 @@ export default function LoginPage() {
                       disabled={loading || isPending}
                     />
 
-                    <div className="flex justify-center mt-4 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">
-                      <label className="flex items-center gap-2"></label>
+                    <div className="flex justify-center mt-4 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap ">
                       <button
                         type="button"
                         onClick={() => router.push("/forgot-password")}

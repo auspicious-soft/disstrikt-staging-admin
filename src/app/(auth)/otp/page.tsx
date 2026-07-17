@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
 import InputField from "@/app/components/InputField";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [otp, setOtp] = useState("");
+  const router = useRouter()
   const [loading, setLoading] = useState(false);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -30,6 +32,7 @@ export default function Home() {
     }
 
     console.log("OTP:", otp);
+    router.push("/change-password")
 
     // Call your API here
   };
@@ -53,9 +56,9 @@ export default function Home() {
           <div className="relative z-10 flex w-full max-w-[500px] mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
             <form
               onSubmit={handleSubmit}
-              className="flex-1 flex flex-col justify-center gap-3 p-2 w-full"
+              className="flex-1 flex flex-col justify-center gap-3 p-1 w-full"
             >
-              <div className="w-full flex justify-start">
+              <div className="w-full flex justify-start mb-2">
                 <Image
                   src={logo}
                   alt="logo"
@@ -64,18 +67,18 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-4xl font-normal font-heading capitalize">
+                <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal font-heading capitalize">
                   Enter OTP
                 </h1>
-                <p className="text-black/50 text-sm sm:text-base font-normal">
+                <p className="text-black/50 text-sm sm:text-base md:text-base lg:text-lg font-normal">
                   Please enter the OTP received on your email.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 <label
                   htmlFor="otp"
-                  className="text-[#00000080] text-xs sm:text-base font-normal"
+                  className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
                 >
                   OTP <span className="text-[#EA3838]">*</span>
                 </label>
@@ -93,7 +96,7 @@ export default function Home() {
 
               <ArrowButton text="Verify OTP" type="submit" disabled={loading} />
 
-              <div className="flex justify-center mt-2 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">
+              <div className="flex justify-center mt-2 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap gap-2">
                 <span className="text-black/60">Remember Password?</span>
                 <Link
                   href="/"

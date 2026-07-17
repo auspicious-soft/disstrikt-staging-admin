@@ -36,7 +36,7 @@ const InputField: React.FC<InputFieldProps> = ({
       onChange={onChange}
       required={required}
       disabled={disabled}
-      className={`w-full px-4 py-5 bg-white rounded-[10px] outline outline-rose-100 text-zinc-400 placeholder-zinc-400 text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-300 ${className}`}
+      className={`w-full px-4 py-2 h-12 bg-white rounded-[10px] outline outline-rose-100 text-zinc-400 placeholder-zinc-400 text-sm sm:text-base md:text-base lg:text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-300 ${className}`}
     />
   );
 };

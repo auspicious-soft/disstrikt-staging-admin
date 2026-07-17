@@ -11,25 +11,25 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 import AppLogo from "./app-logo";
-import {
-  DashboardIcon,
-  ReviewtaskIcon,
-  UserIcon,
-  SettingsIcon,
-  UsersIcon,
-} from "../../../lib/icons";
-import TaskLogo from "../././../../assets/icons/Task.png";
-import subscptionLogo from "../././../../assets/icons/Subscription.png";
-import FrameLogo from "../././../../assets/icons/Frame.png";
-import Revenue from "../././../../assets/icons/revenue.png";
+import { SettingsIcon, UsersIcon } from "../../../lib/icons";
 import TripleDotIcon from "../././../../assets/icons/ThreeDots.png";
-import { NavProjects } from "./nav-projects";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import SettingsModal from "../../components/SettingsModal";
-import { LogOutIcon } from "lucide-react";
 import Loader from "./ui/Loader";
-import { Building, Camera, ColorWheel, CreditCard, GraduationCap, HomeSimple, ListSelect, ShoppingBag } from "iconoir-react";
+import {
+  Camera,
+  ChatLines,
+  GraduationCap,
+  HomeSimple,
+  ListSelect,
+  Phone,
+  ShoppingBag,
+  ShopWindow,
+} from "iconoir-react";
+import SettingsModal from "./SettingModal";
+import Link from "next/link";
+import Image from "next/image";
+import Logo from "../../../assets/images/Logo.png";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   session?: any; // Add session as a prop
@@ -39,184 +39,59 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
   const router = useRouter();
   const { isMobile, state, setOpen, setOpenMobile } = useSidebar();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [wasExpanded, setWasExpanded] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
-
-  console.log("Session in AppSidebar:", session);
-
   // Get userRole directly from session prop
   const userRole = session?.user?.role || "";
-  console.log("Current userRole:", userRole);
-
   // Use useMemo to recalculate dataa whenever userRole changes
   const dataa = React.useMemo(() => {
-    console.log("Calculating dataa with userRole:", userRole);
-
-    if (userRole === "ADMIN") {
-      console.log("Returning admin menu");
-      return {
-        user: {
-          name: "Kane",
-          profile: "Admin",
-          avatar: "https://github.com/shadcn.png",
-        },
-        navMain: [
-          {
-            title: "Dashboard",
-            url: "/admin/dashboard",
-            icon: () => <HomeSimple />,
-          },
-          {
-            title: "Model Mansion",
-            url: "/admin/model-mansion",
-            icon: () => <UsersIcon />,
-          },
-          {
-            title: "Job Junction",
-            url: "/admin/job-junction",
-            icon: () => <ShoppingBag />,
-          },
-          {
-            title: "Training Theater",
-            url: "/admin/training-theater",
-            icon: () => <ListSelect />,
-          },
-          {
-            title: "Shoot Studio",
-            url: "/admin/shoot-studio",
-            icon: () => <Camera />,
-          },
-          {
-            title: "University Union",
-            url: "/admin/university-union",
-            icon: () => <GraduationCap />,
-          },
-          {
-            title: "Model Market",
-            url: "/admin/model-market",
-            icon: () => <img src={TaskLogo.src} alt="Task" />,
-          },
-          {
-            title: "Celebration Cruise",
-            url: "/admin/celebration-cruise",
-            icon: () => <ColorWheel />,
-          },
-          {
-            title: "Subscription-Plans",
-            url: "/admin/subscription-plans",
-            icon: () => (
-              <CreditCard/>
-            ),
-          },
-           {
-            title: "Studio Management",
-            url: "/admin/studio-management",
-            icon: () => <Building/>,
-          },
-
-        ],
-        projects: [
-          {
-            title: "Settings",
-            url: "/",
-            icon: SettingsIcon,
-          },
-        ],
-      };
-    } else if (userRole && userRole !== "ADMIN") {
-      // Return employee data for any non-ADMIN role
-      console.log("Returning employee menu for role:", userRole);
-      return {
-        user: {
-          name: "Kane",
-          profile: "Employee",
-          avatar: "https://github.com/shadcn.png",
-        },
-        navMain: [
-          {
-            title: "Review Tasks",
-            url: "/admin/review-tasks",
-            icon: () => <ReviewtaskIcon />,
-          },
-          {
-            title: "Task Management",
-            url: "/admin/task-management",
-            icon: () => <img src={TaskLogo.src} alt="Task" />,
-          },
-          {
-            title: "Job Applicants",
-            url: "/admin/job-applicants",
-            icon: () => <img src={Revenue.src} alt="Revenue" />,
-          },
-          {
-            title: "Job Management",
-            url: "/admin/job-management",
-            icon: () => <img src={FrameLogo.src} alt="Job" />,
-          },
-          {
-            title: "Activities",
-            url: "/admin/activities",
-            icon: () => <img src={Revenue.src} alt="Revenue" />,
-          },
-          {
-            title: "Logout",
-            url: "#", // prevent navigation
-            icon: () => <LogOutIcon />,
-          },
-        ],
-        projects: [],
-      };
-    }
-
-    // Return default employee structure if no role is found
-    console.log("Returning default employee menu - no role found");
     return {
       user: {
         name: "Kane",
-        profile: "Employee",
+        profile: "Admin",
         avatar: "https://github.com/shadcn.png",
       },
       navMain: [
         {
-          title: "Review Tasks",
-          url: "/admin/review-tasks",
-          icon: () => <ReviewtaskIcon />,
+          title: "Dashboard",
+          url: "/agent/dashboard",
+          icon: () => <HomeSimple />,
         },
         {
-          title: "Task Management",
-          url: "/admin/task-management",
-          icon: () => <img src={TaskLogo.src} alt="Task" />,
+          title: "Assigned Models",
+          url: "/agent/assigned-models",
+          icon: () => <UsersIcon />,
         },
         {
-          title: "Job Applicants",
-          url: "/admin/job-applicants",
-          icon: () => <img src={Revenue.src} alt="Revenue" />,
+          title: "Job Junction",
+          url: "/agent/job-junction",
+          icon: () => <ShoppingBag />,
         },
         {
-          title: "Job Management",
-          url: "/admin/job-management",
-          icon: () => <img src={FrameLogo.src} alt="Job" />,
+          title: "Model Market",
+          url: "/agent/model-market",
+          icon: () => <ShopWindow />,
         },
         {
-          title: "Logout",
-          url: "#",
-          icon: () => <LogOutIcon />,
+          title: "Messages",
+          url: "/agent/messages",
+          icon: () => <ChatLines />,
+        },
+        {
+          title: "Calls",
+          url: "/agent/calls",
+          icon: () => <Phone />,
         },
       ],
-      projects: [],
+      projects: [
+        {
+          title: "Settings",
+          url: "/",
+          icon: SettingsIcon,
+        },
+      ],
     };
   }, [userRole]);
-
-  React.useEffect(() => {
-    // if (isModalOpen && !isMobile && state === "expanded") {
-    //   setWasExpanded(true);
-    //   setOpen(false);
-    // } else if (!isModalOpen && !isMobile && wasExpanded) {
-    //   setOpen(true);
-    //   setWasExpanded(false);
-    // }
-  }, [isModalOpen, isMobile, state, setOpen]);
 
   // 🔹 Prevent scrolling when modal is open
   React.useEffect(() => {
@@ -258,7 +133,20 @@ export function AppSidebar({ session, ...props }: AppSidebarProps) {
                     : "flex items-center justify-between pt-[2px] pb-[10px] pl-[12px]"
                 }
               >
-                {state === "expanded" && <AppLogo />}
+                {state === "expanded" && (
+                  <div className="inline-block group-data-[collapsible=icon]:opacity-0">
+                    <Link href="/agent/dashboard" className="w-max block">
+                      <Image
+                        src={Logo}
+                        alt="Logo"
+                        width={0}
+                        height={0}
+                        sizes="100vw"
+                        className="h-18 w-26"
+                      />
+                    </Link>
+                  </div>
+                )}
                 {(isMobile || state === "collapsed") && (
                   <SidebarTrigger className="sidebar-trigger-collapse" />
                 )}

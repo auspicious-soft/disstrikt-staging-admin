@@ -3,8 +3,8 @@ import * as React from "react";
 import { File, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import Loader from "../admin/components/ui/Loader";
 import { BellNotification, Notes } from "iconoir-react";
+import Loader from "@/app/admin/components/ui/Loader";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const modalRef = React.useRef(null);
@@ -37,7 +37,7 @@ export default function SettingsModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleRedirectAccount = () => {
-    router.push("/admin/account-settings");
+    router.push("/agent/account-settings");
     onClose();
   };
 
@@ -77,7 +77,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
           {/* Settings Modal */}
           <div
-            className={`top-28 fixed left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
+            className={`top-72 fixed left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
               isOpen
                 ? "opacity-100 translate-y-[calc(100%+0.5rem)]"
                 : "opacity-0 translate-y-[calc(100%+2rem)]"
@@ -108,44 +108,6 @@ export default function SettingsModal({ isOpen, onClose }) {
               </button>
 
               <div className="self-stretch h-0 outline outline-offset-[-0.50px] outline-stone-700"></div>
-
-              {/* Terms Of Use */}
-              <button
-                className="inline-flex justify-start items-center gap-3.5 bg-transparent border-none cursor-pointer"
-                type="button"
-                onClick={handleRedirectTermsUse}
-              >
-                <div className="w-4 h-4 relative overflow-hidden">
-                  <File className="w-4 h-4 text-stone-200" />
-                </div>
-                <div className="justify-start text-stone-200 text-sm font-normal  leading-tight">
-                  Terms Of Use
-                </div>
-              </button>
-              <button
-                className="inline-flex justify-start items-center gap-3.5 bg-transparent border-none cursor-pointer"
-                type="button"
-                onClick={() => (router.push("/admin/notifications",onClose()))}
-              >
-                <div className="w-4 h-4 relative overflow-hidden">
-                  <BellNotification className="w-4 h-4 text-stone-200" />
-                </div>
-                <div className="justify-start text-stone-200 text-sm font-normal  leading-tight">
-                  Notifications
-                </div>
-              </button>
-              <button
-                className="inline-flex justify-start items-center gap-3.5 bg-transparent border-none cursor-pointer"
-                type="button"
-                onClick={() => (router.push("/admin/disstriktonites",onClose()))}
-              >
-                <div className="w-4 h-4 relative overflow-hidden">
-                  <Notes className="w-4 h-4 text-stone-200" />
-                </div>
-                <div className="justify-start text-stone-200 text-sm font-normal  leading-tight">
-                  Disstriktonites
-                </div>
-              </button>
 
               <div className="self-stretch h-0 outline outline-offset-[-0.50px] outline-stone-700"></div>
 

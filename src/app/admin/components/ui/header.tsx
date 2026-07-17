@@ -92,6 +92,11 @@ export function AppHeader() {
   } else if (pathname.startsWith("/admin/university-union") &&
     pathSegments.length > 2) {
     pageName = "Progress Overview";
+  } else if (pathname.startsWith("/admin/disstriktonites") &&
+    pathSegments.length > 2 && pathSegments[2] !== "add") {
+    pageName = "ADD NEW ROLE";
+  } else if (pathname.startsWith("/admin/disstriktonites/add")) {
+    pageName = "Add Disstriktonites";
   } else if (pathname.startsWith("/admin/celebration-cruise") &&
     pathSegments.length > 2 && pathSegments[2] !== "create-event") {
     pageName = "Celebration Cruise";

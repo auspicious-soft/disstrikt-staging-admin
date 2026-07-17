@@ -9,6 +9,8 @@ interface InputFieldProps {
   disabled?: boolean;
   required?: boolean;
   name?: string;
+  id?: string;
+  maxLength?: number;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -19,12 +21,16 @@ const InputField: React.FC<InputFieldProps> = ({
   className = "",
   disabled = false,
   required = false,
-  name=""
+  name="",
+  id,
+  maxLength,
 }) => {
   return (
     <input
+      id={id}
       type={type}
       name={name}
+      maxLength={maxLength}
       placeholder={placeholder}
       value={value}
       onChange={onChange}

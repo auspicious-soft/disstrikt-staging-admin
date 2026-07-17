@@ -8,10 +8,7 @@ import React, { useEffect, useState } from "react";
 import InputField from "../../components/InputField";
 import UpdatePasswordModal from "@/app/components/UpdatePasswordModal";
 import { toast } from "sonner";
-import { resetPassword } from "@/services/admin-services";
 import { useRouter } from "next/navigation";
-import { useDataContext } from "@/app/components/DataContext";
-import { redirect } from "next/navigation";
 import Loader from "@/app/admin/components/ui/Loader";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -20,76 +17,15 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isPending, startTransition] = React.useTransition();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { token } = useDataContext();
   const { data: session } = useSession();
-
-  useEffect(() => {
-    if (session) {
-      router.push("/admin/dashboard");
-    }
-  }, [session, router]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleChangePassword = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    // 🔹 Validation checks
-    if (!password && !confirmPassword) {
-      toast.error("Please Enter Password and Confirm Password.");
-      return;
-    }
-
-    if (password && !confirmPassword) {
-      toast.error("Please Enter Confirm Password.");
-      return;
-    }
-
-    if (!password && confirmPassword) {
-      toast.error("Please Enter Both Password and Confirm Password.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (password && password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
-      return;
-    }
-    if (!token) {
-      toast.error("Session Expired try again and update password");
-      return;
-    }
-    setLoading(true);
-    startTransition(async () => {
-      try {
-        const response = await resetPassword({ password, token });
-        if (response?.status === 200) {
-          toast.success("Password updated successfully");
-          setIsModalOpen(true);
-        } else {
-          toast.error("Failed to update password");
-        }
-      } catch (err: any) {
-        if (err.status === 400) {
-          toast.error("Invalid password format");
-        } else {
-          toast.error("Something went wrong");
-        }
-      } finally {
-        setLoading(false);
-      }
-    });
-  };
 
   const handleCloseModalWithNavigation = () => {
     setIsModalOpen(false);
-    redirect("/");
+    router.push("/");
   };
 
   return (
@@ -109,10 +45,9 @@ export default function Home() {
               />
             </div>
 
-            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
+            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
               <form
-                onSubmit={handleChangePassword}
-                className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full"
+                className="flex-1 flex flex-col justify-center gap-3 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full"
               >
                 <div className="w-full flex justify-start">
                   <Image
@@ -186,7 +121,7 @@ export default function Home() {
                 <ArrowButton
                   text="Update Password"
                   type="submit"
-                  disabled={loading || isPending}
+                  disabled={loading}
                 />
 
                 <UpdatePasswordModal

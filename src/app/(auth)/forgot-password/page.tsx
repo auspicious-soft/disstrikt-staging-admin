@@ -6,7 +6,6 @@ import logo from "../../../assets/images/Logo2.png";
 import InputField from "../../components/InputField";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { forgotPasswordService } from "@/services/admin-services";
 import { toast } from "sonner";
 import { useDataContext } from "@/app/components/DataContext";
 import Loader from "@/app/admin/components/ui/Loader";
@@ -18,7 +17,6 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const { setDataEmail } = useDataContext();
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = React.useTransition();
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -38,23 +36,10 @@ export default function Home() {
       toast.error("Please Enter your Email address");
       return;
     }
-    startTransition(async () => {
-      setLoading(true);
-      try {
-        const response = await forgotPasswordService({ email: email });
-        if (response?.status === 200) {
-          toast.success("OTP sent successfully");
-          router.push("/otp");
-        } else {
-          toast.error("User not Found");
-        }
-      } catch (err: any) {
-        if (err.status == 400) toast.error("User not found");
-        else toast.error("Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    });
+    setLoading(true);
+    toast.success("OTP sent successfully");
+    router.push("/otp");
+    setLoading(false);
   };
 
   return (
@@ -74,7 +59,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[480px] md:p-6">
+            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
               <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-4 py-6 sm:px-6 sm:py-6 md:px-6 md:py-6 w-full">
                 <div className="w-full flex justify-start">
                   <Image
@@ -95,7 +80,7 @@ export default function Home() {
 
                 <form
                   onSubmit={handleFogetPassword}
-                  className="flex flex-col gap-3 sm:gap-4"
+                  className="flex flex-col gap-3"
                 >
                   <div className="flex flex-col gap-2">
                     <label
@@ -123,7 +108,7 @@ export default function Home() {
                     type="submit"
                     text="Next"
                     onClick={handleFogetPassword}
-                    disabled={loading || isPending}
+                    disabled={loading}
                   />
 
                   <div className="flex justify-center mt-4 items-center text-zinc-400 text-base font-medium flex-wrap gap-2">

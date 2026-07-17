@@ -7,9 +7,8 @@ import { EyeOff } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import InputField from "./components/InputField";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { loginAction } from "@/actions";
 import Loader from "./admin/components/ui/Loader";
 import { Email, Eye, Lock } from "@/lib/icons";
 
@@ -20,55 +19,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
-
-  useEffect(() => {
-    if (session) {
-      router.push("/admin/dashboard");
-    }
-  }, [session, router]);
-
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      if (!email && !password) {
-        toast.error("Email and Password are required.");
-        setLoading(false);
-        return;
-      }
-      if (email && !password) {
-        toast.error("Password is required.");
-        setLoading(false);
-        return;
-      }
-      if (!email && password) {
-        toast.error("Email is required.");
-        setLoading(false);
-        return;
-      }
-      startTransition(async () => {
-        setLoading(true);
-        try {
-          const response = await loginAction({ email, password });
-          if (response?.success) {
-            toast.success("Logged in successfully");
-            router.push("/admin/dashboard");
-          } else if (response?.message === "Invalid password") {
-            toast.error(response?.message);
-          } else {
-            console.error("Login failed: ", response);
-            toast.error("User Not Found.");
-          }
-        } catch (error) {
-          console.error("Login action error:", error);
-          toast.error("Something went wrong! Please try again.");
-        } finally {
-          setLoading(false);
-        }
-      });
-    }, 100);
-  };
 
   return (
     <>
@@ -88,7 +38,7 @@ export default function LoginPage() {
             </div>
 
             {/* Auth section */}
-            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-[580px] md:p-6">
+            <div className="relative z-10 flex w-full max-w-[500px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-auto md:h-fit md:p-6">
               {/* Left side: Image */}
 
               {/* Right side: Login form */}
@@ -113,7 +63,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit}>
+                <form >
                   <div className="flex flex-col gap-2 sm:gap-2">
                     <label
                       htmlFor=""

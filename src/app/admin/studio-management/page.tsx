@@ -244,7 +244,7 @@ const dummyUsers: TableRow[] = [
               <button
                 type="button"
                 onClick={() =>
-                  router.push(`/admin/celebration-cruise/${row._id}`)
+                  router.push(`/admin/studio-management/manage-shoot-features`)
                 }
                 className="text-xs font-medium bg-white/10 p-2 rounded-md text-stone-200 hover:bg-white/20 transition-colors"
               >

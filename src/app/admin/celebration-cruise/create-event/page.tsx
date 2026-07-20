@@ -15,7 +15,7 @@ const CreateCelebrationCruiseEvent = () => {
     <main className="w-full text-stone-200">
       <form className="space-y-2">
         <section className="rounded-xl border border-stone-700 p-2 sm:p-2">
-          <h2 className="mb-5 text-sm font-medium text-stone-100">
+          <h2 className="mb-2 text-sm font-medium text-stone-100">
             Event Details
           </h2>
 
@@ -92,7 +92,7 @@ const CreateCelebrationCruiseEvent = () => {
         </section>
 
         <section className="rounded-xl border border-stone-700 p-2 sm:p-2 mb-5">
-          <h2 className="mb-5 text-sm font-medium text-stone-100">
+          <h2 className="mb-2 text-sm font-medium text-stone-100">
             Schedule &amp; Location
           </h2>
 

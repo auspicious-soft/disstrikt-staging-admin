@@ -1,6 +1,7 @@
 "use client";
 
 import CustomSelect from "@/app/components/CustomSelect";
+import { NavArrowDownSolid } from "iconoir-react";
 import { ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -25,21 +26,37 @@ const Panel = ({
   title: string;
   children: ReactNode;
   columns?: 2 | 3;
-}) => (
-  <section className="mb-4 overflow-hidden rounded-md border border-stone-700 bg-black/10">
-    <div className="flex h-10 items-center bg-white/10 px-4">
-      <h2 className="text-sm font-medium text-stone-100">{title}</h2>
-    </div>
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
 
-    <div
-      className={`grid grid-cols-1 gap-x-20 gap-y-6 px-4 py-5 ${
-        columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
-      }`}
-    >
-      {children}
-    </div>
-  </section>
-);
+  return (
+    <section className="mb-4 overflow-hidden rounded-md border border-stone-700 bg-black/10">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-10 w-full items-center justify-between bg-white/10 px-4"
+      >
+        <h2 className="text-sm font-medium text-stone-100">{title}</h2>
+
+        <NavArrowDownSolid
+          className={`h-5 w-5 transition-transform duration-300 ${
+            isOpen ? "rotate-0" : "-rotate-180"
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className={`grid grid-cols-1 gap-x-20 gap-y-6 px-4 py-5 ${
+            columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
+          }`}
+        >
+          {children}
+        </div>
+      )}
+    </section>
+  );
+};
 
 const EditBookingPage = () => {
   const router = useRouter();

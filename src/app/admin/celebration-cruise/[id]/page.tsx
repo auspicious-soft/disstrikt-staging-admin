@@ -152,7 +152,7 @@ const ticketHeaders = [
   { label: "Email", key: "email",icon: <ChevronsUpDown className="w-4 h-4" /> },
   { label: "Mobile Number", key: "mobile",icon: <ChevronsUpDown className="w-4 h-4" /> },
   { label: "No. Of Tickets", key: "tickets", align: "center" as const ,icon: <ChevronsUpDown className="w-4 h-4" />},
-  { label: "Total Active Months", key: "activeMonths",icon: <ChevronsUpDown className="w-4 h-4" /> },
+  { label: "Total Active Months", key: "activeMonths",align: "center" as const ,icon: <ChevronsUpDown className="w-4 h-4" /> },
 ];
 
 const CelebrationCruiseCreateEvent = () => {

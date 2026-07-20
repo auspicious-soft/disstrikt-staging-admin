@@ -164,7 +164,7 @@ const ModelMansionTabContent = ({
           open={activeTab === "Portfolio" && index === 0}
           className="group rounded-md border border-stone-700 bg-black/20 overflow-hidden"
         >
-          <summary className="min-h-9 px-3 py-2 flex items-center justify-between gap-3 cursor-pointer list-none text-stone-200 text-sm font-medium">
+          <summary className="min-h-9 bg-white/10 px-3 py-2 flex items-center justify-between gap-3 cursor-pointer list-none text-stone-200 text-sm font-medium">
             <span>{section.title}</span>
             <NavArrowDownSolid className="w-4 h-4 shrink-0 text-stone-300 transition-transform group-open:rotate-180" />
           </summary>

@@ -77,7 +77,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
           {/* Settings Modal */}
           <div
-            className={`top-28 fixed left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
+            className={`top-15 fixed left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
               isOpen
                 ? "opacity-100 translate-y-[calc(100%+0.5rem)]"
                 : "opacity-0 translate-y-[calc(100%+2rem)]"

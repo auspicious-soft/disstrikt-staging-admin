@@ -35,7 +35,7 @@ const ModelMansionDetailsPage = () => {
 
   return (
     <div className="w-full flex flex-col gap-8 text-stone-200">
-      <section className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6 lg:gap-8 items-start">
+      <section className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 lg:gap-8 items-start">
         <div className="relative w-full max-w-[420px] mx-auto xl:mx-0 aspect-[1.16/1] rounded-2xl overflow-hidden bg-neutral-800">
           <Image
             src={dummyUserImg}

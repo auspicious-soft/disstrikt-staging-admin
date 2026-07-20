@@ -118,13 +118,13 @@ const ReviewActivityPage = () => {
     <div className="w-full space-y-5 text-stone-100">
       <div className="grid grid-cols-12 items-stretch gap-x-2 gap-y-6">
         <div className="col-span-12 space-y-4 lg:col-span-8">
-          <Panel title="Model Details" collapsible className="h-full">
+          <Panel title="Overview" collapsible className="h-full">
             <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-2">
-              <DetailItem label="Model Name" value="Naomi" />
-              <DetailItem label="Gender" value="Male" />
-              <DetailItem label="Phone Number" value="+7 457 458 7896" />
+              <DetailItem label="Chapter" value="Naomi" />
+              <DetailItem label="Module" value="Male" />
+              <DetailItem label="Current Task" value="+7 457 458 7896" />
               <DetailItem
-                label="Email Address"
+                label="Progress"
                 value="johnsonalexu@gmail.com"
               />
             </div>
@@ -137,7 +137,7 @@ const ReviewActivityPage = () => {
                 Fatima Laurent
               </h2>
 
-              <span className="text-xs font-semibold text-white/70">
+              <span className="text-xs font-semibold leading-4 text-white/70">
                 Associated Agent
               </span>
             </div>
@@ -174,12 +174,12 @@ const ReviewActivityPage = () => {
           </section>
         </div>
       </div>
-      <Panel title="Shoot Details" collapsible>
+      <Panel title="Call Schedule" collapsible>
         <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-3 mb-2 md:mb-4">
-          <DetailItem label="Shoot Goal" value="Digitals" />
-          <DetailItem label="Shoot Format" value="Portraits" />
+          <DetailItem label="Scheduled Date" value="Digitals" />
+          <DetailItem label="Time Slot" value="Portraits" />
 
-          <DetailItem label="Shoot Vibes" value="Clean & Minimal" />
+          <DetailItem label="Reason" value="Clean & Minimal" />
         </div>
       </Panel>
       <details

@@ -77,18 +77,8 @@ const UserListings: React.FC = () => {
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
-      label: "Agent",
+      label: "Total Amount Paid",
       key: "agent",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Likes",
-      key: "likes",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Active Months",
-      key: "activeMonths",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
   ];

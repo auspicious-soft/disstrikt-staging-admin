@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import SettingsModal from "../../components/SettingsModal";
 import { LogOutIcon } from "lucide-react";
 import Loader from "./ui/Loader";
-import { Building, Camera, ColorWheel, CreditCard, GraduationCap, HomeSimple, ListSelect, ShoppingBag } from "iconoir-react";
+import { Building, Camera, ColorWheel, CreditCard, GraduationCap, HomeSimple, ListSelect, ShoppingBag, ShopWindow } from "iconoir-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -86,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Model Market",
             url: "/admin/model-market",
-            icon: () => <img src={TaskLogo.src} alt="Task" />,
+            icon: () => <ShopWindow />,
           },
           {
             title: "Celebration Cruise",

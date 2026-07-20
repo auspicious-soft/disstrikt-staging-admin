@@ -35,7 +35,7 @@ const ModelMansionDetailsPage = () => {
 
   return (
     <div className="w-full flex flex-col gap-8 text-stone-200">
-      <section className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6 lg:gap-8 items-start">
+      <section className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 lg:gap-8 items-start">
         <div className="relative w-full max-w-[420px] mx-auto xl:mx-0 aspect-[1.16/1] rounded-2xl overflow-hidden bg-neutral-800">
           <Image
             src={dummyUserImg}
@@ -53,7 +53,7 @@ const ModelMansionDetailsPage = () => {
               <p className="text-neutral-400 text-xs leading-tight">
                 {detail.label}
               </p>
-              <p className="mt-1 text-stone-200 text-sm font-medium leading-4 break-words">
+              <p className={`mt-1 ${detail.label === "Assigned Agent" ? "underline" : "" } text-stone-200 text-sm font-medium leading-4 break-words`}>
                 {detail.value}
               </p>
             </div>
@@ -78,7 +78,7 @@ const ModelMansionDetailsPage = () => {
       </section>
 
       <section className="w-full min-w-0 flex flex-col gap-4">
-        <div className="w-full max-w-fit overflow-x-auto overflow-y-hidden">
+        <div className="w-full max-w-fit mx-auto overflow-x-auto overflow-y-hidden">
           <div className="mx-auto flex min-w-max items-center gap-1.5 rounded-full bg-white/10 p-[3px]">
             {TABS.map((tab) => (
               <button

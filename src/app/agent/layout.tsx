@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
+import { Suspense } from "react";
 
 import { SidebarInset, SidebarProvider } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
@@ -25,7 +26,9 @@ export default async function RootLayout({
       className={`${mulish.variable} dark min-h-screen overflow-auto overflow-custom bg-neutral-900 antialiased`}
     >
       <SidebarProvider>
-        <AppSidebar />
+        <Suspense fallback={null}>
+          <AppSidebar />
+        </Suspense>
         <SidebarInset className="min-w-0 overflow-x-hidden">
           <div
             className="min-h-screen min-w-0 flex flex-col bg-none"
@@ -34,7 +37,9 @@ export default async function RootLayout({
                 "radial-gradient(circle at center, rgba(100,60,94,0.25) 0%, rgba(160,63,94,0.15) 0%, transparent 70%)",
             }}
           >
-            <AppHeader />
+            <Suspense fallback={null}>
+              <AppHeader />
+            </Suspense>
             <div className="relative min-w-0 flex-1 flex flex-col gap-4 py-6 px-4 md:py-8 md:px-7 md:gap-7">
               <div
                 aria-hidden

@@ -61,16 +61,20 @@ const Panel = ({
   children,
   collapsible = false,
   defaultOpen = true,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
   collapsible?: boolean;
   defaultOpen?: boolean;
+  className?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <section className="overflow-hidden rounded-md border border-stone-700 bg-black/10">
+    <section
+      className={`overflow-hidden rounded-md border border-stone-700 bg-black/10 ${className}`}
+    >
       <button
         type="button"
         onClick={() => collapsible && setIsOpen((prev) => !prev)}

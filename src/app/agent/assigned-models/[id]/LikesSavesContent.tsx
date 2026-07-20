@@ -7,7 +7,15 @@ import dummyUserImg from "@/assets/images/dummyUserImg.png";
 type ActivityCategory = "brands" | "photographer" | "content creator";
 type ActivityFilter = "all" | ActivityCategory;
 
-const peopleWhoLiked = [
+type ActivityItem = {
+  id: number;
+  name: string;
+  action: string;
+  time: string;
+  category?: ActivityCategory;
+};
+
+const peopleWhoLiked: ActivityItem[] = [
   { id: 1, name: "Emma", action: "Photographer", time: "2 Hr", category: "photographer" },
   { id: 2, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr", category: "brands" },
   { id: 3, name: "Jack", action: "appreciated your profile", time: "1 Hr", category: "content creator" },
@@ -19,7 +27,7 @@ const peopleWhoLiked = [
   { id: 9, name: "Jack", action: "appreciated your profile", time: "2 Hr", category: "content creator" },
 ];
 
-const profileStats = [
+const profileStats: ActivityItem[] = [
   { id: 1, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr" },
   { id: 2, name: "Jack", action: "appreciated your profile", time: "1 Hr" },
   { id: 3, name: "Ella Jacobs", action: "saved your profile", time: "4 Yr" },
@@ -30,14 +38,6 @@ const profileStats = [
   { id: 8, name: "Jack", action: "appreciated your profile", time: "3 Hr" },
   { id: 9, name: "Jack", action: "appreciated your profile", time: "2 Yr" },
 ];
-
-type ActivityItem = {
-  id: number;
-  name: string;
-  action: string;
-  time: string;
-  category?: ActivityCategory;
-};
 
 const filterTabs: { label: string; value: ActivityFilter }[] = [
   { label: "All", value: "all" },

@@ -25,7 +25,7 @@ const NotificationsPage = () => {
             </h1>
 
             <label className="relative w-full sm:w-[295px]" aria-label="Preferred Language">
-              <select className={selectClass} placeholder="">
+              <select className={selectClass}>
                 <option value="" disabled className="bg-stone-900">
                   Preferred Language
                 </option>
@@ -69,7 +69,7 @@ const NotificationsPage = () => {
           <label className="block">
             <FieldLabel>Select People</FieldLabel>
             <div className="relative">
-              <select className={inputClass + " appearance-none pr-9"} placeholder="">
+              <select className={inputClass + " appearance-none pr-9"} >
                 <option value="" disabled className="bg-stone-900">
                   Select
                 </option>

@@ -77,7 +77,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
           {/* Settings Modal */}
           <div
-            className={`top-72 fixed left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
+            className={`bottom-42 fixed left-3 w-72 z-50 transition-all duration-300 ease-in-out ${
               isOpen
                 ? "opacity-100 translate-y-[calc(100%+0.5rem)]"
                 : "opacity-0 translate-y-[calc(100%+2rem)]"
@@ -108,9 +108,6 @@ export default function SettingsModal({ isOpen, onClose }) {
               </button>
 
               <div className="self-stretch h-0 outline outline-offset-[-0.50px] outline-stone-700"></div>
-
-              <div className="self-stretch h-0 outline outline-offset-[-0.50px] outline-stone-700"></div>
-
               {/* Logout */}
               <button
                 className="inline-flex justify-start items-center gap-3.5 bg-transparent border-none cursor-pointer"

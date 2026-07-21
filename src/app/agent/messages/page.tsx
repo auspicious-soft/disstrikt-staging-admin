@@ -213,7 +213,7 @@ export default function MessagesPage() {
   const selectedThread = threads[selectedChat.id] ?? [];
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-150px)] min-h-[620px] w-full max-w-7xl overflow-hidden rounded-lg border border-stone-800 bg-[#211c1e] shadow-2xl shadow-black/30">
+    <main className="mx-auto flex h-[calc(100vh-150px)] min-h-[620px] w-full overflow-hidden rounded-lg border border-stone-800 bg-[#211c1e] shadow-2xl shadow-black/30">
       <aside className="flex w-full min-w-0 flex-col border-r border-[#404040] bg-[#2d2729] md:max-w-[360px] lg:max-w-[430px]">
         <div className="px-4 py-3">
           <label className="flex h-9 items-center gap-2 rounded-md border border-stone-700/70 bg-[#252123] px-3 text-stone-500">
@@ -307,7 +307,7 @@ export default function MessagesPage() {
           style={doodleBackground}
         >
           <div className="absolute inset-0 bg-black/20" />
-          <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-3">
+          <div className="relative mx-auto flex w-full flex-col gap-3">
             <div className="self-center rounded-full bg-sky-900/80 px-3 py-1 text-xs font-semibold text-sky-100">
               Today
             </div>

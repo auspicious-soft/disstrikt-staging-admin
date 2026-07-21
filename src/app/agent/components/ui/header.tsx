@@ -48,7 +48,7 @@ export function AppHeader() {
   ) {
     pageName = "Model Mansion";
   } else if(
-    pathname.startsWith("/agent/assigned-models") ||
+    pathname.startsWith("/agent/job-junction") ||
     pathSegments.length > 2
   ){
     pageName = "Job Junction";

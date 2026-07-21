@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   SidebarGroup,
@@ -101,7 +102,7 @@ export function NavMain({
                           className={isSubActive ? "" : ""}
                         >
                           <SidebarMenuSubButton asChild>
-                            <a
+                            <Link
                               href={subItem.url}
                               className={`p-2 h-auto hover:bg-transparent hover:!text-neutral-900 ${
                                 isSubActive
@@ -110,7 +111,7 @@ export function NavMain({
                               }`}
                             >
                               <span>{subItem.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       );
@@ -122,7 +123,7 @@ export function NavMain({
           ) : (
             <SidebarMenuItem key={item.title} className={isActive ? "" : " "}>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <a
+                <Link
                   href={item.url}
                  className={`custom-madeTommy px-[20px] py-[10px] h-auto flex items-center gap-2  ${
     isActive ? "bg-rose-500 text-white" : "font-normal"
@@ -134,7 +135,7 @@ export function NavMain({
 >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           );

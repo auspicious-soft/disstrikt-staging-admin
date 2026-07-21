@@ -74,6 +74,7 @@ const headers: TableHeader[] = [
     label: "Upcoming Activities",
     key: "upcomingActivities",
     icon: <ChevronsUpDown className="w-4 h-4" />,
+    align: "center",
   },
 ];
 

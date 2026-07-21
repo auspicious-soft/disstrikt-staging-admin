@@ -35,6 +35,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     headers.length + ((rowIcon && isEyeShow) || renderActions ? 1 : 0);
   const defaultWidth = `${100 / columnCount}%`;
   const minTableWidth = Math.max(640, columnCount * 128);
+  const headerJustifyClasses = {
+    start: "justify-start",
+    center: "justify-center",
+    end: "justify-end",
+  };
 
   return (
     <div className="w-full max-w-full overflow-x-auto rounded-md">
@@ -51,7 +56,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
                 header.width || defaultWidth
               } font-medium text-stone-200 text-sm  leading-tight truncate`}
             >
-              <div className="flex items-center gap-1">
+              <div
+                className={`flex items-center gap-1 ${
+                  headerJustifyClasses[header.align || "start"]
+                }`}
+              >
                 <span className="truncate">{header.label}</span>
                 {header.icon && (
                   <div className="w-4 h-4 relative opacity-50">

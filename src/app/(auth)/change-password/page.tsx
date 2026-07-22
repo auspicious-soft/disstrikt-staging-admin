@@ -14,6 +14,7 @@ import Link from "next/link";
 
 export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
@@ -53,7 +54,7 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                 className="flex-1 flex flex-col justify-center gap-3 p-1 w-full"
                 onSubmit={handleSubmit}
               >
-                <div className="w-full flex justify-start mb-2">
+                <div className="w-full flex justify-start mb-5">
                   <Image
                     src={logo}
                     alt="logo"
@@ -61,9 +62,9 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 mb-4">
                   <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal font-heading capitalize">
-                    Update Password
+                    UPDATE PASSWORD
                   </h1>
                   <p className="text-black/50 text-sm sm:text-base md:text-base lg:text-lg font-normal">
                     Please enter new password and confirm it.
@@ -81,7 +82,7 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                     <div className="relative w-full">
                       <InputField
                         id="new-password"
-                        type={showPassword ? "text" : "password"}
+                        type={showNewPassword ? "text" : "password"}
                         placeholder="New password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -98,6 +99,12 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                           <rect x="4" y="9" width="16" height="11" rx="2" />
                           <path d="M8 9V7a4 4 0 1 1 8 0v2" />
                         </svg>
+                      </div>
+                      <div
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                        onClick={() => setShowNewPassword((prev) => !prev)}
+                      >
+                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </div>
                     </div>
                   </div>
@@ -151,7 +158,7 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                   onClose={handleCloseModalWithNavigation}
                 />
 
-                <div className="flex justify-center mt-2 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap gap-2">
+                <div className="flex justify-center mt-5 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap gap-2">
                   <span className="text-black/60">Remember Password?</span>
                   <Link
                     href="/"

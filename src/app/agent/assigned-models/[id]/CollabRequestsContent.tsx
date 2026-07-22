@@ -5,7 +5,6 @@ import { NavArrowDownSolid } from "iconoir-react";
 import { CalendarDays, ChevronRight, Clock3, MapPin } from "lucide-react";
 
 type CollabStatus = "Pending" | "Approved" | "Rejected";
-type CollabTab = "Requests Received" | "Enquired Collabs";
 
 type CollabRequest = {
   id: number;
@@ -66,41 +65,14 @@ const receivedRequests: CollabRequest[] = [
   },
 ];
 
-const enquiredCollabs: CollabRequest[] = [
-  {
-    id: 5,
-    agencyName: "Agency Name",
-    location: "Paris, France",
-    date: "12 Jun - 14 Jun",
-    time: "10:00 AM",
-    collabType: "Professional Shoot Collab",
-    primaryAudience: "Women 22-45",
-    status: "Pending",
-    idea: "Explore a collaboration for a fashion editorial shoot with a strong city backdrop and premium styling direction.",
-  },
-  {
-    id: 6,
-    agencyName: "Agency Name",
-    location: "Paris, France",
-    date: "12 Jun - 14 Jun",
-    time: "10:00 AM",
-    collabType: "Professional Shoot Collab",
-    primaryAudience: "Women 22-45",
-    status: "Approved",
-    idea: "Plan an agency-led campaign built around lifestyle posing, natural light portraits, and polished social deliverables.",
-  },
-];
-
 const CollabRequestsContent = () => {
-  const [activeTab, setActiveTab] = useState<CollabTab>("Requests Received");
   const [statusFilter, setStatusFilter] = useState<CollabStatus | "All">("All");
   const [statusOpen, setStatusOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<CollabRequest | null>(
     null,
   );
 
-  const requests =
-    activeTab === "Requests Received" ? receivedRequests : enquiredCollabs;
+  const requests = receivedRequests;
 
   const filteredRequests = useMemo(() => {
     if (statusFilter === "All") return requests;
@@ -120,68 +92,7 @@ const CollabRequestsContent = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4 pl-2">
-        <div className="flex items-center gap-5 text-xs font-light">
-          <button
-            type="button"
-            onClick={() => setActiveTab("Requests Received")}
-            className={`pb-1 transition-colors ${
-              activeTab === "Requests Received"
-                ? "border-b border-rose-500 text-rose-500"
-                : "text-stone-300 hover:text-white"
-            }`}
-          >
-            Requests Received
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("Enquired Collabs")}
-            className={`pb-1 transition-colors ${
-              activeTab === "Enquired Collabs"
-                ? "border-b border-rose-500 text-rose-500"
-                : "text-stone-300 hover:text-white"
-            }`}
-          >
-            Enquired Collabs
-          </button>
-        </div>
-
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setStatusOpen((prev) => !prev)}
-            className="flex items-center gap-1 text-xs font-normal text-stone-200"
-          >
-            {statusFilter === "All" ? "Status" : statusFilter}
-            <NavArrowDownSolid
-              className={`transition-transform ${statusOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {statusOpen && (
-            <div className="absolute right-0 top-6 z-20 w-32 overflow-hidden rounded-md border border-stone-700 bg-stone-950 shadow-xl">
-              {(["All", "Pending", "Approved", "Rejected"] as const).map(
-                (status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => {
-                      setStatusFilter(status);
-                      setStatusOpen(false);
-                    }}
-                    className={`block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-stone-800 ${
-                      statusFilter === status
-                        ? "text-rose-500"
-                        : "text-stone-200"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ),
-              )}
-            </div>
-          )}
-        </div>
+      <div className="flex items-center justify-end gap-4 pl-2">
       </div>
       <div className="w-full rounded-md border border-stone-800 bg-black/10 ">
         <div className=" flex flex-col">
@@ -232,13 +143,13 @@ const CollabRequestsContent = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-5 px-1 md:justify-end">
+                {/* <div className="flex items-center justify-between gap-5 px-1 md:justify-end">
                   <span
                     className={`rounded-full px-3 py-1 text-[10px] font-normal leading-none text-white ${statusClassName(item.status)}`}
                   >
                     {item.status}
                   </span>
-                </div>
+                </div> */}
               </div>
               <button
                 className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-stone-800"

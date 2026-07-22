@@ -476,7 +476,7 @@ const SubscriptionPlans = () => {
         </div>
 
         <SelectField
-          label="General Support"
+          label="General Contact"
           value={activePlan.generalSupport}
           onChange={(value) =>
             updateActivePlan((plan) => ({ ...plan, generalSupport: value }))

@@ -706,7 +706,7 @@ function ChartLegend({
           }`}
         >
           <span
-            className="h-2 w-2 rounded-sm"
+            className="h-2 w-2"
             style={{ backgroundColor: item.color }}
           />
           {item.label}

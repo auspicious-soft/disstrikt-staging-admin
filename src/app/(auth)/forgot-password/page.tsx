@@ -54,7 +54,7 @@ export default function Home() {
 
             <div className="relative z-10 flex w-full max-w-[520px]  mx-auto md:ml-15 bg-rose-50/95 shadow-2xl rounded-2xl overflow-hidden flex-col h-fit md:p-6">
               <div className="flex-1 flex flex-col justify-center gap-3 p-1  w-full">
-                <div className="w-full flex justify-start mb-2">
+                <div className="w-full flex justify-start mb-4">
                   <Image
                     src={logo}
                     alt="logo"
@@ -62,9 +62,9 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal font-heading capitalize">
-                    Forgot Password
+                <div className="flex flex-col gap-2 mb-4">
+                  <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl  font-normal font-heading capitalize">
+                    FORGET PASSWORD
                   </h1>
                   <p className="text-black/50 text-sm sm:text-base md:text-base lg:text-lg font-normal">
                     Please enter your email address to reset your password.
@@ -78,7 +78,7 @@ export default function Home() {
                   <div className="flex flex-col">
                     <label
                       htmlFor="forgot-email"
-                      className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
+                      className="text-[#00000080] text-xs sm:text-sm font-normal"
                     >
                       Email Address <span className="text-[#EA3838]">*</span>
                     </label>

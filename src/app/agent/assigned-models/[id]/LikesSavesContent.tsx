@@ -55,7 +55,7 @@ const ActivityList = ({
   items: ActivityItem[];
   children?: React.ReactNode;
 }) => (
-  <div className="overflow-hidden rounded-md border border-stone-800 ">
+  <div className="overflow-hidden rounded-md border border-white/20 ">
     <div className="bg-white/10 px-3 py-2">
       <h2 className="text-sm font-medium text-stone-100">{title}</h2>
     </div>
@@ -103,7 +103,7 @@ const LikesSavesContent = () => {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <ActivityList
-        title="People Who Liked & Saved This Profile"
+        title="People Who Liked & Saved Your Profile"
         items={filteredPeopleWhoLiked}
       >
         <div className="mt-2 flex flex-wrap items-center gap-1">
@@ -123,7 +123,7 @@ const LikesSavesContent = () => {
           ))}
         </div>
       </ActivityList>
-      <ActivityList title="Profile Liked And Saved By User" items={profileStats} />
+      <ActivityList title="Profiles You Liked And Saved" items={profileStats} />
     </div>
   );
 };

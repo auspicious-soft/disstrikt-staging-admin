@@ -78,7 +78,7 @@ const ModelMansionDetailsPage = () => {
       </section>
 
       <section className="w-full min-w-0 flex flex-col gap-4">
-        <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+        <div className="w-full md:max-w-fit mx-auto overflow-x-auto overflow-y-hidden">
           <div className="mx-auto flex min-w-max items-center gap-1.5 rounded-full bg-white/10 p-[3px]">
             {TABS.map((tab) => (
               <button

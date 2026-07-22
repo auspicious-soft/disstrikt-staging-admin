@@ -58,7 +58,7 @@ export default function Home() {
               onSubmit={handleSubmit}
               className="flex-1 flex flex-col justify-center gap-3 p-1 w-full"
             >
-              <div className="w-full flex justify-start mb-2">
+              <div className="w-full flex justify-start mb-5">
                 <Image
                   src={logo}
                   alt="logo"
@@ -66,9 +66,9 @@ export default function Home() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 mb-4">
                 <h1 className="text-[#815753] font-['ovo'] text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal font-heading capitalize">
-                  Enter OTP
+                  ENTER OTP
                 </h1>
                 <p className="text-black/50 text-sm sm:text-base md:text-base lg:text-lg font-normal">
                   Please enter the OTP received on your email.

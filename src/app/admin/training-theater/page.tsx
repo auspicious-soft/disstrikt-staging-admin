@@ -11,16 +11,16 @@ interface SelectOption {
   label: string;
   value: string;
 }
-
+type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
 interface TableRow {
   _id: string;
   userId: string;
-  name: string;
-  subscriptionPlan: string;
-  country: string;
-  agent: string;
-  likes: number;
-  activeMonths: number;
+  modelName: string;
+  activityType: string;
+  studio: string;
+  date: string;
+  timeSlot: string;
+  status: ApplicantFilter;
 }
 
 interface TableHeader {
@@ -31,7 +31,6 @@ interface TableHeader {
   align?: "start" | "end" | "center";
   fontWeight?: string;
 }
-type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -47,40 +46,43 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 const TrainingTheater: React.FC = () => {
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
-   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("upcoming");
-    const [currentPage, setCurrentPage] = useState(1);
-  
+  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("upcoming");
+
   const [page, setPage] = useState(1);
   const [limit] = useState(5);
-    const router = useRouter();
-
+  const router = useRouter();
 
   const debouncedSearch = useDebouncedValue(search, 500);
 
   const headers: TableHeader[] = [
     {
-      label: "Job Title",
+      label: "User Id",
       key: "userId",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
-      label: "Company Name",
-      key: "name",
+      label: "Model Name",
+      key: "modelName",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
-      label: "Posted By",
-      key: "subscriptionPlan",
+      label: "Activity Type",
+      key: "activityType",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
-      label: "Posted For",
-      key: "country",
+      label: "Studio",
+      key: "studio",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
-      label: "Country",
-      key: "agent",
+      label: "Date",
+      key: "date",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Time Slot",
+      key: "timeSlot",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
   ];
@@ -89,142 +91,129 @@ const TrainingTheater: React.FC = () => {
     {
       _id: "1",
       userId: "USR001",
-      name: "John Doe",
-      subscriptionPlan: "Premium",
-      country: "USA",
-      agent: "Sarah",
-      likes: 125,
-      activeMonths: 12,
+      modelName: "John Doe",
+      activityType: "Live Shoot",
+      studio: "Studio A",
+      date: "2026-07-25",
+      timeSlot: "10:00 AM - 11:00 AM",
+      status: "past",
     },
     {
       _id: "2",
       userId: "USR002",
-      name: "Emily Smith",
-      subscriptionPlan: "Basic",
-      country: "Canada",
-      agent: "Michael",
-      likes: 86,
-      activeMonths: 8,
+      modelName: "Emily Smith",
+      activityType: "Photo Session",
+      studio: "Studio B",
+      date: "2026-07-10",
+      timeSlot: "2:00 PM - 3:00 PM",
+      status: "past",
     },
     {
       _id: "3",
       userId: "USR003",
-      name: "David Wilson",
-      subscriptionPlan: "Enterprise",
-      country: "UK",
-      agent: "Olivia",
-      likes: 231,
-      activeMonths: 20,
+      modelName: "David Wilson",
+      activityType: "Live Shoot",
+      studio: "Studio C",
+      date: "2026-07-05",
+      timeSlot: "9:00 AM - 10:30 AM",
+      status: "reviewed",
     },
     {
       _id: "4",
       userId: "USR004",
-      name: "Sophia Brown",
-      subscriptionPlan: "Premium",
-      country: "Australia",
-      agent: "Daniel",
-      likes: 150,
-      activeMonths: 10,
+      modelName: "Sophia Brown",
+      activityType: "Video Recording",
+      studio: "Studio A",
+      date: "2026-07-08",
+      timeSlot: "1:00 PM - 2:00 PM",
+      status: "Rejected",
     },
     {
       _id: "5",
       userId: "USR005",
-      name: "Liam Johnson",
-      subscriptionPlan: "Basic",
-      country: "Germany",
-      agent: "Emma",
-      likes: 54,
-      activeMonths: 4,
+      modelName: "Liam Johnson",
+      activityType: "Photo Session",
+      studio: "Studio D",
+      date: "2026-07-30",
+      timeSlot: "11:00 AM - 12:00 PM",
+      status: "upcoming",
     },
     {
       _id: "6",
       userId: "USR006",
-      name: "Noah Williams",
-      subscriptionPlan: "Premium",
-      country: "India",
-      agent: "Lucas",
-      likes: 189,
-      activeMonths: 16,
+      modelName: "Noah Williams",
+      activityType: "Live Shoot",
+      studio: "Studio B",
+      date: "2026-07-02",
+      timeSlot: "4:00 PM - 5:00 PM",
+      status: "past",
     },
     {
       _id: "7",
       userId: "USR007",
-      name: "Ava Davis",
-      subscriptionPlan: "Enterprise",
-      country: "France",
-      agent: "Henry",
-      likes: 310,
-      activeMonths: 30,
+      modelName: "Ava Davis",
+      activityType: "Video Recording",
+      studio: "Studio C",
+      date: "2026-06-28",
+      timeSlot: "3:00 PM - 4:00 PM",
+      status: "reviewed",
     },
     {
       _id: "8",
       userId: "USR008",
-      name: "James Miller",
-      subscriptionPlan: "Basic",
-      country: "Japan",
-      agent: "Mia",
-      likes: 74,
-      activeMonths: 5,
+      modelName: "James Miller",
+      activityType: "Photo Session",
+      studio: "Studio A",
+      date: "2026-07-01",
+      timeSlot: "10:00 AM - 11:00 AM",
+      status: "Rejected",
     },
     {
       _id: "9",
       userId: "USR009",
-      name: "Charlotte Moore",
-      subscriptionPlan: "Premium",
-      country: "Italy",
-      agent: "Ethan",
-      likes: 143,
-      activeMonths: 11,
+      modelName: "Charlotte Moore",
+      activityType: "Live Shoot",
+      studio: "Studio D",
+      date: "2026-08-02",
+      timeSlot: "12:00 PM - 1:00 PM",
+      status: "upcoming",
     },
     {
       _id: "10",
       userId: "USR010",
-      name: "Benjamin Taylor",
-      subscriptionPlan: "Enterprise",
-      country: "Spain",
-      agent: "Grace",
-      likes: 275,
-      activeMonths: 24,
+      modelName: "Benjamin Taylor",
+      activityType: "Video Recording",
+      studio: "Studio B",
+      date: "2026-06-20",
+      timeSlot: "5:00 PM - 6:00 PM",
+      status: "past",
     },
   ];
 
   const filters: { label: string; value: ApplicantFilter }[] = [
-  { label: "Upcoming Activities", value: "upcoming" },
-  { label: "Past Activities", value: "past" },
-  { label: "Reviewed", value: "reviewed" },
-  { label: "Rejected", value: "Rejected" },
-];
+    { label: "Upcoming Activities", value: "upcoming" },
+    { label: "Past Activities", value: "past" },
+    { label: "Reviewed", value: "reviewed" },
+    { label: "Rejected", value: "Rejected" },
+  ];
 
   const filteredUsers = useMemo(() => {
-    let data = [...dummyUsers];
+    let data = dummyUsers.filter((user) => user.status === activeFilter);
 
     if (debouncedSearch) {
       const keyword = debouncedSearch.toLowerCase();
 
       data = data.filter(
         (user) =>
-          String(user.userId).toLowerCase().includes(keyword) ||
-          String(user.name).toLowerCase().includes(keyword) ||
-          String(user.country).toLowerCase().includes(keyword)
+          user.userId.toLowerCase().includes(keyword) ||
+          user.modelName.toLowerCase().includes(keyword) ||
+          user.studio.toLowerCase().includes(keyword),
       );
     }
 
-    switch (sort) {
-      case "highToLowLikes":
-        data.sort((a, b) => Number(b.likes) - Number(a.likes));
-        break;
-
-      case "lowToHighLikes":
-        data.sort((a, b) => Number(a.likes) - Number(b.likes));
-        break;
-
-      default:
-        break;
-    }
 
     return data;
-  }, [debouncedSearch, sort]);
-
+  }, [activeFilter, debouncedSearch, sort]);
   const totalPages = Math.ceil(filteredUsers.length / limit);
 
   const paginatedUsers = useMemo(() => {
@@ -257,7 +246,7 @@ const TrainingTheater: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setActiveFilter(filter.value);
-                    setCurrentPage(1);
+                    setPage(1);
                   }}
                   className={`rounded-full px-4 py-2 text-xs font-normal transition-colors ${
                     activeFilter === filter.value
@@ -291,7 +280,9 @@ const TrainingTheater: React.FC = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    router.push(`/admin/training-theater/review-activity/${row._id}`)
+                    router.push(
+                      `/admin/training-theater/review-activity/${row._id}`,
+                    )
                   }
                   className="text-xs font-medium text-blue-500 hover:underline"
                 >
@@ -302,7 +293,9 @@ const TrainingTheater: React.FC = () => {
                   type="button"
                   aria-label="Edit booking"
                   onClick={() =>
-                    router.push(`/admin/training-theater/edit-booking/${row._id}`)
+                    router.push(
+                      `/admin/training-theater/edit-booking/${row._id}`,
+                    )
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
                 >

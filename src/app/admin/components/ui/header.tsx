@@ -100,8 +100,13 @@ export function AppHeader() {
   } else if (pathname.startsWith("/admin/celebration-cruise") &&
     pathSegments.length > 2 && pathSegments[2] !== "create-event") {
     pageName = "Celebration Cruise";
+  } else if (pathname.startsWith("/admin/model-mansion/") &&
+    pathSegments.length > 2 ) {
+    pageName = "Model Mansion";
   } else if (pathname.startsWith("/admin/training-theater")) {
     pageName = "Training Theater";
+  } else if (pathname.startsWith("/admin/terms&conditions")) {
+    pageName = "Terms Of use";
   } else if (pathname.startsWith("/admin/model-market")) {
     pageName = "Model Market";
   } else if (

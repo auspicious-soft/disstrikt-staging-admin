@@ -97,7 +97,7 @@ const Section = ({
   children: React.ReactNode;
 }) => (
   <section className={sectionClass}>
-    <h2 className="mb-2 text-sm font-medium leading-none text-stone-100">
+    <h2 className="mb-2 text-sm font-medium leading-4 text-stone-100">
       {title}
     </h2>
     {children}
@@ -149,7 +149,7 @@ const PostJobPage = () => {
       </Section>
 
       <Section title="Schedule & Location">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-center">
           <TextInput
             label="Date"
             placeholder="Enter Date"
@@ -162,7 +162,7 @@ const PostJobPage = () => {
           />
           <button
             type="button"
-            className="mb-2 inline-flex h-5 items-center gap-1 text-[10px] font-medium text-stone-300 hover:text-white md:mb-0"
+            className="inline-flex md:mt-4 h-5 items-center gap-1 text-[10px] font-medium text-stone-300 hover:text-white md:mb-0"
           >
             <Plus className="h-3 w-3" />
             Add another day

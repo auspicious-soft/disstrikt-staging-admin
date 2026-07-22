@@ -57,7 +57,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
               } font-medium text-stone-200 text-sm  leading-tight truncate`}
             >
               <div
-                className={`flex items-center gap-1 ${
+                className={`flex items-center text-white/90 text-sm gap-1 ${
                   headerJustifyClasses[header.align || "start"]
                 }`}
               >
@@ -95,7 +95,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           data.map((row, rowIndex) => (
             <tr
               key={rowIndex}
-              className="h-12 border-b border-stone-700 last:border-b-0"
+              className="h-12 border-b text-white/70 border-stone-700 last:border-b-0"
             >
               {headers.map((header, colIndex) => {
                 const cellContent = renderCell
@@ -108,7 +108,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
                 return (
                   <td
                     key={colIndex}
-                    className={`px-5 py-2 text-${header.align || "start"} ${
+                    className={`px-5 py-2 text-white/70 text-sm text-${header.align || "start"} ${
                       header.width || defaultWidth
                     } text-stone-200 text-sm ${
                       header.fontWeight || "font-normal"

@@ -67,6 +67,10 @@ export function AppHeader() {
     pathSegments.length > 2
   ){
     pageName = "DashBoard";
+  } else if(
+    pathname.startsWith("/agent/account-settings") 
+  ){
+    pageName = "ACCOUNT SETTINGS";
   }
   
 

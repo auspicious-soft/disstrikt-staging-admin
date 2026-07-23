@@ -28,7 +28,7 @@ type SelectFieldProps = {
 const sectionClass =
   "rounded-md border border-stone-700 bg-black/10 px-2.5 py-2.5 text-sm font-medium";
 const labelClass =
-  "mb-1.5 block text-sm font-medium leading-none text-stone-200";
+  "mb-2 block text-sm  font-medium leading-none text-stone-200";
 const controlClass =
   "h-9 w-full rounded border border-stone-700 bg-transparent px-3 text-[10px] font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-500";
 
@@ -97,7 +97,7 @@ const Section = ({
   children: React.ReactNode;
 }) => (
   <section className={sectionClass}>
-    <h2 className="mb-2 text-sm font-medium leading-4 text-stone-100">
+    <h2 className="mb-4 text-sm font-medium leading-4 text-stone-100">
       {title}
     </h2>
     {children}

@@ -124,12 +124,12 @@ const ReviewActivityPage = () => {
         <div className="col-span-12 space-y-4 lg:col-span-8">
           <Panel title="Overview" collapsible className="h-full">
             <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-2">
-              <DetailItem label="Chapter" value="Naomi" />
-              <DetailItem label="Module" value="Male" />
-              <DetailItem label="Current Task" value="+7 457 458 7896" />
+              <DetailItem label="Chapter" value="Model" />
+              <DetailItem label="Module" value="1" />
+              <DetailItem label="Current Task" value="11" />
               <DetailItem
                 label="Progress"
-                value="johnsonalexu@gmail.com"
+                value="50%"
               />
             </div>
           </Panel>
@@ -180,10 +180,10 @@ const ReviewActivityPage = () => {
       </div>
       <Panel title="Call Schedule" collapsible>
         <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-3 mb-2 md:mb-4">
-          <DetailItem label="Scheduled Date" value="Digitals" />
-          <DetailItem label="Time Slot" value="Portraits" />
+          <DetailItem label="Scheduled Date" value="24 July, 2026" />
+          <DetailItem label="Time Slot" value="04:00 PM" />
 
-          <DetailItem label="Reason" value="Clean & Minimal" />
+          <DetailItem label="Reason" value="Reason for the call goes here" />
         </div>
       </Panel>
       <details

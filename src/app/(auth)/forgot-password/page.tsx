@@ -11,28 +11,30 @@ import { useDataContext } from "@/app/components/DataContext";
 import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
 import { Email } from "@/lib/icons";
+import { useForgetPassword } from "@/hooks/useLogin";
+
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const { setDataEmail } = useDataContext();
-  const [loading, setLoading] = useState(false);
+  const {mutate:forgetPassword,isPending : loading} = useForgetPassword()
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
 
   const handleFogetPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    setDataEmail(email);
-    if (!email) {
-      toast.error("Please Enter your Email address");
-      return;
-    }
-    setLoading(true);
-    toast.success("OTP sent successfully");
-    router.push("/otp");
-    setLoading(false);
+    forgetPassword(
+      {email}
+    ,
+    {
+      onSuccess:(response)=>{
+        toast.success(response.message)
+        router.push(`/otp?value=${encodeURIComponent(email)}`)
+      },
+      onError:(error:any)=>{
+        toast.error(error?.response?.data?.message || "Forget Failed")
+      }
+    })
   };
 
   return (
@@ -89,7 +91,7 @@ export default function Home() {
                         placeholder="Email Address"
                         name="email"
                         value={email}
-                        onChange={handleChange}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="pl-12 bg-white"
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">

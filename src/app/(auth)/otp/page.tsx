@@ -9,12 +9,15 @@ import { toast } from "sonner";
 import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
 import InputField from "@/app/components/InputField";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useVerifyOtp } from "@/hooks/useLogin";
 
 export default function Home() {
   const [otp, setOtp] = useState("");
-  const router = useRouter()
-  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const value = searchParams.get("value");
+  const router = useRouter();
+  const { mutate: verifyOtp, isPending: loading } = useVerifyOtp();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
 
@@ -30,9 +33,22 @@ export default function Home() {
       toast.error("Please enter a valid 6-digit OTP");
       return;
     }
-
-    console.log("OTP:", otp);
-    router.push("/change-password")
+    verifyOtp(
+      {
+        otp,
+        value,
+      },
+      {
+        onSuccess:(response)=>{
+          toast.success("Verified Successfully")
+          localStorage.setItem("verifyToken",response.data.token)
+          router.push("/change-password")
+        },
+        onError:(error:any)=>{
+          toast.error(error?.response?.data?.message)
+        }
+      },
+    );
 
     // Call your API here
   };

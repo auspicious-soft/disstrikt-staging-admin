@@ -56,7 +56,7 @@ export const Email = () => (
     <path
       d="M5.83333 7.49996L10 10.4166L14.1667 7.49996"
       stroke="black"
-      stroke-opacity="0.5"
+      strokeOpacity="0.5"
       strokeWidth="1.25"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -64,7 +64,7 @@ export const Email = () => (
     <path
       d="M1.66667 14.1666V5.83329C1.66667 4.91282 2.41286 4.16663 3.33334 4.16663H16.6667C17.5871 4.16663 18.3333 4.91282 18.3333 5.83329V14.1666C18.3333 15.0871 17.5871 15.8333 16.6667 15.8333H3.33334C2.41286 15.8333 1.66667 15.0871 1.66667 14.1666Z"
       stroke="black"
-      stroke-opacity="0.5"
+      strokeOpacity="0.5"
       strokeWidth="1.25"
     />
   </svg>
@@ -80,7 +80,7 @@ export const Lock = () => (
     <path
       d="M13.3333 9.99992H14.5C14.7761 9.99992 15 10.2238 15 10.4999V16.1666C15 16.4427 14.7761 16.6666 14.5 16.6666H5.5C5.22386 16.6666 5 16.4427 5 16.1666V10.4999C5 10.2238 5.22386 9.99992 5.5 9.99992H6.66667M13.3333 9.99992V6.66659C13.3333 5.55547 12.6667 3.33325 10 3.33325C7.33333 3.33325 6.66667 5.55547 6.66667 6.66659V9.99992M13.3333 9.99992H6.66667"
       stroke="black"
-      stroke-opacity="0.5"
+      strokeOpacity="0.5"
       strokeWidth="1.25"
       strokeLinecap="round"
       strokeLinejoin="round"

@@ -4,26 +4,56 @@ import ArrowButton from "@/app/components/Button";
 import AuthBackground from "../../public/assets/AuthImage.png";
 import logo from "../assets/images/Logo2.png";
 import { EyeOff } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import InputField from "./components/InputField";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Loader from "./admin/components/ui/Loader";
-import { Email,  Lock } from "@/lib/icons";
+import { Email, Lock } from "@/lib/icons";
 import { Eye } from "iconoir-react";
+import { useLogin } from "@/hooks/useLogin";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { mutate: login, isPending: loading } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.success("Login successful");
-    window.location.href = "/admin/dashboard";
+
+    login(
+      {
+        email,
+        password,
+      },
+      {
+        onSuccess: (response) => {
+          toast.success(response.message);
+          if(response.data.role === "FOUNDER"){
+            router.replace("/agent/dashboard");
+          }else{
+            router.replace("/admin/dashboard")
+          }
+        },
+
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || "Login failed");
+        },
+      },
+    );
   };
+
+  useEffect(()=>{
+    const token = localStorage.getItem("token")
+    const role = localStorage.getItem("role")
+    if(token && role === "FOUNDER"){
+      router.replace("/admin/dashboard")
+    }else if(token && role === "AGENT"){
+      router.replace("/agent/dashboard")
+    }
+  },[])
 
   return (
     <>
@@ -71,63 +101,63 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin}>
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-col">
-                    <label
-                      htmlFor="email"
-                      className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
-                    >
-                      Email Address <span className="text-[#EA3838] ">*</span>
-                    </label>
-                    <div className="relative w-full">
-                      <InputField
-                        id="email"
-                        value={email}
-                        name="email"
-                        onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                        placeholder="Email Address"
-                        className="pl-12 bg-white"
-                      />
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
-                        <Email />
+                      <label
+                        htmlFor="email"
+                        className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
+                      >
+                        Email Address <span className="text-[#EA3838] ">*</span>
+                      </label>
+                      <div className="relative w-full">
+                        <InputField
+                          id="email"
+                          value={email}
+                          name="email"
+                          onChange={(e) => setEmail(e.target.value)}
+                          type="email"
+                          placeholder="Email Address"
+                          className="pl-12 bg-white"
+                        />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                          <Email />
+                        </div>
                       </div>
-                    </div>
                     </div>
                     <div className="flex flex-col">
-                    <label
-                      htmlFor="password"
-                      className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
-                    >
-                      Password <span className="text-[#EA3838] ">*</span>
-                    </label>
-                    <div className="relative w-full">
-                      <InputField
-                        id="password"
-                        value={password}
-                        name="password"
-                        onChange={(e) => setPassword(e.target.value)}
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        className="pl-12 pr-12 bg-white"
-                      />
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
-                        <Lock />
-                      </div>
-                      <div
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
-                        onClick={() => setShowPassword((prev) => !prev)}
+                      <label
+                        htmlFor="password"
+                        className="text-[#00000080] text-xs sm:text-sm md:text-base lg:text-base font-normal"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 text-zinc-500" />
-                        ) : (
-                          <Eye className="h-5 text-zinc-500" />
-                        )}
+                        Password <span className="text-[#EA3838] ">*</span>
+                      </label>
+                      <div className="relative w-full">
+                        <InputField
+                          id="password"
+                          value={password}
+                          name="password"
+                          onChange={(e) => setPassword(e.target.value)}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Password"
+                          className="pl-12 pr-12 bg-white"
+                        />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                          <Lock />
+                        </div>
+                        <div
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 text-zinc-500" />
+                          ) : (
+                            <Eye className="h-5 text-zinc-500" />
+                          )}
+                        </div>
                       </div>
-                    </div>
                     </div>
 
                     <ArrowButton
                       type="submit"
-                      text="Login"
+                      text={loading ? "Logging in..." : "Login"}
                       disabled={loading}
                     />
 

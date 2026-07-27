@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { DataProvider } from "./components/DataContext";
 import { CountryProvider } from "./components/CountryContext";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Disstrikt Admin",
@@ -46,7 +47,9 @@ export default async function RootLayout({
             <Toaster position="top-center" />
             {/* <Toaster position="top-right" /> */}
 
-            <AppRouterCacheProvider>{children}</AppRouterCacheProvider>
+            <AppRouterCacheProvider>
+              <Providers>{children}</Providers>
+            </AppRouterCacheProvider>
           </DataProvider>
         </CountryProvider>
       </body>

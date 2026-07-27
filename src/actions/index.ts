@@ -4,18 +4,24 @@ import { loginService } from "@/services/admin-services";
 import { cookies } from "next/headers";
 import { createS3Client } from "@/config/s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, ObjectCannedACL, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getImageClientS3URL } from "@/config/axios";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ObjectCannedACL,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getImageClientS3URL } from "@/lib/axios";
 
 export const loginAction = async (payload: any) => {
   try {
     const res: any = await loginService(payload);
-       console.log("LOGIN RESPONSE:", res?.data);
+    console.log("LOGIN RESPONSE:", res?.data);
     const user = res?.data?.data;
-    console.log('user: ', user);
+    console.log("user: ", user);
     return res.data;
   } catch (error: any) {
-       console.error("LOGIN ERROR:", error?.response?.data || error);
+    console.error("LOGIN ERROR:", error?.response?.data || error);
     return error?.response?.data;
   }
 };
@@ -29,7 +35,10 @@ export const getTokenCustom = async () => {
   return cookieStore.get("token")?.value || "";
 };
 
-export const generateSignedUrlToUploadOn = async (fileName: string, fileType: string) => {
+export const generateSignedUrlToUploadOn = async (
+  fileName: string,
+  fileType: string,
+) => {
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `products/${fileName}`,
@@ -38,7 +47,7 @@ export const generateSignedUrlToUploadOn = async (fileName: string, fileType: st
   };
   try {
     const command = new PutObjectCommand(uploadParams);
-    console.log('command: ', command);
+    console.log("command: ", command);
     const signedUrl = await getSignedUrl(await createS3Client(), command);
     // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 900 });
     return { signedUrl, key: uploadParams.Key };
@@ -48,7 +57,10 @@ export const generateSignedUrlToUploadOn = async (fileName: string, fileType: st
   }
 };
 
-export const generateSignedUrlForProfile = async (fileName: string, fileType: string) => {
+export const generateSignedUrlForProfile = async (
+  fileName: string,
+  fileType: string,
+) => {
   const uploadParams = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `profiles/${fileName}`,
@@ -64,7 +76,6 @@ export const generateSignedUrlForProfile = async (fileName: string, fileType: st
     throw error;
   }
 };
-
 
 export const deleteFileFromS3 = async (imageKey: string) => {
   const params = {
@@ -93,13 +104,17 @@ export const getFileWithMetadata = async (fileKey: string) => {
       new HeadObjectCommand({
         Bucket: process.env.AWS_BUCKET_NAME!,
         Key: fileKey,
-      })
+      }),
     );
     const metadata = headData.Metadata || {};
     if (metadata.timestamps) {
       try {
-        const firstDecode = Buffer.from(metadata.timestamps, "base64").toString("utf-8");
-        const secondDecode = Buffer.from(firstDecode, "base64").toString("utf-8");
+        const firstDecode = Buffer.from(metadata.timestamps, "base64").toString(
+          "utf-8",
+        );
+        const secondDecode = Buffer.from(firstDecode, "base64").toString(
+          "utf-8",
+        );
         metadata.timestamps = JSON.parse(secondDecode);
       } catch (error) {
         console.error("Error decoding metadata timestamps:", error);

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
 import { Suspense } from "react";
-
 import { SidebarInset, SidebarProvider } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/ui/header";
+import AuthGuard from "./components/AuthGuard";
 
 const mulish = Mulish({
   variable: "--font-mulish",
@@ -20,8 +20,12 @@ export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
+  
 }>) {
+
+
   return (
+    <AuthGuard>
     <div
       className={`${mulish.variable} dark min-h-screen overflow-auto overflow-custom bg-neutral-900 antialiased`}
     >
@@ -54,5 +58,6 @@ export default async function RootLayout({
         </SidebarInset>
       </SidebarProvider>
     </div>
+    </AuthGuard>
   );
 }

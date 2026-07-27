@@ -11,30 +11,86 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
+import { useChangePassword } from "@/hooks/useLogin";
 
 export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
+  const { mutate, isPending } = useChangePassword();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
 
   const handleCloseModalWithNavigation = () => {
     setIsModalOpen(false);
     router.push("/");
   };
-const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const token = localStorage.getItem("verifyToken");
 
-  router.push("/");
-};
+    if (!token) {
+      toast.error("Token not found");
+      return;
+    }
+    if (!password.trim()) {
+      toast.error("Password is required");
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      toast.error("Confirm password is required");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (password.trim().length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
+    // At least one uppercase, one lowercase, one number, and one special character
+    // const passwordRegex =
+    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_\-+=])[A-Za-z\d@$!%*?&#^()_\-+=]{8,}$/;
+
+    // if (!passwordRegex.test(password)) {
+    //   toast.error(
+    //     "Password must contain uppercase, lowercase, number, and special character"
+    //   );
+    //   return;
+    // }
+
+    mutate(
+      {
+        password,
+        token,
+      },
+      {
+        onSuccess: (response) => {
+          localStorage.removeItem("verifyToken");
+
+          setPassword("");
+          setConfirmPassword("");
+
+          toast.success(response.message);
+          setIsModalOpen(true);
+        },
+        onError: (error: any) => {
+          toast.error(
+            error?.response?.data?.message || "Failed to update password",
+          );
+        },
+      },
+    );
+  };
 
   return (
     <>
-      {loading ? (
+      {isPending ? (
         <Loader />
       ) : (
         <>
@@ -104,7 +160,11 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
                         onClick={() => setShowNewPassword((prev) => !prev)}
                       >
-                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showNewPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -141,7 +201,11 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
                         onClick={() => setShowPassword((prev) => !prev)}
                       >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -149,8 +213,8 @@ const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 
                 <ArrowButton
                   text="Update Password"
-                  type="submit"
-                  disabled={loading}
+                  type={isPending ? "submitting..." : "submit"}
+                  disabled={isPending}
                 />
 
                 <UpdatePasswordModal

@@ -213,7 +213,7 @@ export default function Home() {
 
                 <ArrowButton
                   text="Update Password"
-                  type={isPending ? "submitting..." : "submit"}
+                  type="submit"
                   disabled={isPending}
                 />
 

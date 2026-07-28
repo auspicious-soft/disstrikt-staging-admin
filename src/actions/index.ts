@@ -1,6 +1,5 @@
 "use server";
 
-import { loginService } from "@/services/admin-services";
 import { cookies } from "next/headers";
 import { createS3Client } from "@/config/s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -13,18 +12,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getImageClientS3URL } from "@/lib/axios";
 
-export const loginAction = async (payload: any) => {
-  try {
-    const res: any = await loginService(payload);
-    console.log("LOGIN RESPONSE:", res?.data);
-    const user = res?.data?.data;
-    console.log("user: ", user);
-    return res.data;
-  } catch (error: any) {
-    console.error("LOGIN ERROR:", error?.response?.data || error);
-    return error?.response?.data;
-  }
-};
+
 
 export const logoutAction = async () => {
   return { success: true };

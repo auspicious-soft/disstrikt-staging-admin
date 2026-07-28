@@ -4,7 +4,7 @@ import Image from "next/image";
 import ArrowButton from "@/app/components/Button";
 import AuthBackground from "../../../../public/assets/AuthImage.png";
 import logo from "../../../assets/images/Logo2.png";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { toast } from "sonner";
 import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import InputField from "@/app/components/InputField";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVerifyOtp } from "@/hooks/useLogin";
 
-export default function Home() {
+function OtpPageContent() {
   const [otp, setOtp] = useState("");
   const searchParams = useSearchParams();
   const value = searchParams.get("value");
@@ -126,5 +126,13 @@ export default function Home() {
         </div>
       )}
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <OtpPageContent />
+    </Suspense>
   );
 }

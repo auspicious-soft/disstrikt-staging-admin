@@ -32,9 +32,9 @@ export default function LoginPage() {
         onSuccess: (response) => {
           toast.success(response.message);
           if(response.data.role === "FOUNDER"){
-            router.replace("/agent/dashboard");
+            router.replace("/admin/dashboard");
           }else{
-            router.replace("/admin/dashboard")
+            router.replace("/agent/dashboard")
           }
         },
 

@@ -9,6 +9,8 @@ import CustomInput from "@/app/components/CustomInput";
 import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
 import { NavArrowDownSolid } from "iconoir-react";
+import { useGetEmployees } from "@/hooks/useAdmin";
+import Loader from "../components/ui/Loader";
 
 interface DisstriktoniteRow {
   _id: string;
@@ -26,86 +28,6 @@ interface TableHeader {
   align?: "start" | "end" | "center";
   fontWeight?: string;
 }
-
-const disstriktonites: DisstriktoniteRow[] = [
-  {
-    _id: "1",
-    name: "Alex Johnson",
-    phone: "555-987-6543",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "2",
-    name: "Maria Smith",
-    phone: "555-123-4567",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "3",
-    name: "Emily Davis",
-    phone: "555-345-7890",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "4",
-    name: "Daniel Martinez",
-    phone: "555-876-5432",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "5",
-    name: "Sophia Lee",
-    phone: "555-432-1098",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "6",
-    name: "William Walker",
-    phone: "555-210-9876",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "7",
-    name: "Olivia Hall",
-    phone: "555-765-4321",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "8",
-    name: "James Young",
-    phone: "555-505-1212",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "9",
-    name: "Daniel Martinez",
-    phone: "555-876-5432",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "10",
-    name: "William Walker",
-    phone: "555-210-9876",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-  {
-    _id: "11",
-    name: "James Young",
-    phone: "555-505-1212",
-    role: "Agent",
-    languages: ["English", "Spanish", "German"],
-  },
-];
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -144,35 +66,38 @@ const headers: TableHeader[] = [
 const DisstriktonitesPage = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(11);
+  const [limit] = useState(10);
   const router = useRouter();
   const debouncedSearch = useDebouncedValue(search, 400);
-
-  const filteredRows = useMemo(() => {
-    if (!debouncedSearch) return disstriktonites;
-
-    const keyword = debouncedSearch.toLowerCase();
-
-    return disstriktonites.filter((item) =>
-      [item.name, item.phone, item.role, item.languages.join(" ")]
-        .join(" ")
-        .toLowerCase()
-        .includes(keyword),
-    );
-  }, [debouncedSearch]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / limit));
-  const paginatedRows = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredRows.slice(start, start + limit);
-  }, [filteredRows, limit, page]);
+  const { data, isLoading } = useGetEmployees({
+    page,
+    limit,
+    search: debouncedSearch,
+  });
+  const rows = useMemo(() => {
+  return (
+    data?.data?.map((employee: any) => ({
+      _id: employee._id,
+      name: employee.fullName,
+      phone: `${employee.countryCode ?? ""} ${employee.phone ?? "-"}`,
+      role: employee.role,
+      languages: employee.language ?? [],
+    })) ?? []
+  );
+}, [data]);
+const totalPages = data?.pagination?.totalPages ?? 1;
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
 
   return (
-    <main className="w-full">
+    <>
+    {isLoading ?
+    <Loader/>
+     : 
+    (
+     <main className="w-full">
       <div className="flex w-full flex-col gap-2.5">
         <div className="flex flex-wrap items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
           <CustomInput
@@ -182,31 +107,31 @@ const DisstriktonitesPage = () => {
             onChange={(event) => setSearch(event.target.value)}
           />
           <div className="max-w-full md:max-w-fit">
-          <CustomButton
-            label="Manage Roles"
-            size="Medium"
-            bgColor="bg-rose-500"
-            textColor="text-white"
-            onClick={() => router.push("/admin/disstriktonites/manage-roles")}
-          />
+            <CustomButton
+              label="Manage Roles"
+              size="Medium"
+              bgColor="bg-rose-500"
+              textColor="text-white"
+              onClick={() => router.push("/admin/disstriktonites/manage-roles")}
+            />
           </div>
           <div className="max-w-full md:max-w-fit">
-          <CustomButton
-            label="Add Disstriktonites"
-            size="Medium"
-            bgColor="bg-rose-500"
-            textColor="text-white"
-            onClick={() => router.push("/admin/disstriktonites/add")}
-          />
+            <CustomButton
+              label="Add Disstriktonites"
+              size="Medium"
+              bgColor="bg-rose-500"
+              textColor="text-white"
+              onClick={() => router.push("/admin/disstriktonites/add")}
+            />
           </div>
         </div>
 
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
-            data={paginatedRows}
+            data={rows}
             isEyeShow={false}
-            renderCell={(row: DisstriktoniteRow, key: keyof DisstriktoniteRow) => {
+            renderCell={(row: any, key)=> {
               if (key !== "languages") return row[key];
 
               return (
@@ -222,13 +147,13 @@ const DisstriktonitesPage = () => {
                 </div>
               );
             }}
-            renderActions={() => (
+            renderActions={(row) => (
               <>
                 <button
                   type="button"
                   className="flex h-8 w-8 items-center justify-center rounded-md bg-neutral-800 text-stone-300 transition-colors hover:bg-neutral-700 hover:text-white"
                   aria-label="Edit"
-                  onClick={()=> router.push("/admin/disstriktonites/manage-roles")}
+                  onClick={() => router.push(`/admin/disstriktonites/${row._id}`)}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
@@ -252,6 +177,9 @@ const DisstriktonitesPage = () => {
         />
       </div>
     </main>
+    )
+    }
+    </>
   );
 };
 

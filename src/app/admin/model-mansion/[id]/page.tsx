@@ -13,6 +13,7 @@ const TABS = [
   "Collab Requests",
   "Notifications",
   "Likes & Saves",
+  "Chat"
 ];
 
 const profileDetails = [

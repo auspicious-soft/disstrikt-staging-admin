@@ -5,6 +5,7 @@ import dummyUserImg from "@/assets/images/dummyUserImg.png";
 import { Clock3, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 import { Calendar } from "iconoir-react";
+import ChatWindow from "@/app/components/ChatWindow";
 
 const selectedModels = [
   {
@@ -30,6 +31,26 @@ const selectedModels = [
     height: "172 cm",
     stats: "84 / 60 / 86",
     shoe: "39 EU",
+  },
+];
+const messages = [
+  {
+    id: "1",
+    sender: "other",
+    message: "Hi, I got a message about auditions.",
+    time: "18:12",
+  },
+  {
+    id: "2",
+    sender: "me",
+    message: "Hi! Thanks for replying 😊",
+    time: "18:16",
+  },
+  {
+    id: "3",
+    sender: "me",
+    message: "Are you available for a short Zoom audition this week?",
+    time: "18:16",
   },
 ];
 
@@ -180,6 +201,9 @@ const ModelMarketDetailsPage = () => {
           <span className="text-base font-medium text-rose-500">€1500</span>
         </div>
       </Panel>
+
+      <h2 className="mb-2 mt-5 text-xl font-medium">Group Chat</h2>
+      <ChatWindow name="David Moore, Naomi, Agent" messages={messages} />
     </div>
   );
 };

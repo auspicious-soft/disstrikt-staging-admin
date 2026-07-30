@@ -40,6 +40,7 @@ export const deleteQuiz = remove;
 export const downloadCSVTask = (url: string) =>
   axiosInstance.get(url, { responseType: "blob" });
 
+
 export const downloadCSV = downloadCSVTask;
 
 export const uploadAnything = (url: string, payload: FormData) =>

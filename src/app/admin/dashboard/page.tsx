@@ -333,7 +333,7 @@ export default function Dashboard() {
           />
         </Card>
 
-        <Card title="Jobs" showTab="false">
+        <Card title="Jobs" showTab={false}>
           <StackBarChart
             months={months}
             series={jobData[selectedRange]}
@@ -342,7 +342,7 @@ export default function Dashboard() {
           />
         </Card>
 
-        <Card title="Users / Signups" showTab="false">
+        <Card title="Users / Signups" showTab={false}>
           <StackBarChart
             months={months}
             series={signupData[selectedRange]}
@@ -351,7 +351,7 @@ export default function Dashboard() {
           />
         </Card>
 
-        <Card title="Activity" showTab="false">
+        <Card title="Activity" showTab={false}>
           <GroupedBarChart
             months={months}
             series={activityData[selectedRange]}
@@ -362,8 +362,8 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-1 xl:grid-cols-2">
-        <Card title="Subscribers" showTab="false">
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-[auto_1fr]">
+        <Card title="Subscribers" showTab={false}>
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-[auto_1fr] mt-3 sm:mt-5">
             <div className="flex items-center gap-4 sm:gap-6">
               <div className="flex h-[160px] w-8 shrink-0 flex-col overflow-hidden rounded-[8px] sm:h-[180px] sm:w-10">
                 {subscriberSegments.map((segment, index) => (
@@ -382,8 +382,8 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="w-fit rounded-[8px] bg-black/25 px-5 py-6 text-center sm:px-8 sm:py-7">
+            <div className="flex items-center justify-end">
+              <div className="w-fit rounded-[8px] bg-black/25 px-5 py-4 text-center sm:px-5 sm:py-4">
                 <h3 className="mb-3 text-sm font-semibold sm:text-base">
                   Subscription Choice
                 </h3>
@@ -397,7 +397,7 @@ export default function Dashboard() {
                     <p className="text-[10px] text-stone-300">Commitment</p>
                   </div>
                 </div>
-                <p className="rounded-lg bg-[#FFFFFF1A] text-left p-2 text-[11px] text-stone-300">
+                <p className="rounded-lg text-xs bg-[#FFFFFF1A] text-left p-2 text-stone-300">
                   Most of the people choose
                   <br />
                   "Flex" Plan.

@@ -9,6 +9,7 @@ import CollabRequestsContent from "./CollabRequestsContent";
 import NotificationsContent from "./NotificationsContent";
 import LikesSavesContent from "./LikesSavesContent";
 import ChatWindow from "@/app/components/ChatWindow";
+import ModelProfileSlider from "@/app/components/Modelprofileslider";
 
 type TabContentProps = {
   activeTab: string;
@@ -181,56 +182,69 @@ const ModelMansionTabContent = ({
       ) : activeTab === "Chat" ? (
         <ChatWindow name="Naomi" messages={messages} />
       ) : (
-        sections.map((section, index) => (
-          <details
-            key={section.title}
-            open={activeTab === "Portfolio" && index === 0}
-            className="group rounded-md border border-stone-700 bg-black/20 overflow-hidden"
-          >
-            <summary className="min-h-9 px-3 py-2 bg-white/10 flex items-center justify-between gap-3 cursor-pointer list-none text-stone-200 text-sm font-medium">
-              <span>{section.title}</span>
-              <ChevronDown className="w-4 h-4 shrink-0 text-stone-300 transition-transform group-open:rotate-180" />
-            </summary>
+        <ModelProfileSlider profileImage={profileImage}/>
+        // sections.map((section, index) => (
+        //   // <details
+        //   //   key={section.title}
+        //   //   open={activeTab === "Portfolio" && index === 0}
+        //   //   className="group rounded-2xl border-2 border-red-900/70 bg-black overflow-hidden shadow-[0_0_25px_-5px_rgba(190,18,60,0.35)]"
+        //   // >
+        //   //   <summary className="min-h-9 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer list-none">
+        //   //     <div>
+        //   //       {activeTab === "Portfolio" && index === 0 && (
+        //   //         <p className="text-red-500 font-serif text-sm mb-1">
+        //   //           {String(index + 1).padStart(2, "0")}
+        //   //         </p>
+        //   //       )}
+        //   //       <span className="text-red-500 font-serif uppercase tracking-wide text-lg">
+        //   //         {section.title}
+        //   //       </span>
+        //   //     </div>
+        //   //     <ChevronDown className="w-4 h-4 shrink-0 text-red-500/70 transition-transform group-open:rotate-180" />
+        //   //   </summary>
 
-            <div className="border-t border-stone-800 px-3 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5">
-                {activeTab === "Portfolio" && index === 0 ? (
-                  <div className="relative w-full max-w-[240px] aspect-square rounded-md overflow-hidden bg-neutral-800">
-                    <Image
-                      src={profileImage}
-                      alt="Model headshot"
-                      fill
-                      sizes="240px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : null}
+        //   //   <div className="border-t border-red-900/30 px-4 py-5">
+        //   //     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+        //   //       {activeTab === "Portfolio" && index === 0 ? (
+        //   //         <div className="relative w-full max-w-[240px] aspect-square rounded-xl overflow-hidden bg-neutral-900 border border-red-900/40">
+        //   //           <Image
+        //   //             src={profileImage}
+        //   //             alt="Model headshot"
+        //   //             fill
+        //   //             sizes="240px"
+        //   //             className="object-cover"
+        //   //           />
+        //   //         </div>
+        //   //       ) : null}
 
-                <div
-                  className={`grid grid-cols-2 sm:grid-cols-3 gap-x-10 gap-y-4 ${
-                    activeTab === "Portfolio" && index === 0
-                      ? ""
-                      : "md:col-span-2"
-                  }`}
-                >
-                  {section.items?.map((item) => (
-                    <div
-                      key={`${section.title}-${item.label}`}
-                      className="min-w-0"
-                    >
-                      <p className="text-neutral-400 text-[11px] leading-tight">
-                        {item.label}
-                      </p>
-                      <p className="mt-1 text-stone-200 text-xs font-semibold leading-tight break-words">
-                        {item.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </details>
-        ))
+        //   //       <div
+        //   //         className={`grid grid-cols-2 gap-x-6 gap-y-4 ${
+        //   //           activeTab === "Portfolio" && index === 0
+        //   //             ? ""
+        //   //             : "md:col-span-2"
+        //   //         }`}
+        //   //       >
+        //   //         {section.items?.map((item) => (
+        //   //           <div
+        //   //             key={`${section.title}-${item.label}`}
+        //   //             className="min-w-0"
+        //   //           >
+        //   //             <p className="text-neutral-500 text-[11px] leading-tight mb-1.5">
+        //   //               {item.label}
+        //   //             </p>
+        //   //             <div className="rounded-md border border-neutral-800 bg-neutral-950 px-3 py-2.5">
+        //   //               <p className="text-stone-100 text-sm font-medium leading-tight break-words">
+        //   //                 {item.value}
+        //   //               </p>
+        //   //             </div>
+        //   //           </div>
+        //   //         ))}
+        //   //       </div>
+        //   //     </div>
+        //   //   </div>
+        //   // </details>
+          
+        // ))
       )}
     </div>
   );

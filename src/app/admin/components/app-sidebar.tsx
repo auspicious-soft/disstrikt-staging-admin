@@ -42,16 +42,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Use useMemo to recalculate dataa whenever userRole changes
   const dataa = React.useMemo(() => {
-    console.log("Calculating dataa with userRole:", userRole);
 
     if (userRole === "ADMIN") {
-      console.log("Returning admin menu");
       return {
-        user: {
-          name: "Kane",
-          profile: "Admin",
-          avatar: "https://github.com/shadcn.png",
-        },
         navMain: [
           {
             title: "Dashboard",

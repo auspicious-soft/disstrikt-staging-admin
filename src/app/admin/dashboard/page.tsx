@@ -1,886 +1,435 @@
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useEffect, useState } from "react";
-// import { Bar, Line } from "react-chartjs-2";
-// import {
-//   Chart as ChartJS,
-//   CategoryScale,
-//   LinearScale,
-//   BarElement,
-//   LineElement,
-//   PointElement,
-//   Title,
-//   Tooltip,
-//   Legend,
-// } from "chart.js";
-// import userImage1 from "../../../assets/icons/dashboarduser.png";
-// import userImage2 from "../../../assets/icons/dashboardNewuser.png";
-// import money from "../../../assets/icons/dashboardmoney.png";
-// import star from "../../../assets/icons/dashboardStar.png";
-// import profit from "../../../assets/icons/profitDashboard.png";
-// import { getDashboardData } from "@/services/admin-services";
-// import { ADMIN_URLS } from "@/constants/apiUrls";
-// import { useCountry } from "@/app/components/CountryContext";
-// import Loader from "../components/ui/Loader";
-
-// // Register Chart.js components
-// ChartJS.register(
-//   CategoryScale,
-//   LinearScale,
-//   BarElement,
-//   LineElement,
-//   PointElement,
-//   Title,
-//   Tooltip,
-//   Legend,
-// );
-
-// // Chart.js options for Users Overview (Bar Graph)
-// const usersOverviewChartOptions = {
-//   responsive: true,
-//   maintainAspectRatio: false,
-//   plugins: {
-//     legend: {
-//       position: "top" as const,
-//       labels: {
-//         color: "#d6d3d1",
-//         font: { family: "Kodchasan", size: 12 },
-//       },
-//     },
-//   },
-//   scales: {
-//     x: {
-//       ticks: { color: "#d6d3d1", font: { family: "Kodchasan", size: 12 } },
-//       grid: { display: false },
-//     },
-//     y: {
-//       ticks: { color: "#d6d3d1", font: { family: "Kodchasan", size: 12 } },
-//       grid: { color: "#71717a" },
-//       beginAtZero: true,
-//     },
-//   },
-// };
-
-// // Chart.js options for Job Applications (Line Graph)
-// const jobApplicationsChartOptions = {
-//   responsive: true,
-//   maintainAspectRatio: false,
-//   plugins: {
-//     legend: { display: false },
-//   },
-//   scales: {
-//     x: {
-//       ticks: { color: "#d6d3d1", font: { family: "Kodchasan", size: 12 } },
-//       grid: { display: false },
-//     },
-//     y: {
-//       ticks: { color: "#d6d3d1", font: { family: "Kodchasan", size: 12 } },
-//       grid: { color: "#71717a" },
-//       beginAtZero: true,
-//     },
-//   },
-// };
-
-// export default function Dashboard() {
-//   const router = useRouter();
-//   const [loading, setLoading] = useState(false);
-//   const { country } = useCountry();
-//   const [newDashboardData, setNewDashboardData] = useState<any>(null);
-
-//   const fetchDashboardData = async () => {
-//     setLoading(true);
-//     try {
-//       const response = await getDashboardData(
-//         `${ADMIN_URLS.GET_DASHBOARD_DATA}?country=${country}`,
-//       );
-
-//       if (response.status === 200) {
-//         console.log("response", response?.data?.data);
-//         setNewDashboardData(response?.data?.data);
-//       }
-//     } catch (error) {
-//       console.log(error, "error");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchDashboardData();
-//   }, [country]);
-
-//   if (loading || !newDashboardData) {
-//     return <Loader />;
-//   }
-
-//   const totalTaskCount = newDashboardData.topThreeTasks.reduce(
-//     (sum: number, task: any) => sum + task.count,
-//     0,
-//   );
-//   const dropOffLevel = newDashboardData.topThreeTasks.map((task: any) => ({
-//     level: `Task ${task.taskNumber}`,
-//     percentage:
-//       totalTaskCount > 0 ? Math.round((task.count / totalTaskCount) * 100) : 0,
-//   }));
-
-//   const usersOverviewChartData = {
-//     labels: newDashboardData.userOverview.map((user: any) => user.country),
-//     datasets: [
-//       {
-//         label: "Total Users",
-//         data: newDashboardData.userOverview.map((user: any) => user.totalUsers),
-//         backgroundColor: "#f43f5e",
-//       },
-//       {
-//         label: "Users With Subscription",
-//         data: newDashboardData.userOverview.map(
-//           (user: any) => user.subscribedUsersCount,
-//         ),
-//         backgroundColor: "#fecdd3",
-//       },
-//     ],
-//   };
-
-//   const jobApplicationsChartData = {
-//     labels: [
-//       "Jan",
-//       "Feb",
-//       "Mar",
-//       "Apr",
-//       "May",
-//       "Jun",
-//       "Jul",
-//       "Aug",
-//       "Sep",
-//       "Oct",
-//       "Nov",
-//       "Dec",
-//     ],
-//     datasets: [
-//       {
-//         data: newDashboardData.jobApplication.map((app: any) => app.count),
-//         borderColor: "#86efac",
-//         backgroundColor: "rgba(134, 239, 172, 0.3)",
-//         fill: true,
-//         tension: 0.4,
-//       },
-//     ],
-//   };
-
-//   return (
-//     <>
-//       {" "}
-//       {loading ? (
-//         <Loader />
-//       ) : (
-//         <>
-//           <div className="flex flex-col justify-center items-center gap-6 w-full max-w-7xl mx-auto min-h-screen">
-//             {/* Main Content */}
-//             <div className="flex flex-col justify-start items-start gap-6 w-full">
-//               {/* Top Cards */}
-//               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-//                 <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[80px]">
-//                   <div className="flex justify-between items-center w-full">
-//                     <div className="flex flex-col justify-start items-start gap-2">
-//                       <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                         Active Users
-//                       </div>
-//                       <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                         {newDashboardData.activeUsers.toLocaleString()}
-//                       </div>
-//                     </div>
-//                     <img
-//                       className="w-8 sm:w-10 h-8 sm:h-10"
-//                       src={userImage1.src}
-//                       alt="Active Users Icon"
-//                     />
-//                   </div>
-//                 </div>
-//                 <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[80px]">
-//                   <div className="flex justify-between items-center w-full">
-//                     <div className="flex flex-col justify-start items-start gap-2">
-//                       <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                         Pending Reviews
-//                       </div>
-//                       <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                         {newDashboardData.pendingReviews.toLocaleString()}
-//                       </div>
-//                     </div>
-//                     <img
-//                       className="w-8 sm:w-10 h-8 sm:h-10"
-//                       src={star.src}
-//                       alt="Pending Reviews Icon"
-//                     />
-//                   </div>
-//                 </div>
-//                 <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[80px]">
-//                   <div className="flex flex-col justify-start items-start gap-2 w-full">
-//                     <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                       Subscribed Users
-//                     </div>
-//                     <div className="flex flex-col lg:flex-row flex-wrap justify-start items-start gap-2 w-full">
-//                       {/* Flex Group */}
-//                       <div className="flex flex-col gap-1">
-//                         <div className="text-stone-400 text-xs font-semibold  uppercase tracking-wide">
-//                           Flex
-//                         </div>
-//                         <div className="flex flex-row flex-wrap gap-2">
-//                           {newDashboardData.subscribedUsers
-//                             .filter((plan: any) => !plan.isCommitment)
-//                             .map((plan: any, index: number) => (
-//                               <div
-//                                 key={index}
-//                                 className="flex flex-col justify-center items-start gap-1 min-w-[50px]"
-//                               >
-//                                 <div className="text-stone-200 text-xs font-semibold  truncate">
-//                                   {plan.name
-//                                     .split(" ")
-//                                     .filter(
-//                                       (word: string) =>
-//                                         word.toLowerCase() !== "the",
-//                                     )
-//                                     .map((word: string) =>
-//                                       word[0].toUpperCase(),
-//                                     )
-//                                     .join("")}
-//                                 </div>
-//                                 <div className="text-rose-500 text-sm font-extrabold font-['Minork_Sans']">
-//                                   {plan.count.toLocaleString()}
-//                                 </div>
-//                               </div>
-//                             ))}
-//                         </div>
-//                       </div>
-
-//                       {/* Divider - horizontal by default, vertical on lg+ */}
-//                       <div className="w-full h-px lg:w-px lg:h-auto lg:self-stretch bg-stone-700" />
-
-//                       {/* Commitment Group */}
-//                       <div className="flex flex-col gap-1">
-//                         <div className="text-stone-400 text-xs font-semibold  uppercase tracking-wide">
-//                           Commitment
-//                         </div>
-//                         <div className="flex flex-row flex-wrap gap-2">
-//                           {newDashboardData.subscribedUsers
-//                             .filter((plan: any) => plan.isCommitment)
-//                             .map((plan: any, index: number) => (
-//                               <div
-//                                 key={index}
-//                                 className="flex flex-col justify-center items-start gap-1 min-w-[50px]"
-//                               >
-//                                 <div className="text-stone-200 text-xs font-semibold  truncate">
-//                                   {plan.name
-//                                     .split(" ")
-//                                     .filter(
-//                                       (word: string) =>
-//                                         word.toLowerCase() !== "the",
-//                                     )
-//                                     .map((word: string) =>
-//                                       word[0].toUpperCase(),
-//                                     )
-//                                     .join("")}
-//                                 </div>
-//                                 <div className="text-rose-500 text-sm font-extrabold font-['Minork_Sans']">
-//                                   {plan.count.toLocaleString()}
-//                                 </div>
-//                               </div>
-//                             ))}
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//               {/* Charts and Side Cards */}
-//               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
-//                 {/* Users Overview Chart */}
-//                 <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-start items-start gap-2.5 w-full">
-//                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2">
-//                     <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                       Users Overview
-//                     </div>
-//                     <div className="flex flex-col sm:flex-row justify-start items-center gap-3 sm:gap-5">
-//                       <div className="flex justify-start items-center gap-2">
-//                         <div className="w-2 h-2 bg-rose-500" />
-//                         <div className="text-neutral-300 text-xs font-normal  leading-3">
-//                           Total Users
-//                         </div>
-//                       </div>
-//                       <div className="flex justify-start items-center gap-2">
-//                         <div className="w-2 h-2 bg-rose-200" />
-//                         <div className="text-neutral-300 text-xs font-normal  leading-3">
-//                           Users With Subscription
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div className="w-full h-64 sm:h-72 lg:h-80">
-//                     <Bar
-//                       data={usersOverviewChartData}
-//                       options={usersOverviewChartOptions}
-//                     />
-//                   </div>
-//                 </div>
-
-//                 {/* Side Cards */}
-//                 <div className="grid grid-cols-1 gap-4 w-full">
-//                   <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[100px]">
-//                     <div className="flex justify-between items-center w-full">
-//                       <div className="flex flex-col justify-start items-start gap-2">
-//                         <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                           Revenue this Month
-//                         </div>
-//                         <div className="flex flex-col sm:flex-row justify-start items-start gap-3">
-//                           <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                             €
-//                             {newDashboardData.revenueThisMonth.eur.toLocaleString()}
-//                           </div>
-//                           <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                             £
-//                             {newDashboardData.revenueThisMonth.gbp.toLocaleString()}
-//                           </div>
-//                         </div>
-//                       </div>
-//                       <img
-//                         className="w-10 h-10 sm:w-12 sm:h-12"
-//                         src={profit.src}
-//                         alt="Revenue Month Icon"
-//                       />
-//                     </div>
-//                   </div>
-//                   <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[100px]">
-//                     <div className="flex justify-between items-center w-full">
-//                       <div className="flex flex-col justify-start items-start gap-2">
-//                         <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                           Revenue this Year
-//                         </div>
-//                         <div className="flex flex-col sm:flex-row justify-start items-start gap-3">
-//                           <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                             €
-//                             {newDashboardData.revenueThisYear.eur.toLocaleString()}
-//                           </div>
-//                           <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                             £
-//                             {newDashboardData.revenueThisYear.gbp.toLocaleString()}
-//                           </div>
-//                         </div>
-//                       </div>
-//                       <img
-//                         className="w-10 h-10 sm:w-12 sm:h-12"
-//                         src={money.src}
-//                         alt="Revenue Year Icon"
-//                       />
-//                     </div>
-//                   </div>
-//                   <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[100px]">
-//                     <div className="flex justify-between items-center w-full">
-//                       <div className="flex flex-col justify-start items-start gap-2">
-//                         <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                           New Users This Month
-//                         </div>
-//                         <div className="text-rose-500 text-lg sm:text-2xl font-extrabold font-['Minork_Sans']">
-//                           {newDashboardData.thisMonthUsers.toLocaleString()}
-//                         </div>
-//                       </div>
-//                       <img
-//                         className="w-10 h-10 sm:w-12 sm:h-12"
-//                         src={userImage2.src}
-//                         alt="New Users Icon"
-//                       />
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-
-//               {/* Bottom Cards */}
-//               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
-//                 <div className="grid grid-cols-1 gap-4 w-full">
-//                   <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[150px]">
-//                     <div className="flex flex-col justify-start items-start gap-4 w-full">
-//                       <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                         Jobs Overview
-//                       </div>
-//                       <div className="flex flex-col justify-center items-start gap-1 w-full">
-//                         <div className="text-stone-200 text-xs sm:text-sm font-semibold ">
-//                           Total Jobs Posted
-//                         </div>
-//                         <div className="text-rose-500 text-lg sm:text-2xl font-extrabold font-['Minork_Sans']">
-//                           {newDashboardData.totalJobs.toLocaleString()}
-//                         </div>
-//                       </div>
-//                       <div className="flex flex-col justify-center items-start gap-1 w-full">
-//                         <div className="text-stone-200 text-xs sm:text-sm font-semibold ">
-//                           Active Jobs
-//                         </div>
-//                         <div className="text-rose-500 text-lg sm:text-2xl font-extrabold font-['Minork_Sans']">
-//                           {newDashboardData.activeJobs.toLocaleString()}
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-between items-start gap-2.5 w-full min-h-[150px]">
-//                     <div className="flex flex-col justify-start items-start gap-4 w-full">
-//                       <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                         Drop off level
-//                       </div>
-//                       {dropOffLevel.map((level: any, index: number) => (
-//                         <div
-//                           key={index}
-//                           className="flex justify-between items-center w-full"
-//                         >
-//                           <div className="text-rose-500 text-base sm:text-xl font-extrabold font-['Minork_Sans']">
-//                             {level.level}
-//                           </div>
-//                           <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                             {level.percentage}%
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 </div>
-//                 <div className="p-4 bg-neutral-900 rounded-[10px] border-r-2 border-b-2 border-stone-700 flex flex-col justify-start items-start gap-2.5 w-full">
-//                   <div className="flex justify-start items-center w-full">
-//                     <div className="text-stone-200 text-sm sm:text-base font-semibold ">
-//                       Job Applications Received
-//                     </div>
-//                   </div>
-//                   <div className="w-full h-64 sm:h-72 lg:h-80">
-//                     <Line
-//                       data={jobApplicationsChartData}
-//                       options={jobApplicationsChartOptions}
-//                     />
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </>
-//       )}
-//     </>
-//   );
-// }
 "use client";
 
-import React from "react";
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Tooltip,
-} from "chart.js";
-import type { ChartData, ChartOptions } from "chart.js";
-import { BarChart3, Users } from "lucide-react";
-import { Line } from "react-chartjs-2";
-import Image from "next/image";
+import { useMemo, useState } from "react";
+import { ArrowSeparateVertical } from "iconoir-react";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
+type RangeKey = "3" | "6";
+type TabKey = "revenue" | "subscription";
+type BarSeries = {
+  label: string;
+  color: string;
+  values: number[];
+};
+
+const ranges: Array<{ label: string; value: RangeKey }> = [
+  { label: "Last 3 Months", value: "3" },
+  { label: "Last 6 Months", value: "6" },
+];
+
+const revenueTabs: Array<{ label: string; value: TabKey }> = [
+  { label: "Revenue By Country", value: "revenue" },
+  { label: "Subscription Count", value: "subscription" },
+];
+
+const monthLabels: Record<RangeKey, string[]> = {
+  "3": ["Jan", "Feb", "Mar"],
+  "6": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+};
+
+const revenueData: Record<RangeKey, BarSeries[]> = {
+  "3": [
+    { label: "Country", color: "#EF476F", values: [420, 500, 0] },
+    { label: "Country", color: "#FFB229", values: [420, 520, 0] },
+    { label: "Country", color: "#C21FCF", values: [280, 420, 0] },
+    { label: "Country", color: "#3D4BCC", values: [190, 210, 0] },
+    { label: "Country", color: "#303448", values: [150, 180, 350] },
+  ],
+  "6": [
+    { label: "Country", color: "#EF476F", values: [380, 420, 460, 500, 540, 580] },
+    { label: "Country", color: "#FFB229", values: [360, 400, 430, 460, 500, 540] },
+    { label: "Country", color: "#C21FCF", values: [240, 270, 310, 340, 380, 420] },
+    { label: "Country", color: "#3D4BCC", values: [160, 180, 210, 230, 260, 290] },
+    { label: "Country", color: "#303448", values: [130, 150, 180, 200, 220, 250] },
+  ],
+};
+
+const jobData: Record<RangeKey, BarSeries[]> = {
+  "3": [
+    { label: "Agent", color: "#EF476F", values: [120, 130, 0] },
+    { label: "Designers", color: "#FFB229", values: [90, 110, 0] },
+    { label: "Photographers", color: "#C21FCF", values: [70, 95, 0] },
+    { label: "Designers", color: "#303448", values: [65, 135, 75] },
+  ],
+  "6": [
+    { label: "Agent", color: "#EF476F", values: [110, 125, 140, 150, 160, 175] },
+    { label: "Designers", color: "#FFB229", values: [85, 95, 105, 115, 125, 135] },
+    { label: "Photographers", color: "#C21FCF", values: [65, 75, 85, 95, 105, 115] },
+    { label: "Designers", color: "#303448", values: [55, 65, 75, 85, 95, 105] },
+  ],
+};
+
+const signupData: Record<RangeKey, BarSeries[]> = {
+  "3": [
+    { label: "Agencies", color: "#EF476F", values: [110, 130, 0] },
+    { label: "Models", color: "#FFB229", values: [85, 95, 0] },
+    { label: "Photographers", color: "#C21FCF", values: [70, 90, 0] },
+    { label: "Designers", color: "#3D4BCC", values: [55, 70, 0] },
+    { label: "Stylists", color: "#303448", values: [65, 85, 70] },
+  ],
+  "6": [
+    { label: "Agencies", color: "#EF476F", values: [100, 110, 125, 135, 145, 155] },
+    { label: "Models", color: "#FFB229", values: [75, 82, 90, 98, 106, 115] },
+    { label: "Photographers", color: "#C21FCF", values: [62, 68, 75, 82, 90, 98] },
+    { label: "Designers", color: "#3D4BCC", values: [48, 55, 60, 68, 75, 82] },
+    { label: "Stylists", color: "#303448", values: [58, 64, 70, 78, 85, 92] },
+  ],
+};
+
+const activityData: Record<RangeKey, BarSeries[]> = {
+  "3": [
+    { label: "Likes", color: "#EF476F", values: [1050, 640, 55] },
+    { label: "Saves", color: "#FFB229", values: [880, 520, 45] },
+    { label: "Collab inquiries", color: "#C21FCF", values: [720, 410, 35] },
+    { label: "Bookings", color: "#3D4BCC", values: [560, 300, 24] },
+    { label: "Job Applicatio.", color: "#7181FF", values: [440, 210, 18] },
+    { label: "Agency applic.", color: "#303448", values: [0, 0, 12] },
+  ],
+  "6": [
+    { label: "Likes", color: "#EF476F", values: [640, 700, 760, 820, 880, 950] },
+    { label: "Saves", color: "#FFB229", values: [520, 570, 620, 670, 720, 780] },
+    { label: "Collab inquiries", color: "#C21FCF", values: [410, 445, 480, 520, 560, 600] },
+    { label: "Bookings", color: "#3D4BCC", values: [300, 320, 340, 370, 400, 430] },
+    { label: "Job Applicatio.", color: "#7181FF", values: [210, 235, 260, 290, 320, 350] },
+    { label: "Agency applic.", color: "#303448", values: [90, 105, 120, 140, 160, 180] },
+  ],
+};
+
+const subscriberSegments = [
+  { color: "#EF476F", height: 40 },
+  { color: "#C21FCF", height: 15 },
+  { color: "#3D4BCC", height: 20 },
+  { color: "#FFB229", height: 25 },
+];
+
+const subscriberLabels = [
+  "NPP",
+  "NPP-C",
+  "NPP-F",
+  "AMP",
+  "AMP-C",
+  "AMP-F",
+  "RSP",
+  "RSP-C",
+  "RSP-F",
+];
+
+const tableRows = [
+  ["Product Purchases", "145", "1,240"],
+  ["Service Purchases", "89", "740"],
+  ["Collabs Initiated", "240", "2,110"],
+  ["Collabs Confirmed", "120", "980"],
+  ["Jobs Posted", "320", "2,840"],
+  ["Job Applications", "450", "3,950"],
+  ["Job Bookings", "180", "1,550"],
+];
+
+const Card = ({
+  title,
+  children,
+  showTab = false,
+  tabs,
+  activeTab,
+  onTabChange,
+}: {
+  title?: string;
+  children: React.ReactNode;
+  showTab?: boolean;
+  tabs?: Array<{ label: string; value: TabKey }>;
+  activeTab?: TabKey;
+  onTabChange?: (value: TabKey) => void;
+}) => (
+  <section className="rounded-[12px] bg-[#111115] p-4 text-stone-100 sm:p-6">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      {title && <h2 className="mb-3 text-sm font-semibold sm:mb-5 sm:text-base">{title}</h2>}
+      {showTab && tabs && (
+        <div className="mb-2 flex flex-wrap justify-center gap-4 text-[10px] sm:gap-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => onTabChange?.(tab.value)}
+              className={`pb-1 ${
+                activeTab === tab.value
+                  ? "border-b border-[#EF476F] text-[#EF476F]"
+                  : "text-stone-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+    {children}
+  </section>
 );
 
-const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-const topStats = [
-  { label: "Active Users", value: "24,358" },
-  { label: "Active Bookings", value: "24" },
-  { label: "Upcoming Events", value: "4" },
-  { label: "Active Agents", value: "12" },
-];
-
-const otherStats = [
-  { label: "Booking Requests", value: "84" },
-  { label: "Bookings Confirmed", value: "52" },
-  { label: "Upcoming Shoots", value: "14" },
-  { label: "Upcoming Training Sessions", value: "24" },
-  { label: "Upcoming Events", value: "5" },
-  { label: "Event Tickets Sold", value: "47" },
-];
-
-const newUsers = [
-  { role: "Models", new: "1,854", total: "1,854" },
-  { role: "Agencies", new: "587", total: "587" },
-  { role: "Photographers", new: "458", total: "458" },
-  { role: "Stylists", new: "587", total: "587" },
-  { role: "Brands", new: "587", total: "587" },
-];
-
-const rangeFilters = ["Yesterday", "Last Week", "Last Month", "Last year"];
-
-const cardClass =
-  "rounded-md bg-[#111412]/90 shadow-[0_10px_35px_rgba(0,0,0,0.18)]";
-
-const chartOptions: ChartOptions<"line"> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: {
-    intersect: false,
-    mode: "index",
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      backgroundColor: "#1c1c1c",
-      borderColor: "#44403c",
-      borderWidth: 1,
-      titleColor: "#e7e5e4",
-      bodyColor: "#d6d3d1",
-      displayColors: true,
-    },
-  },
-  scales: {
-    x: {
-      grid: {
-        display: false,
-      },
-      border: {
-        color: "#57534e",
-      },
-      ticks: {
-        color: "#d6d3d1",
-        font: {
-          size: 10,
-        },
-      },
-    },
-    y: {
-      min: 0,
-      max: 350,
-      grid: {
-        color: "rgba(120, 113, 108, 0.18)",
-      },
-      border: {
-        color: "#57534e",
-      },
-      ticks: {
-        stepSize: 50,
-        color: "#d6d3d1",
-        font: {
-          size: 10,
-        },
-      },
-    },
-  },
-  elements: {
-    point: {
-      radius: 0,
-      hoverRadius: 4,
-    },
-    line: {
-      borderWidth: 2,
-      tension: 0.42,
-    },
-  },
-};
-
-const jobsChartData: ChartData<"line"> = {
-  labels: months,
-  datasets: [
-    {
-      label: "Photographer",
-      data: [0, 100, 92, 86, 105, 108, 100, 94, 95, 120, 134, 128],
-      borderColor: "#EF4444",
-      backgroundColor: "rgba(239, 68, 68, 0.14)",
-      fill: true,
-    },
-    {
-      label: "Agent",
-      data: [0, 52, 72, 76, 148, 143, 121, 100, 96, 178, 199, 219],
-      borderColor: "#D4C500",
-      backgroundColor: "rgba(212, 197, 0, 0.22)",
-      fill: true,
-    },
-    {
-      label: "Stylist",
-      data: [0, 132, 135, 131, 174, 178, 181, 175, 151, 131, 164, 218],
-      borderColor: "#12B538",
-      backgroundColor: "rgba(18, 181, 56, 0.18)",
-      fill: true,
-    },
-    {
-      label: "Designer",
-      data: [0, 68, 63, 61, 92, 105, 104, 93, 96, 119, 132, 131],
-      borderColor: "#008CFF",
-      backgroundColor: "rgba(245, 158, 11, 0.12)",
-      fill: true,
-    },
-    {
-      label: "Agency",
-      data: [0, 35, 40, 43, 58, 60, 61, 57, 55, 70, 82, 88],
-      borderColor: "#FB00FF",
-      backgroundColor: "rgba(225, 29, 72, 0.08)",
-      fill: true,
-    },
-  ],
-};
-
-const activityChartData: ChartData<"line"> = {
-  labels: months,
-  datasets: [
-    {
-      label: "Likes",
-      data: [0, 102, 95, 92, 105, 108, 101, 92, 95, 121, 135, 130],
-      borderColor: "#DC2626",
-      backgroundColor: "rgba(220, 38, 38, 0.11)",
-      fill: true,
-    },
-    {
-      label: "Bookings",
-      data: [0, 74, 82, 79, 151, 138, 113, 92, 96, 175, 199, 216],
-      borderColor: "#D4C500",
-      backgroundColor: "rgba(212, 197, 0, 0.22)",
-      fill: true,
-    },
-    {
-      label: "Saves",
-      data: [0, 138, 132, 136, 180, 178, 181, 176, 151, 132, 164, 216],
-      borderColor: "#12B538",
-      backgroundColor: "rgba(18, 181, 56, 0.18)",
-      fill: true,
-    },
-    {
-      label: "Applicants",
-      data: [0, 26, 29, 27, 44, 48, 49, 44, 42, 54, 61, 66],
-      borderColor: "#3B82F6",
-      backgroundColor: "rgba(59, 130, 246, 0.08)",
-      fill: true,
-    },
-  ],
-};
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <article
-      className={`${cardClass} flex h-[78px] items-center gap-4 p-4 bg-white/5 border-none`}
-    >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-stone-300">
-        <Users className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-stone-100">{label}</p>
-        <p className="mt-1 text-2xl font-medium leading-none text-[#EF476F]">
-          {value}
-        </p>
-      </div>
-    </article>
-  );
-}
-
-function ChartLegend({
-  items,
-  compact = false,
-}: {
-  items: { label: string; color: string }[];
-  compact?: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-4">
-      {items.map((item) => (
+const Legend = ({ series }: { series: BarSeries[] }) => (
+  <div className="flex flex-row flex-wrap gap-x-4 gap-y-2 rounded-lg bg-[#00000030] p-2 sm:flex-col sm:flex-nowrap sm:gap-2">
+    {series.map((item, index) => (
+      <div key={`${item.label}-${index}`} className="flex items-center gap-2">
         <span
-          key={item.label}
-          className={`inline-flex items-center gap-2 text-stone-300 ${
-            compact ? "text-[10px]" : "text-xs"
-          }`}
-        >
-          <span
-            className="h-2 w-2"
-            style={{ backgroundColor: item.color }}
-          />
-          {item.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function ChartPanel({
-  title,
-  data,
-  heightClass,
-  showFilters,
-  legend,
-}: {
-  title: string;
-  data: ChartData<"line">;
-  heightClass: string;
-  showFilters?: boolean;
-  legend: { label: string; color: string }[];
-}) {
-  return (
-    <section className={`${cardClass} flex min-w-0 flex-col p-4 pb-0 bg-[#141615] border-r-2 border-b-2 border-[#453F3F] `}>
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-medium text-stone-100">{title}</h2>
-        {showFilters ? (
-          <div className="flex flex-wrap gap-4 text-xs font-light text-stone-500">
-            {rangeFilters.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                className={`pb-1 ${
-                  filter === "Last year"
-                    ? "border-b border-[#EF476F] text-[#EF476F]"
-                    : "hover:text-stone-300"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <ChartLegend items={legend} compact />
-        )}
-      </div>
-
-      <div className={heightClass}>
-        <Line data={data} options={chartOptions} />
-      </div>
-
-      {showFilters ? <ChartLegend items={legend} /> : null}
-    </section>
-  );
-}
-
-export default function Dashboard() {
-  const jobsLegend = [
-    { label: "Photographer", color: "#EF4444" },
-    { label: "Agent", color: "#D4C500" },
-    { label: "Stylist", color: "#12B538" },
-    { label: "Designer", color: "#008CFF" },
-    { label: "Agency", color: "#FB00FF" },
-  ];
-
-  const activityLegend = [
-    { label: "Likes", color: "#DC2626" },
-    { label: "Bookings", color: "#D4C500" },
-    { label: "Saves", color: "#12B538" },
-    { label: "Applicants", color: "#3B82F6" },
-  ];
-
-  return (
-    <main className="w-full text-stone-200">
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {topStats.map((stat) => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </section>
-
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
-        <ChartPanel
-          title="Jobs Posted"
-          data={jobsChartData}
-          heightClass="h-[360px]"
-          showFilters
-          legend={jobsLegend}
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: item.color }}
         />
+        <span className="whitespace-nowrap text-[10px] text-stone-300">{item.label}</span>
+      </div>
+    ))}
+  </div>
+);
 
-        <aside className="grid gap-4">
-          <section
-            className={`${cardClass} flex h-[72px] items-center bg-[#141615] border-r-2 border-b-2 border-[#453F3F] justify-between p-4`}
-          >
-            <div>
-              <p className="text-sm font-medium text-stone-100">
-                Revenue This Month
-              </p>
-              <div className="mt-2 flex gap-4 text-xl font-medium text-[#EF476F]">
-                <span>€34,258</span>
-                <span>£34,258</span>
-              </div>
-            </div>
-            <Image
-              src="/assets/profit-up.png"
-              alt="Revenue Graph"
-              width={40}
-              height={40}
-            />
-          </section>
+const StackBarChart = ({
+  months,
+  series,
+  max,
+  ticks,
+  barWidth = 28,
+}: {
+  months: string[];
+  series: BarSeries[];
+  max: number;
+  ticks: string[];
+  barWidth?: number;
+}) => {
+  const totals = months.map((_, index) =>
+    series.reduce((sum, item) => sum + item.values[index], 0),
+  );
 
-          <section className={`${cardClass} grid grid-cols-2 border-r-2 border-b-2 border-[#453F3F] bg-[#141615] gap-4 p-4`}>
-            <div>
-              <p className="text-sm font-medium text-stone-100">
-                Jobs Posted This Month
-              </p>
-              <p className="mt-2 flex gap-4 text-xl font-medium text-[#EF476F]">2,358</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-stone-100">
-                Active Jobs
-              </p>
-              <p className="mt-2 flex gap-4 text-xl font-medium text-[#EF476F]">58</p>
-            </div>
-          </section>
-
-          <section className={`${cardClass} border-r-2 border-b-2 border-[#453F3F] p-4 bg-[#141615]`}>
-            <h2 className="mb-4 text-base font-medium text-stone-100">
-              New Users this month
-            </h2>
-            <div className="grid grid-cols-[1fr_70px_76px] gap-y-2 text-xs font-semibold">
-              <span className="text-stone-300 text-xs font-semibold">Role</span>
-              <span className="text-right text-stone-300 text-xs font-semibold">New</span>
-              <span className="text-right text-stone-300 text-xs font-semibold">Total Active</span>
-              {newUsers.map((user) => (
-                <React.Fragment key={user.role}>
-                  <span className="font-medium text-base text-[#EF476F]">
-                    {user.role}
-                  </span>
-                  <span className="text-right text-sm font-medium text-stone-200">{user.new}</span>
-                  <span className="text-right text-sm font-medium text-stone-200">
-                    {user.total}
-                  </span>
-                </React.Fragment>
+  return (
+    <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_1fr_auto] sm:gap-5">
+      <div className="flex h-[150px] flex-col justify-between text-[10px] text-stone-500 sm:h-[190px]">
+        {ticks.map((tick) => (
+          <span key={tick}>{tick}</span>
+        ))}
+      </div>
+      <div className="-ml-2 flex h-[170px] items-end justify-around gap-3 overflow-x-auto sm:ml-0 sm:h-[220px] sm:gap-8 sm:overflow-visible">
+        {months.map((month, monthIndex) => (
+          <div key={month} className="flex shrink-0 flex-col items-center gap-2 sm:gap-3">
+            <div
+              className="flex flex-col-reverse overflow-hidden rounded-t-[4px]"
+              style={{
+                width: barWidth,
+                height: Math.max((totals[monthIndex] / max) * 178, 14),
+              }}
+            >
+              {series.map((item, index) => (
+                <span
+                  key={`${item.label}-${index}`}
+                  style={{
+                    backgroundColor: item.color,
+                    height: `${(item.values[monthIndex] / totals[monthIndex]) * 100 || 0}%`,
+                  }}
+                />
               ))}
             </div>
-          </section>
-        </aside>
-      </section>
+            <span className="text-[10px] text-stone-500">{month}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-end sm:mb-4">
+        <Legend series={series} />
+      </div>
+    </div>
+  );
+};
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(260px,0.58fr)_minmax(0,1fr)]">
-        <section className={`${cardClass} p-4 h-fit bg-[#141615] border-r-2 border-b-2 border-[#453F3F]`}>
-          <h2 className="mb-4 text-base font-medium text-stone-100">
-            Other Stats
-          </h2>
-          <div className="space-y-3">
-            {otherStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="flex items-center justify-between gap-4 text-base"
-              >
-                <span className="font-medium text-[#EF476F]">{stat.label}</span>
-                <span className="text-stone-300">{stat.value}</span>
-              </div>
+const GroupedBarChart = ({
+  months,
+  series,
+  max,
+  ticks,
+}: {
+  months: string[];
+  series: BarSeries[];
+  max: number;
+  ticks: string[];
+}) => (
+  <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_1fr_auto] sm:gap-5">
+    <div className="flex h-[150px] flex-col justify-between text-[10px] text-stone-500 sm:h-[190px]">
+      {ticks.map((tick) => (
+        <span key={tick}>{tick}</span>
+      ))}
+    </div>
+    <div className="-ml-2 flex h-[170px] items-end justify-around gap-3 overflow-x-auto sm:ml-0 sm:h-[220px] sm:gap-2 sm:overflow-visible">
+      {months.map((month, monthIndex) => (
+        <div key={month} className="flex shrink-0 flex-col items-center gap-2 sm:gap-3">
+          <div className="flex h-[150px] items-end gap-[1px] sm:h-[178px]">
+            {series.map((item, index) => (
+              <span
+                key={`${item.label}-${index}`}
+                className="w-[6px] rounded-t-[3px] sm:w-[8px]"
+                style={{
+                  backgroundColor: item.color,
+                  height: Math.max((item.values[monthIndex] / max) * 178, 4),
+                }}
+              />
             ))}
           </div>
-        </section>
+          <span className="text-[10px] text-stone-500">{month}</span>
+        </div>
+      ))}
+    </div>
+    <div className="flex items-end sm:mb-4">
+      <Legend series={series} />
+    </div>
+  </div>
+);
 
-        <ChartPanel
-          title="Activity"
-          data={activityChartData}
-          heightClass="h-[300px]"
-          legend={activityLegend}
-        />
-      </section>
+export default function Dashboard() {
+  const [selectedRange, setSelectedRange] = useState<RangeKey>("3");
+  const [activeRevenueTab, setActiveRevenueTab] = useState<TabKey>("revenue");
+  const months = useMemo(() => monthLabels[selectedRange], [selectedRange]);
+  const isThreeMonth = selectedRange === "3";
+
+  const revenueChartSeries =
+    activeRevenueTab === "revenue"
+      ? revenueData[selectedRange]
+      : signupData[selectedRange];
+
+  const revenueChartMax = activeRevenueTab === "revenue" ? 2200 : 520;
+  const revenueChartTicks =
+    activeRevenueTab === "revenue"
+      ? ["EUR 2,000", "EUR 1,500", "EUR 1,000", "EUR 500", "EUR 0"]
+      : ["500", "400", "300", "200", "100", "0"];
+
+  return (
+    <main className="w-full text-stone-100">
+      <div className="mb-5 flex justify-end">
+        <label className="relative block w-full max-w-[210px]">
+          <select
+            value={selectedRange}
+            onChange={(event) => setSelectedRange(event.target.value as RangeKey)}
+            className="h-9 w-full appearance-none rounded-[6px] border border-[#332C2D] bg-[#0F0F13] px-4 pr-9 text-[12px] text-stone-300 outline-none focus:border-[#EF476F]"
+          >
+            {ranges.map((range) => (
+              <option key={range.value} value={range.value} className="bg-[#111115]">
+                {range.label}
+              </option>
+            ))}
+          </select>
+          <ArrowSeparateVertical className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+        </label>
+      </div>
+
+      <div
+        className={
+          isThreeMonth
+            ? "grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-1 xl:grid-cols-2"
+            : "grid grid-cols-1 gap-4 sm:gap-5"
+        }
+      >
+        <Card
+          title={activeRevenueTab === "revenue" ? "Revenue" : "Subscription Count"}
+          showTab
+          tabs={revenueTabs}
+          activeTab={activeRevenueTab}
+          onTabChange={setActiveRevenueTab}
+        >
+          <StackBarChart
+            months={months}
+            series={revenueChartSeries}
+            max={revenueChartMax}
+            ticks={revenueChartTicks}
+          />
+        </Card>
+
+        <Card title="Jobs" showTab="false">
+          <StackBarChart
+            months={months}
+            series={jobData[selectedRange]}
+            max={520}
+            ticks={["500", "400", "300", "200", "100", "0"]}
+          />
+        </Card>
+
+        <Card title="Users / Signups" showTab="false">
+          <StackBarChart
+            months={months}
+            series={signupData[selectedRange]}
+            max={520}
+            ticks={["500", "400", "300", "200", "100", "0"]}
+          />
+        </Card>
+
+        <Card title="Activity" showTab="false">
+          <GroupedBarChart
+            months={months}
+            series={activityData[selectedRange]}
+            max={1500}
+            ticks={["1,500", "1,000", "500", "0"]}
+          />
+        </Card>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-1 xl:grid-cols-2">
+        <Card title="Subscribers" showTab="false">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-[auto_1fr]">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="flex h-[160px] w-8 shrink-0 flex-col overflow-hidden rounded-[8px] sm:h-[180px] sm:w-10">
+                {subscriberSegments.map((segment, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      backgroundColor: segment.color,
+                      height: `${segment.height}%`,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex h-[160px] flex-col justify-between text-[11px] text-stone-300 sm:h-[180px] sm:text-[13px]">
+                {subscriberLabels.map((label) => (
+                  <span key={label}>{label}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="w-fit rounded-[8px] bg-black/25 px-5 py-6 text-center sm:px-8 sm:py-7">
+                <h3 className="mb-3 text-sm font-semibold sm:text-base">
+                  Subscription Choice
+                </h3>
+                <div className="mb-3 flex justify-center gap-6 sm:gap-9">
+                  <div>
+                    <p className="text-[22px] font-bold text-[#EF476F] sm:text-[24px]">66%</p>
+                    <p className="text-[10px] text-stone-300">Flex</p>
+                  </div>
+                  <div>
+                    <p className="text-[22px] font-bold text-[#EF476F] sm:text-[24px]">34%</p>
+                    <p className="text-[10px] text-stone-300">Commitment</p>
+                  </div>
+                </div>
+                <p className="rounded-lg bg-[#FFFFFF1A] text-left p-2 text-[11px] text-stone-300">
+                  Most of the people choose
+                  <br />
+                  "Flex" Plan.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card showTab={false}>
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[420px] table-fixed text-left text-[12px] sm:min-w-0">
+              <thead className="border-b border-stone-900 text-stone-500">
+                <tr>
+                  <th className="pb-4 font-medium">Subject</th>
+                  <th className="pb-4 text-right font-medium">Month</th>
+                  <th className="pb-4 text-right font-medium">Year</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map(([subject, month, year]) => (
+                  <tr key={subject} className="text-stone-200">
+                    <td className="py-2">{subject}</td>
+                    <td className="py-2 text-right text-stone-500">{month}</td>
+                    <td className="py-2 text-right font-semibold text-[#EF476F]">{year}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </main>
   );
 }

@@ -362,7 +362,7 @@ const UniversityUnion: React.FC = () => {
     if (key === "link") {
       return (
         <a
-          href={row.link}
+          // href={row.link}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[#3B82F6] hover:underline"

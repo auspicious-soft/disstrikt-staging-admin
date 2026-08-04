@@ -1,324 +1,284 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Check, ChevronDown, X } from "lucide-react";
+import React, { useState } from "react";
 import { InfoCircle } from "iconoir-react";
 
-const locales = [
-  { label: "English", key: "en" },
-  { label: "French", key: "fr" },
-  { label: "Spanish", key: "es" },
-  { label: "Dutch", key: "nl" },
-] as const;
+type LocaleKey = "en" | "fr" | "es" | "nl";
+type BillingMode = "flex" | "commitment";
 
-const regionalOptions = [
-  "Europe",
-  "Asia",
-  "North America",
-  "South America",
-  "Africa",
-  "Australia",
-];
-
-const yesNoOptions = ["Yes", "No"];
-const taskOptions = ["10", "25", "50", "100", "Unlimited"];
-
-const permissionFields: Array<{
-  label: string;
-  key:
-    | "websitePublication"
-    | "profilePromotion"
-    | "modelCoach"
-    | "unlimitedShoots"
-    | "regionalAccess"
-    | "modelRouteProgram";
-  multiple?: boolean;
-}> = [
-  { label: "Website Publication", key: "websitePublication" },
-  { label: "Profile Promotion", key: "profilePromotion" },
-  { label: "Model Coach", key: "modelCoach" },
-  { label: "Unlimited Shoots", key: "unlimitedShoots" },
-  { label: "Regional Access", key: "regionalAccess", multiple: true },
-  { label: "Model Route Program", key: "modelRouteProgram" },
-];
-
-const inputClass =
-  "h-10 w-full rounded-md border border-stone-700 bg-transparent px-3 text-xs text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400";
-
-const selectClass =
-  "h-10 w-full appearance-none rounded-md border border-stone-700 bg-stone-900 px-3 pr-8 text-xs text-stone-200 outline-none focus:border-rose-400";
-
-type LocaleMap = Record<"en" | "fr" | "es" | "nl", string>;
-
-type PlanForm = {
-  _id?: string;
-  id?: string;
+type Plan = {
   key: string;
-  name: LocaleMap;
+  name: Record<LocaleKey, string>;
   price: {
     eur: string;
     gbp: string;
   };
-  description: LocaleMap;
-  tasksPermitted: string;
-  pictureUploadLimit: string;
-  generalSupport: string;
-  websitePublication: string;
-  profilePromotion: string;
-  modelCoach: string;
-  unlimitedShoots: string;
-  regionalAccess: string[];
-  modelRouteProgram: string;
-  freeTrial: {
-    tasksPerCriteria: string;
-    pictureUploadLimit: string;
-  };
+  description: Record<LocaleKey, string>;
 };
 
-const staticPlans: PlanForm[] = [
+type ModuleRow =
+  | {
+      label: string;
+      type: "toggle";
+      enabled?: boolean;
+    }
+  | {
+      label: string;
+      type: "options";
+      options: string[];
+      active: string;
+    };
+
+type ModuleSection = {
+  title: string;
+  enabled?: boolean;
+  rows: ModuleRow[];
+};
+
+const locales: Array<{ label: string; key: LocaleKey }> = [
+  { label: "English", key: "en" },
+  { label: "French", key: "fr" },
+  { label: "Spanish", key: "es" },
+  { label: "Dutch", key: "nl" },
+];
+
+const staticPlans: Plan[] = [
   {
     key: "Rising Star Plan",
     name: {
       en: "Rising Star Plan",
-      fr: "Plan Etoile Montante",
-      es: "Plan Estrella Emergente",
-      nl: "Rijzende Ster Plan",
+      fr: "Rising Star Plan",
+      es: "Rising Star Plan",
+      nl: "Rising Star Plan",
     },
-    price: { eur: "49.99", gbp: "42.99" },
+    price: {
+      eur: "299.99",
+      gbp: "259.99",
+    },
     description: {
-      en: "A starter plan for models building their first professional profile.",
-      fr: "Un plan de depart pour les modeles qui creent leur premier profil professionnel.",
-      es: "Un plan inicial para modelos que crean su primer perfil profesional.",
-      nl: "Een startplan voor modellen die hun eerste professionele profiel opbouwen.",
-    },
-    tasksPermitted: "10",
-    pictureUploadLimit: "500",
-    generalSupport: "Yes",
-    websitePublication: "Yes",
-    profilePromotion: "No",
-    modelCoach: "No",
-    unlimitedShoots: "No",
-    regionalAccess: ["Europe"],
-    modelRouteProgram: "No",
-    freeTrial: {
-      tasksPerCriteria: "2",
-      pictureUploadLimit: "50",
+      en: "Rising Star Plan",
+      fr: "Rising Star Plan",
+      es: "Rising Star Plan",
+      nl: "Rising Star Plan",
     },
   },
   {
-    key: "Hot Fame Plan",
+    key: "New Face Plan",
     name: {
-      en: "Hot Fame Plan",
-      fr: "Plan Hot Fame",
-      es: "Plan Hot Fame",
-      nl: "Hot Fame Plan",
+      en: "New Face Plan",
+      fr: "New Face Plan",
+      es: "New Face Plan",
+      nl: "New Face Plan",
     },
-    price: { eur: "129.99", gbp: "109.99" },
+    price: {
+      eur: "399.99",
+      gbp: "349.99",
+    },
     description: {
-      en: "Expanded visibility, support, and uploads for growing model careers.",
-      fr: "Plus de visibilite, de support et d'envois pour les carrieres en croissance.",
-      es: "Mayor visibilidad, soporte y cargas para carreras de modelaje en crecimiento.",
-      nl: "Meer zichtbaarheid, ondersteuning en uploads voor groeiende modelcarrieres.",
-    },
-    tasksPermitted: "50",
-    pictureUploadLimit: "2000",
-    generalSupport: "Yes",
-    websitePublication: "Yes",
-    profilePromotion: "Yes",
-    modelCoach: "Yes",
-    unlimitedShoots: "No",
-    regionalAccess: ["Europe", "Asia"],
-    modelRouteProgram: "Yes",
-    freeTrial: {
-      tasksPerCriteria: "5",
-      pictureUploadLimit: "100",
+      en: "New Face Plan",
+      fr: "New Face Plan",
+      es: "New Face Plan",
+      nl: "New Face Plan",
     },
   },
   {
     key: "Aspire Model Plan",
     name: {
       en: "Aspire Model Plan",
-      fr: "Plan Aspire Model",
-      es: "Plan Aspire Model",
+      fr: "Aspire Model Plan",
+      es: "Aspire Model Plan",
       nl: "Aspire Model Plan",
     },
-    price: { eur: "249.99", gbp: "219.99" },
-    description: {
-      en: "Full access for established models who need premium placement and support.",
-      fr: "Acces complet pour les modeles etablis ayant besoin d'un placement premium.",
-      es: "Acceso completo para modelos establecidos que necesitan presencia premium.",
-      nl: "Volledige toegang voor gevestigde modellen die premium plaatsing nodig hebben.",
+    price: {
+      eur: "599.99",
+      gbp: "529.99",
     },
-    tasksPermitted: "Unlimited",
-    pictureUploadLimit: "5000",
-    generalSupport: "Yes",
-    websitePublication: "Yes",
-    profilePromotion: "Yes",
-    modelCoach: "Yes",
-    unlimitedShoots: "Yes",
-    regionalAccess: ["Europe", "Asia", "North America"],
-    modelRouteProgram: "Yes",
-    freeTrial: {
-      tasksPerCriteria: "10",
-      pictureUploadLimit: "250",
+    description: {
+      en: "Aspire Model Plan",
+      fr: "Aspire Model Plan",
+      es: "Aspire Model Plan",
+      nl: "Aspire Model Plan",
     },
   },
 ];
 
+const moduleSections: ModuleSection[] = [
+  {
+    title: "Shoot Studio",
+    enabled: true,
+    rows: [
+      { label: "Portfolio Shoot", type: "toggle", enabled: true },
+      { label: "Custom Shoot", type: "toggle", enabled: true },
+    ],
+  },
+  {
+    title: "Model Market",
+    enabled: true,
+    rows: [
+      { label: "Basic Scroll Mode", type: "toggle", enabled: true },
+      { label: "Swipe Mode", type: "toggle", enabled: true },
+    ],
+  },
+  {
+    title: "Job Junction",
+    enabled: true,
+    rows: [
+      {
+        label: "Job application per day",
+        type: "options",
+        options: ["01", "05", "Unlimited"],
+        active: "01",
+      },
+      {
+        label: "Job Applications per month",
+        type: "options",
+        options: ["10", "30", "Unlimited"],
+        active: "10",
+      },
+      { label: "Basic Scroll Mode", type: "toggle", enabled: true },
+      { label: "Swipe Mode", type: "toggle", enabled: true },
+    ],
+  },
+  {
+    title: "University Union",
+    enabled: true,
+    rows: [
+      { label: "Personal Model Agent", type: "toggle", enabled: true },
+      { label: "Agent Calls", type: "toggle", enabled: true },
+      {
+        label: "Modules Unlocked",
+        type: "options",
+        options: ["01", "02", "03", "04", "05"],
+        active: "01",
+      },
+    ],
+  },
+  {
+    title: "Model Mansion",
+    enabled: true,
+    rows: [
+      { label: "Achievement Cabinet", type: "toggle", enabled: true },
+      { label: "Professional Model Contract", type: "toggle", enabled: true },
+      {
+        label: "Portfolio Book Tier",
+        type: "options",
+        options: ["01", "02", "03", "04", "05"],
+        active: "01",
+      },
+      { label: "Model Fee Calculator", type: "toggle", enabled: true },
+    ],
+  },
+];
+
+const inputClass =
+  "h-[54px] w-full rounded-[4px] border border-[#332C2D] bg-transparent px-3 text-[12px] font-light text-stone-300 outline-none transition-colors placeholder:text-stone-500 focus:border-[#EF476F]";
+
+const textareaClass =
+  "min-h-[136px] w-full resize-none rounded-[4px] border border-[#332C2D] bg-transparent px-3 py-3 text-[12px] font-light text-stone-300 outline-none transition-colors placeholder:text-stone-500 focus:border-[#EF476F]";
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <span className="mb-1 block text-xs font-medium text-stone-200">
+  <span className="mb-1 block text-xs font-normal text-stone-100">
     {children}
   </span>
 );
 
-const SelectField = ({
-  label,
-  value,
-  options = yesNoOptions,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options?: string[];
-  onChange: (value: string) => void;
-}) => (
-  <label className="block">
-    <FieldLabel>{label}</FieldLabel>
-    <div className="relative">
-      <select
-        className={selectClass}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="" className="bg-stone-800">
-          Select
-        </option>
-        {options.map((option) => (
-          <option key={option} value={option} className="bg-stone-800">
-            {option}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
-    </div>
-  </label>
+const Toggle = ({ checked = true }: { checked?: boolean }) => (
+  <span
+    className={`relative inline-flex h-[14px] w-[28px] shrink-0 items-center rounded-full transition-colors ${
+      checked ? "bg-[#F3A0B7]" : "bg-stone-700"
+    }`}
+  >
+    <span
+      className={`h-[10px] w-[10px] rounded-full bg-white transition-transform ${
+        checked ? "translate-x-[15px]" : "translate-x-[3px]"
+      }`}
+    />
+  </span>
 );
 
-const MultiSelectField = ({
-  label,
-  selected,
-  onChange,
+const SectionShell = ({
+  title,
+  children,
+  border = "true",
 }: {
-  label: string;
-  selected: string[];
-  onChange: (value: string[]) => void;
-}) => {
-  const [open, setOpen] = useState(false);
+  title: string;
+  children: React.ReactNode;
+  border?: string;
+}) => (
+  <section
+    className={`rounded-[6px] bg-none ${
+      border === "true" ? "border border-stone-700 p-2" : ""
+    }`}
+  >
+    <h2 className="mb-2 text-base font-medium text-stone-100">{title}</h2>
+    {children}
+  </section>
+);
 
-  const toggleOption = (option: string) => {
-    onChange(
-      selected.includes(option)
-        ? selected.filter((item) => item !== option)
-        : [...selected, option],
-    );
-  };
-
-  return (
-    <div className="relative">
-      <FieldLabel>{label}</FieldLabel>
+const OptionGroup = ({
+  options,
+  active,
+}: {
+  options: string[];
+  active: string;
+}) => (
+  <div className="flex items-center gap-6 text-[10px] text-stone-500">
+    {options.map((option) => (
       <button
+        key={option}
         type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex min-h-10 w-full items-center justify-between gap-2 rounded-md border border-stone-700 bg-stone-900 px-3 py-1.5 text-left text-xs text-stone-200 outline-none transition-colors hover:border-stone-500 focus:border-rose-400"
+        className={`pb-1 transition-colors ${
+          option === active
+            ? "border-b border-[#EF476F] text-[#EF476F]"
+            : "border-b border-transparent hover:text-stone-200"
+        }`}
       >
-        <span className="flex min-w-0 flex-1 flex-wrap gap-1">
-          {selected.length ? (
-            selected.map((option) => (
-              <span
-                key={option}
-                className="inline-flex max-w-full items-center gap-1 rounded bg-neutral-800 px-2 py-1 text-[11px] leading-none text-stone-100"
-              >
-                <span className="truncate">{option}</span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Remove ${option}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleOption(option);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      toggleOption(option);
-                    }
-                  }}
-                  className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded text-stone-400 hover:bg-stone-700 hover:text-white"
-                >
-                  <X className="h-3 w-3" />
-                </span>
-              </span>
-            ))
-          ) : (
-            <span className="py-1 text-stone-400">Select</span>
-          )}
-        </span>
-        <ChevronDown className="ml-3 h-3.5 w-3.5 shrink-0 text-stone-400" />
+        {option}
       </button>
-
-      {open && (
-        <div className="absolute left-0 right-0 z-20 mt-1 max-h-44 overflow-y-auto rounded-md border border-stone-700 bg-stone-900 py-1 shadow-xl">
-          {regionalOptions.map((option) => {
-            const isSelected = selected.includes(option);
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => toggleOption(option)}
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-stone-200 transition-colors hover:bg-white/10"
-              >
-                <span>{option}</span>
-                {isSelected && <Check className="h-3.5 w-3.5 text-rose-400" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const LabelWithInfo = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center justify-between">
-    <FieldLabel>{children}</FieldLabel>
-    <InfoCircle className="h-4 w-4 cursor-pointer text-stone-400 hover:text-white" />
+    ))}
   </div>
 );
 
+const ModuleSection = ({ title, enabled = true, rows }: ModuleSection) => (
+  <section className="overflow-hidden rounded-[6px] border border-[#292324] bg-black/30">
+    <div className="flex h-[34px] items-center justify-between bg-white/10 px-3">
+      <h2 className="text-sm font-medium text-stone-100">{title}</h2>
+      <div className="flex items-center gap-3 text-xs font-normal text-stone-100">
+        <span>Module Enabled</span>
+        <Toggle checked={enabled} />
+      </div>
+    </div>
+
+    <div className="space-y-3 px-3 py-4">
+      {rows.map((row) => (
+        <div
+          key={row.label}
+          className="flex min-h-[18px] items-center justify-between gap-6"
+        >
+          <span className="text-xs font-normal text-stone-400">
+            {row.label}
+          </span>
+          {row.type === "toggle" ? (
+            <div className="flex items-center gap-3 text-xs font-normal text-stone-100">
+              <span>On</span>
+              <Toggle checked={row.enabled} />
+            </div>
+          ) : (
+            <OptionGroup options={row.options} active={row.active} />
+          )}
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
 const SubscriptionPlans = () => {
-  const [plans, setPlans] = useState<PlanForm[]>(staticPlans);
+  const [billingMode, setBillingMode] = useState<BillingMode>("flex");
+  const [plans, setPlans] = useState(staticPlans);
   const [activeIndex, setActiveIndex] = useState(0);
   const activePlan = plans[activeIndex];
 
-  const pictureOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          [
-            "500",
-            "1000",
-            "2000",
-            "5000",
-            activePlan?.pictureUploadLimit,
-          ].filter(Boolean),
-        ),
-      ) as string[],
-    [activePlan?.pictureUploadLimit],
-  );
-
-  const updateActivePlan = (updater: (plan: PlanForm) => PlanForm) => {
+  const updateActivePlan = (updater: (plan: Plan) => Plan) => {
     setPlans((current) =>
       current.map((plan, index) =>
         index === activeIndex ? updater(plan) : plan,
@@ -326,34 +286,47 @@ const SubscriptionPlans = () => {
     );
   };
 
-  if (!activePlan) {
-    return <main className="w-full text-sm text-stone-200">No plans found.</main>;
-  }
-
   return (
     <main className="w-full text-stone-200">
-      <div className="mb-4 flex w-fit flex-wrap gap-2 rounded-2xl bg-[#141615]">
-        {plans.map((plan, index) => (
+      <div className="mb-7 flex h-[34px] w-[270px] overflow-hidden rounded-full bg-[#111111]">
+        {(["flex", "commitment"] as BillingMode[]).map((mode) => (
           <button
-            key={plan._id || plan.id || `${plan.key}-${index}`}
+            key={mode}
             type="button"
-            onClick={() => setActiveIndex(index)}
-            className={`h-8 rounded-full px-5 text-xs font-medium transition-colors ${
-              index === activeIndex
-                ? "bg-rose-500 text-white"
-                : "text-stone-300 hover:bg-white/10 hover:text-white"
+            onClick={() => setBillingMode(mode)}
+            className={`h-full flex-1 rounded-full text-xs font-normal capitalize transition-colors ${
+              billingMode === mode
+                ? "bg-[#EF476F] text-white"
+                : "text-stone-400 hover:text-white"
             }`}
           >
-            {plan.name.en || plan.key || `Plan ${index + 1}`}
+            {mode}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-8 flex flex-wrap gap-8">
+        {plans.map((plan, index) => (
+          <button
+            key={plan.key}
+            type="button"
+            onClick={() => setActiveIndex(index)}
+            className={`border-b pb-2 text-[12px] transition-colors ${
+              index === activeIndex
+                ? "border-[#EF476F] text-[#EF476F]"
+                : "border-transparent text-stone-400 hover:text-white"
+            }`}
+          >
+            {plan.key}
           </button>
         ))}
       </div>
 
       <form className="space-y-3" onSubmit={(event) => event.preventDefault()}>
         <label className="block">
-          <div className="mb-1.5 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <FieldLabel>Key</FieldLabel>
-            <InfoCircle className="h-4 w-4 text-stone-400" />
+            <InfoCircle className="h-4 w-4 text-stone-300" />
           </div>
           <input
             className={inputClass}
@@ -365,11 +338,12 @@ const SubscriptionPlans = () => {
           />
         </label>
 
-        <section className="space-y-2">
-          <h2 className="text-xs font-medium text-stone-100">Plan Details</h2>
-          <section className="space-y-2 rounded-md border border-stone-700 p-2">
-            <h2 className="text-xs font-medium text-stone-100">Name Of Plan</h2>
-            <div className="grid gap-2 md:grid-cols-4">
+        <SectionShell title="Plan Details" border="false">
+          <section className="rounded-[6px] border border-[#332C2D] p-2">
+            <h3 className="mb-2 text-sm font-medium text-stone-100">
+              Name Of Plan
+            </h3>
+            <div className="grid gap-3 md:grid-cols-4">
               {locales.map((locale) => (
                 <label key={locale.key} className="block">
                   <FieldLabel>{locale.label}</FieldLabel>
@@ -386,19 +360,20 @@ const SubscriptionPlans = () => {
                       }))
                     }
                     placeholder="Rising Star Plan"
-                    aria-label={`Name of plan ${locale.label}`}
                   />
                 </label>
               ))}
             </div>
           </section>
-        </section>
+        </SectionShell>
 
-        <section className="space-y-2 rounded-md border border-stone-700 p-2">
-          <h2 className="text-xs font-medium text-stone-100">Price</h2>
-          <div className="grid gap-2 md:grid-cols-2">
-            <label>
-              <LabelWithInfo>In Euros</LabelWithInfo>
+        <SectionShell title="Price">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block">
+              <div className="mb-2 flex items-center justify-between">
+                <FieldLabel>In Euros</FieldLabel>
+                <InfoCircle className="h-4 w-4 text-stone-300" />
+              </div>
               <input
                 className={inputClass}
                 value={activePlan.price.eur}
@@ -408,11 +383,14 @@ const SubscriptionPlans = () => {
                     price: { ...plan.price, eur: event.target.value },
                   }))
                 }
-                placeholder="4299"
+                placeholder="299.99"
               />
             </label>
-            <label>
-              <LabelWithInfo>In GBP</LabelWithInfo>
+            <label className="block">
+              <div className="mb-2 flex items-center justify-between">
+                <FieldLabel>In GBP</FieldLabel>
+                <InfoCircle className="h-4 w-4 text-stone-300" />
+              </div>
               <input
                 className={inputClass}
                 value={activePlan.price.gbp}
@@ -422,20 +400,19 @@ const SubscriptionPlans = () => {
                     price: { ...plan.price, gbp: event.target.value },
                   }))
                 }
-                placeholder="129.99"
+                placeholder="259.99"
               />
             </label>
           </div>
-        </section>
+        </SectionShell>
 
-        <section className="space-y-2 rounded-md border border-stone-700 p-2">
-          <h2 className="text-xs font-medium text-stone-100">Description</h2>
-          <div className="space-y-2">
+        <SectionShell title="Description">
+          <div className="space-y-4">
             {locales.map((locale) => (
               <label key={locale.key} className="block">
                 <FieldLabel>{locale.label}</FieldLabel>
                 <textarea
-                  className="h-20 w-full resize-none rounded-md border border-stone-700 bg-transparent px-3 py-3 text-xs text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400"
+                  className={textareaClass}
                   value={activePlan.description[locale.key]}
                   onChange={(event) =>
                     updateActivePlan((plan) => ({
@@ -451,113 +428,17 @@ const SubscriptionPlans = () => {
               </label>
             ))}
           </div>
-        </section>
+        </SectionShell>
 
-        <div className="grid gap-2 md:grid-cols-2">
-          <SelectField
-            label="Tasks Permitted"
-            value={activePlan.tasksPermitted}
-            options={taskOptions}
-            onChange={(value) =>
-              updateActivePlan((plan) => ({ ...plan, tasksPermitted: value }))
-            }
-          />
-          <SelectField
-            label="Picture Upload Limit"
-            value={activePlan.pictureUploadLimit}
-            options={pictureOptions}
-            onChange={(value) =>
-              updateActivePlan((plan) => ({
-                ...plan,
-                pictureUploadLimit: value,
-              }))
-            }
-          />
+        <div className="space-y-3">
+          {moduleSections.map((section) => (
+            <ModuleSection key={section.title} {...section} />
+          ))}
         </div>
-
-        <SelectField
-          label="General Contact"
-          value={activePlan.generalSupport}
-          onChange={(value) =>
-            updateActivePlan((plan) => ({ ...plan, generalSupport: value }))
-          }
-        />
-
-        <section className="grid gap-2 md:grid-cols-3">
-          {permissionFields.map((field) =>
-            field.key === "regionalAccess" ? (
-              <MultiSelectField
-                key={field.key}
-                label={field.label}
-                selected={activePlan.regionalAccess}
-                onChange={(value) =>
-                  updateActivePlan((plan) => ({
-                    ...plan,
-                    regionalAccess: value,
-                  }))
-                }
-              />
-            ) : (
-              <SelectField
-                key={field.key}
-                label={field.label}
-                value={activePlan[field.key]}
-                onChange={(value) =>
-                  updateActivePlan((plan) => ({
-                    ...plan,
-                    [field.key]: value,
-                  }))
-                }
-              />
-            ),
-          )}
-        </section>
-
-        <section className="space-y-2 rounded-md border border-stone-700 p-2">
-          <h2 className="text-xs font-medium text-stone-100">
-            Free Trial Details
-          </h2>
-          <div className="grid gap-2 md:grid-cols-2">
-            <label className="block">
-              <FieldLabel>Tasks Per Criteria</FieldLabel>
-              <input
-                className={inputClass}
-                value={activePlan.freeTrial.tasksPerCriteria}
-                onChange={(event) =>
-                  updateActivePlan((plan) => ({
-                    ...plan,
-                    freeTrial: {
-                      ...plan.freeTrial,
-                      tasksPerCriteria: event.target.value,
-                    },
-                  }))
-                }
-                placeholder="Task Per Model"
-              />
-            </label>
-            <label className="block">
-              <FieldLabel>Picture Upload Limit</FieldLabel>
-              <input
-                className={inputClass}
-                value={activePlan.freeTrial.pictureUploadLimit}
-                onChange={(event) =>
-                  updateActivePlan((plan) => ({
-                    ...plan,
-                    freeTrial: {
-                      ...plan.freeTrial,
-                      pictureUploadLimit: event.target.value,
-                    },
-                  }))
-                }
-                placeholder="12"
-              />
-            </label>
-          </div>
-        </section>
 
         <button
           type="submit"
-          className="mt-6 h-10 w-full rounded-md bg-rose-500 text-xs font-medium text-white transition-colors hover:bg-rose-400"
+          className="mt-10 h-[42px] w-full rounded-[6px] bg-[#EF476F] text-[12px] font-medium uppercase text-white transition-colors hover:bg-rose-400"
         >
           SAVE
         </button>

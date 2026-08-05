@@ -42,7 +42,7 @@ const AccountSettings = () => {
   // ✅ Update Admin Data
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
 
   };
 

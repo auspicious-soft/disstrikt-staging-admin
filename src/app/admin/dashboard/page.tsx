@@ -102,9 +102,9 @@ const subscriberSegments = [
 ];
 
 const subscriberLabels = [
-  "NPP",
-  "NPP-C",
-  "NPP-F",
+  "NFP",
+  "NFP-C",
+  "NFP-F",
   "AMP",
   "AMP-C",
   "AMP-F",
@@ -289,7 +289,7 @@ export default function Dashboard() {
   const revenueChartMax = activeRevenueTab === "revenue" ? 2200 : 520;
   const revenueChartTicks =
     activeRevenueTab === "revenue"
-      ? ["EUR 2,000", "EUR 1,500", "EUR 1,000", "EUR 500", "EUR 0"]
+      ? ["€ 2,000", "€ 1,500", "€ 1,000", "€ 500", "€ 0"]
       : ["500", "400", "300", "200", "100", "0"];
 
   return (

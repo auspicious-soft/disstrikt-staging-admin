@@ -9,7 +9,7 @@ import Loader from "../../components/ui/Loader";
 const inputClass =
   "h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-xs font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-400";
 
-const selectClass = inputClass + " appearance-none pr-9";
+const selectClass = inputClass + " appearance-none pr-9 ";
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <span className="mb-1.5 block text-xs font-normal leading-none text-stone-200">
@@ -207,11 +207,11 @@ const AddDisstriktonitePage = () => {
                     value={form.countryCode}
                     onChange={handleChange}
                   >
-                    <option value="+91">+91</option>
-                    <option value="+1">+1</option>
-                    <option value="+31">+31</option>
-                    <option value="+33">+33</option>
-                    <option value="+34">+34</option>
+                    <option value="+91" className="bg-stone-800">+91</option>
+                    <option value="+1" className="bg-stone-800">+1</option>
+                    <option value="+31" className="bg-stone-800">+31</option>
+                    <option value="+33" className="bg-stone-800">+33</option>
+                    <option value="+34" className="bg-stone-800">+34</option>
                   </select>
 
                   <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
@@ -266,7 +266,7 @@ const AddDisstriktonitePage = () => {
                   onChange={handleChange}
                   disabled={isLoading}
                 >
-                  <option value="">Select Role</option>
+                  <option value="" className="bg-stone-800">Select Role</option>
 
                   {roleOptions.map((role: any, index: number) => {
                     const roleValue =
@@ -278,7 +278,7 @@ const AddDisstriktonitePage = () => {
                       `Role ${index + 1}`;
 
                     return (
-                      <option key={roleValue || index} value={roleValue}>
+                      <option key={roleValue || index} value={roleValue} className="bg-stone-800">
                         {roleLabel}
                       </option>
                     );

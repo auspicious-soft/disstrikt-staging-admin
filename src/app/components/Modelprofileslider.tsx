@@ -141,12 +141,12 @@ export default function ModelProfileSlider({
       </button>
 
       <div className="relative px-2">
-        <div className="absolute inset-y-0.5 left-0 w-4 rounded-l-lg border-y-2 border-l-2 border-[#f0444d]" />
-        <div className="absolute inset-y-0.5 left-1 w-4 rounded-l-lg border-y-2 border-l-2 border-[#751f26]" />
-        <div className="absolute inset-y-0.5 right-1 w-4 rounded-r-lg border-y-2 border-r-2 border-[#751f26]" />
-        <div className="absolute inset-y-0.5 right-0 w-4 rounded-r-lg border-y-2 border-r-2 border-[#f0444d]" />
+        <div className="absolute inset-y-1 left-[-5px] w-4 rounded-l-lg border-y-2 border-l-4 border-[#f0444d]" />
+        <div className="absolute inset-y-1 left-0.5 w-4 rounded-l-lg border-y-2 border-l-3 border-[#751f26]" />
+        <div className="absolute inset-y-1 right-0.5 w-4 rounded-r-lg border-y-2 border-r-3 border-[#751f26]" />
+        <div className="absolute inset-y-1 right-[-5px] w-4 rounded-r-lg border-y-2 border-r-4 border-[#f0444d]" />
 
-        <section className="relative z-10 min-h-[300px] rounded-lg border-3 border-[#37141C] bg-black px-5 py-3.5 shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
+        <section className="relative z-10 min-h-[300px] rounded-lg border-5 border-[#37141C] bg-black px-5 py-3.5 shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
           <p className="font-ovo text-2xl font-normal leading-none text-[#EF476F]">
             {String(index + 1).padStart(2, "0")}
           </p>
@@ -158,7 +158,7 @@ export default function ModelProfileSlider({
 
           {section.type === "headshot-measurements" ? (
             <div className="mt-4 grid gap-3 md:grid-cols-[300px_1fr] md:items-start">
-              <div className="relative h-[370px] w-full overflow-hidden rounded border border-[#273126] bg-neutral-900">
+              <div className="relative h-[400px] w-full overflow-hidden rounded border border-[#273126] bg-neutral-900">
                 {profileImage ? (
                   <Image
                     src={profileImage}

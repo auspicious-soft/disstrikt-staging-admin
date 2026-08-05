@@ -9,22 +9,24 @@ interface FeatureSection {
   fields: string[];
 }
 
+// NOTE: fields now start as empty strings ("") so the inputs are empty
+// and show the grey placeholder text instead of pre-filled black text.
 const defaultSections: FeatureSection[] = [
   {
     title: "Shoot Goals",
-    fields: ["Type Your Text Here", "Type Your Text Here"],
+    fields: ["", ""],
   },
   {
     title: "Shoot Format",
-    fields: ["Type Your Text Here", "Type Your Text Here"],
+    fields: ["", ""],
   },
-  { title: "Vibes", fields: ["Type Your Text Here", "Type Your Text Here"] },
-  { title: "Outfits", fields: ["Type Your Text Here", "Type Your Text Here"] },
+  { title: "Vibes", fields: ["", ""] },
+  { title: "Outfits", fields: ["", ""] },
 ];
 
 const defaultAddOnRows = [
-  { feature: "Type Your Text Here", price: "Enter Amount" },
-  { feature: "Type Your Text Here", price: "Enter Amount" },
+  { feature: "", price: "" },
+  { feature: "", price: "" },
 ];
 
 const inputClass =
@@ -193,7 +195,7 @@ const ManageShootFeatures = () => {
   });
 
   const [addOnRows, setAddOnRows] = React.useState(
-    defaultAddOnRows.map((row) => ({ feature: "", price: "" })),
+    defaultAddOnRows.map(() => ({ feature: "", price: "" })),
   );
 
   const [addOnFeatureContent, setAddOnFeatureContent] = React.useState({
@@ -210,11 +212,12 @@ const ManageShootFeatures = () => {
     }));
   };
 
+  // New fields are added empty so they show the placeholder too.
   const addField = (title: string) => {
     setSectionsData((current) =>
       current.map((section) =>
         section.title === title
-          ? { ...section, fields: [...section.fields, "Type Your Text Here"] }
+          ? { ...section, fields: [...section.fields, ""] }
           : section,
       ),
     );

@@ -54,7 +54,7 @@ const ModelMansionDetailsPage = () => {
               <p className="text-neutral-400 text-xs leading-tight">
                 {detail.label}
               </p>
-              <p className="mt-1 text-stone-200 text-sm font-medium leading-4 break-words">
+              <p className={`mt-1 text-stone-200 text-sm font-medium leading-4 break-words ${detail.label === "Assigned Agent" ? "underline" : ""} `}>
                 {detail.value}
               </p>
             </div>

@@ -158,7 +158,7 @@ export default function ModelProfileSlider({
 
           {section.type === "headshot-measurements" ? (
             <div className="mt-4 grid gap-3 md:grid-cols-[300px_1fr] md:items-start">
-              <div className="relative h-[300px] w-full overflow-hidden rounded border border-[#273126] bg-neutral-900">
+              <div className="relative h-[370px] w-full overflow-hidden rounded border border-[#273126] bg-neutral-900">
                 {profileImage ? (
                   <Image
                     src={profileImage}
@@ -180,8 +180,8 @@ export default function ModelProfileSlider({
                     key={`${section.title}-${item.label}`}
                     className={
                       item.label === "Shoe Size"
-                        ? "min-w-0 sm:col-span-2"
-                        : "min-w-0"
+                        ? "min-w-0 h-20 sm:col-span-2"
+                        : "min-w-0 h-20 "
                     }
                   >
                     <p className="mb-1 text-xs leading-none text-neutral-400">
@@ -202,7 +202,7 @@ export default function ModelProfileSlider({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {section.cards.map((card, index) => (
                 <div key={index} className="overflow-hidden">
-                  <div className="relative h-[260px] overflow-hidden">
+                  <div className="relative h-[220px] overflow-hidden">
                     {profileImage ? (
                       <Image
                         src={dummyUserImg}
@@ -217,11 +217,11 @@ export default function ModelProfileSlider({
                       </div>
                     )}
                   </div>
-                  <div className="flex justify-between p-3 text-center">
-                    <p className="text-sm  tracking-[0.3em] text-neutral-100">
+                  <div className="flex justify-between p-3 pt-2 pb-0 text-center">
+                    <p className="text-sm text-neutral-100">
                       {card.labels[0]}
                     </p>
-                    <p className="mt-1 text-sm  tracking-[0.3em] text-neutral-100">
+                    <p className="mt-1 text-sm text-neutral-100">
                       {card.labels[1]}
                     </p>
                   </div>
@@ -233,7 +233,7 @@ export default function ModelProfileSlider({
               {section.cards.map((card) => (
                 <div
                   key={card}
-                  className="flex h-28 items-center justify-center rounded-xl border border-[#2c2c2c] bg-[#0b0b0b] text-center text-sm text-neutral-300 shadow-sm"
+                  className="flex h-43 items-center justify-center rounded-xl border border-[#2c2c2c] bg-[#0b0b0b] text-center text-sm text-neutral-300 shadow-sm"
                 >
                   {card}
                 </div>
@@ -242,8 +242,8 @@ export default function ModelProfileSlider({
           ) : section.type === "detailed-front" ||
             section.type === "detailed-back" ? (
             <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
-              <div className="overflow-hidden rounded-xl border border-[#273126] bg-neutral-900 p-4">
-                <div className="relative h-[400px] w-full overflow-hidden">
+              <div className="overflow-hidden rounded-xl p-4">
+                <div className="relative h-[440px] w-full overflow-hidden">
                   <Image
                     src={section.type === "detailed-front" ? frontImg : backImg}
                     alt={
@@ -280,7 +280,7 @@ export default function ModelProfileSlider({
               {section.cards.map((card) => (
                 <div
                   key={card.title}
-                  className="relative overflow-hidden rounded-3xl border border-[#2c2c2c] bg-[#090909] p-5 shadow-sm"
+                  className="relative h-98 overflow-hidden rounded-3xl border border-[#2c2c2c] bg-[#090909] p-5 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -295,7 +295,7 @@ export default function ModelProfileSlider({
                     </div>
                   </div>
 
-                  <div className="mt-5 flex h-52 items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-[#0b0b0b] text-center text-sm text-neutral-500">
+                  <div className="mt-5 flex h-82 items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-[#0b0b0b] text-center text-sm text-neutral-500">
                     {card.locked ? (
                       <div className="flex flex-col items-center gap-2">
                         {/* <div className="rounded-full w-fit bg-[#2a1118] p-2 text-[#ef4b59]"> */}

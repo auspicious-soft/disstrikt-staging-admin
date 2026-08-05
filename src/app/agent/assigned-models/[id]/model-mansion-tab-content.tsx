@@ -9,6 +9,8 @@ import CollabRequestsContent from "./CollabRequestsContent";
 import NotificationsContent from "./NotificationsContent";
 import LikesSavesContent from "./LikesSavesContent";
 import { NavArrowDownSolid } from "iconoir-react";
+import ModelProfileSlider from "@/app/components/Modelprofileslider";
+import ChatWindow from "@/app/components/ChatWindow";
 
 type TabContentProps = {
   activeTab: string;
@@ -71,6 +73,27 @@ const portfolioSections: Section[] = [
       { label: "Introduction Reel", value: "Not uploaded" },
       { label: "Walk Video", value: "Not uploaded" },
     ],
+  },
+];
+
+const messages = [
+  {
+    id: "1",
+    sender: "other",
+    message: "Hi, I got a message about auditions.",
+    time: "18:12",
+  },
+  {
+    id: "2",
+    sender: "me",
+    message: "Hi! Thanks for replying 😊",
+    time: "18:16",
+  },
+  {
+    id: "3",
+    sender: "me",
+    message: "Are you available for a short Zoom audition this week?",
+    time: "18:16",
   },
 ];
 
@@ -158,53 +181,56 @@ const ModelMansionTabContent = ({
       <NotificationsContent />
     ) : activeTab === "Likes & Saves" ? (
       <LikesSavesContent />
-    ) : sections.map((section, index) => (
-        <details
-          key={section.title}
-          open={activeTab === "Portfolio" && index === 0}
-          className="group rounded-md border border-stone-700 bg-black/20 overflow-hidden"
-        >
-          <summary className="min-h-9 bg-white/10 px-3 py-2 flex items-center justify-between gap-3 cursor-pointer list-none text-stone-200 text-sm font-medium">
-            <span>{section.title}</span>
-            <NavArrowDownSolid className="w-4 h-4 shrink-0 text-stone-300 transition-transform group-open:rotate-180" />
-          </summary>
+    )  : activeTab === "Chat" ? (
+        <ChatWindow name="Naomi" messages={messages} />
+      ) : (
+        <ModelProfileSlider profileImage={profileImage}/>
+        // <details
+        //   key={section.title}
+        //   open={activeTab === "Portfolio" && index === 0}
+        //   className="group rounded-md border border-stone-700 bg-black/20 overflow-hidden"
+        // >
+        //   <summary className="min-h-9 bg-white/10 px-3 py-2 flex items-center justify-between gap-3 cursor-pointer list-none text-stone-200 text-sm font-medium">
+        //     <span>{section.title}</span>
+        //     <NavArrowDownSolid className="w-4 h-4 shrink-0 text-stone-300 transition-transform group-open:rotate-180" />
+        //   </summary>
 
-          <div className="border-t border-stone-800 px-3 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5">
-              {activeTab === "Portfolio" && index === 0 ? (
-                <div className="relative w-full max-w-[240px] aspect-square rounded-md overflow-hidden bg-neutral-800">
-                  <Image
-                    src={profileImage}
-                    alt="Model headshot"
-                    fill
-                    sizes="240px"
-                    className="object-cover"
-                  />
-                </div>
-              ) : null}
+        //   <div className="border-t border-stone-800 px-3 py-4">
+        //     <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5">
+        //       {activeTab === "Portfolio" && index === 0 ? (
+        //         <div className="relative w-full max-w-[240px] aspect-square rounded-md overflow-hidden bg-neutral-800">
+        //           <Image
+        //             src={profileImage}
+        //             alt="Model headshot"
+        //             fill
+        //             sizes="240px"
+        //             className="object-cover"
+        //           />
+        //         </div>
+        //       ) : null}
 
-              <div
-                className={`grid grid-cols-2 sm:grid-cols-2 gap-x-10 gap-y-4 ${
-                  activeTab === "Portfolio" && index === 0
-                    ? ""
-                    : "md:col-span-2"
-                }`}
-              >
-                {section.items?.map((item) => (
-                  <div key={`${section.title}-${item.label}`} className="min-w-0">
-                    <p className="text-neutral-400 text-xs font-normal leading-tight">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 text-stone-200 text-sm font-medium leading-tight break-words">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </details>
-      ))}
+        //       <div
+        //         className={`grid grid-cols-2 sm:grid-cols-2 gap-x-10 gap-y-4 ${
+        //           activeTab === "Portfolio" && index === 0
+        //             ? ""
+        //             : "md:col-span-2"
+        //         }`}
+        //       >
+        //         {section.items?.map((item) => (
+        //           <div key={`${section.title}-${item.label}`} className="min-w-0">
+        //             <p className="text-neutral-400 text-xs font-normal leading-tight">
+        //               {item.label}
+        //             </p>
+        //             <p className="mt-1 text-stone-200 text-sm font-medium leading-tight break-words">
+        //               {item.value}
+        //             </p>
+        //           </div>
+        //         ))}
+        //       </div>
+        //     </div>
+        //   </div>
+        // </details>
+      )}
     </div>
   );
 };

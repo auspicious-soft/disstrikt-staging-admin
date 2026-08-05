@@ -280,7 +280,7 @@ export default function ModelProfileSlider({
               {section.cards.map((card) => (
                 <div
                   key={card.title}
-                  className="relative h-98 overflow-hidden rounded-3xl border border-[#2c2c2c] bg-[#090909] p-5 shadow-sm"
+                  className="relative h-100 overflow-hidden rounded-3xl border border-[#2c2c2c] bg-[#090909] p-5 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>

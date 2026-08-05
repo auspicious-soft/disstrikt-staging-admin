@@ -163,12 +163,6 @@ const JobJunction: React.FC = () => {
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
           </label>
         {/* </div> */}
-        <button className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
-        onClick={()=> router.push('/admin/job-junction/post-job')}
-        >
-          <Plus className="h-4 w-4" />
-          Post A New Job
-        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

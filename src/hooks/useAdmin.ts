@@ -1,10 +1,18 @@
 import { axiosInstance } from "@/lib/axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+interface GetCelebrationCruiseParams {
+  page: number;
+  limit: number;
+  search?: string;
+  activeFilter?: string;
+  country?: string;
+}
+
 export const CreateEvent = () => {
   return useMutation({
-    mutationFn: async (paylaod: any) => {
-      const { data } = await axiosInstance.post("/admin/celebration-cruise");
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.post("/admin/celebration-cruise",payload);
 
       return data;
     },
@@ -69,3 +77,28 @@ export const useUpdateEmployeeById = (id:any)=>{
     }
   })
 }
+export const useGetCelebrationCruise = ({
+  page,
+  limit,
+  search = "",
+  activeFilter = "",
+  country = "",
+}: GetCelebrationCruiseParams) => {
+  return useQuery({
+    queryKey: [
+      "celebrationCruise",
+      page,
+      limit,
+      search,
+      activeFilter,
+      country,
+    ],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `/admin/celebration-cruise?page=${page}&limit=${limit}&search=${search}&country=${country}&status=${activeFilter}`
+      );
+
+      return data.data;
+    },
+  });
+};

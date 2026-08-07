@@ -7,6 +7,8 @@ import Pagination from "@/app/components/Pagination";
 import { Search, ChevronsUpDown, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import CustomButton from "@/app/components/CustomButton";
+import { useGetCelebrationCruise } from "@/hooks/useAdmin";
+import Loader from "../components/ui/Loader";
 
 interface SelectOption {
   label: string;
@@ -48,12 +50,17 @@ const CelebrationCruise: React.FC = () => {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [page, setPage] = useState(1);
-  const [limit] = useState(5);
+  const [limit] = useState(10);
   const router = useRouter();
-
   const debouncedSearch = useDebouncedValue(search, 500);
+  const { data, isPending } = useGetCelebrationCruise({
+    page,
+    limit,
+    country: "",
+    search: debouncedSearch,
+    activeFilter,
+  });
 
   const headers: TableHeader[] = [
     {
@@ -83,140 +90,47 @@ const CelebrationCruise: React.FC = () => {
     },
   ];
 
-  const dummyUsers: TableRow[] = [
-    {
-      _id: "1",
-      eventName: "Summer Fashion Gala",
-      date: "24 Jul 2026",
-      time: "10:00 AM",
-      location: "Paris, France",
-      status: "Active",
-    },
-    {
-      _id: "2",
-      eventName: "Luxury Yacht Party",
-      date: "28 Jul 2026",
-      time: "4:00 PM",
-      location: "Monaco",
-      status: "Upcoming",
-    },
-    {
-      _id: "3",
-      eventName: "Celebrity Networking",
-      date: "02 Aug 2026",
-      time: "6:30 PM",
-      location: "London",
-      status: "Active",
-    },
-    {
-      _id: "4",
-      eventName: "Beach Photoshoot",
-      date: "05 Aug 2026",
-      time: "9:00 AM",
-      location: "Ibiza",
-      status: "Upcoming",
-    },
-    {
-      _id: "5",
-      eventName: "Luxury Dinner",
-      date: "10 Aug 2026",
-      time: "8:00 PM",
-      location: "Dubai",
-      status: "Completed",
-    },
-    {
-      _id: "6",
-      eventName: "Model Meetup",
-      date: "12 Aug 2026",
-      time: "3:00 PM",
-      location: "Milan",
-      status: "Active",
-    },
-    {
-      _id: "7",
-      eventName: "Fashion Week",
-      date: "16 Aug 2026",
-      time: "11:00 AM",
-      location: "New York",
-      status: "Upcoming",
-    },
-    {
-      _id: "8",
-      eventName: "Brand Launch",
-      date: "20 Aug 2026",
-      time: "5:00 PM",
-      location: "Los Angeles",
-      status: "Completed",
-    },
-    {
-      _id: "9",
-      eventName: "Networking Dinner",
-      date: "23 Aug 2026",
-      time: "7:30 PM",
-      location: "Rome",
-      status: "Completed",
-    },
-    {
-      _id: "10",
-      eventName: "VIP Cruise",
-      date: "28 Aug 2026",
-      time: "1:00 PM",
-      location: "Barcelona",
-      status: "Upcoming",
-    },
-  ];
+  const tableData: TableRow[] = useMemo(() => {
+    return (
+      data?.data?.map((event: any) => ({
+        _id: event._id,
+        eventName: event.title,
+        date: new Date(event.startDateTime).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        time: new Date(event.startDateTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        location: `${event.city}, ${event.country}`,
+        status: event.status,
+      })) ?? []
+    );
+  }, [data]);
 
   const filters: { label: string; value: ApplicantFilter }[] = [
     { label: "All", value: "all" },
     { label: "Active Events", value: "active" },
     { label: "Past Events", value: "past" },
   ];
-
-  const filteredUsers = useMemo(() => {
-    let data = [...dummyUsers];
-
-    if (debouncedSearch) {
-      const keyword = debouncedSearch.toLowerCase();
-
-      data = data.filter(
-        (item) =>
-          item.eventName.toLowerCase().includes(keyword) ||
-          item.location.toLowerCase().includes(keyword) ||
-          item.status.toLowerCase().includes(keyword),
-      );
-    }
-
-    if (activeFilter === "active") {
-      data = data.filter((item) => item.status === "Active");
-    }
-
-    if (activeFilter === "past") {
-      data = data.filter((item) => item.status === "Completed");
-    }
-
-    return data;
-  }, [debouncedSearch, activeFilter]);
-  const totalPages = Math.ceil(filteredUsers.length / limit);
-
-  const paginatedUsers = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredUsers.slice(start, start + limit);
-  }, [filteredUsers, page, limit]);
-
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sort]);
+  }, [debouncedSearch, activeFilter]);
+  const totalPages = data?.pagination?.totalPages ?? 1;
 
   const baseSortOptions: SelectOption[] = [
     { label: "Likes (High → Low)", value: "highToLowLikes" },
     { label: "Likes (Low → High)", value: "lowToHighLikes" },
   ];
 
-  const sortOptions = sort
-    ? [...baseSortOptions, { label: "Clear Sorting", value: "" }]
-    : baseSortOptions;
-
   return (
+    <>
+    {isPending ?
+    <Loader/>
+     : 
+    (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
       <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
         <div className="flex flex-wrap justify-between items-end gap-2.5 w-full">
@@ -267,7 +181,7 @@ const CelebrationCruise: React.FC = () => {
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
-            data={paginatedUsers}
+            data={tableData}
             isEyeShow={false}
             renderActions={(row) => (
               <button
@@ -293,6 +207,8 @@ const CelebrationCruise: React.FC = () => {
         )}
       </div>
     </div>
+    )}
+    </>
   );
 };
 

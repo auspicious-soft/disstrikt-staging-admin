@@ -7,7 +7,6 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
-  ObjectCannedACL,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getImageClientS3URL } from "@/lib/axios";
@@ -31,7 +30,6 @@ export const generateSignedUrlToUploadOn = async (
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `products/${fileName}`,
     ContentType: fileType,
-    acl: "public-read",
   };
   try {
     const command = new PutObjectCommand(uploadParams);
@@ -53,7 +51,6 @@ export const generateSignedUrlForProfile = async (
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `profiles/${fileName}`,
     ContentType: fileType,
-    acl: "public-read",
   };
   try {
     const command = new PutObjectCommand(uploadParams);

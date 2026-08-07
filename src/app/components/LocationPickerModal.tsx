@@ -37,13 +37,17 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const allowedCountries = ["GB", "NL", "BE", "ES", "FR"];
+  const allowedCountries = ["FR", "ES", "GB","BE", "NL"];
+  
+  const googleMapsApiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_APP_GOOGLE_MAPS_API_KEY ||
+    "";
 
   const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script-location-picker", // unique id prevents duplicate load attempts
-    googleMapsApiKey: "AIzaSyCDZoRf-BZL2yR_ZyXpzht_a63hMgLCTis",
+    id: "google-map-script-location-picker",
+    googleMapsApiKey: googleMapsApiKey || "invalid-key",
     libraries,
-    // Optional: prevents font loading issues / reduces payload
     preventGoogleFontsLoading: true,
   });
 
@@ -143,6 +147,25 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   if (!isOpen) return null;
 
   // ── Loading / Error UI ──────────────────────────────────────────────
+  if (!googleMapsApiKey) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-zinc-900 rounded-xl p-8 max-w-md w-full text-center">
+          <h2 className="text-red-400 text-xl mb-4">Google Maps API key is missing</h2>
+          <p className="text-stone-300 mb-6">
+            Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY (or NEXT_APP_GOOGLE_MAPS_API_KEY in your local env file) to enable address lookup and coordinate capture.
+          </p>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-zinc-700 text-stone-200 rounded-lg hover:bg-zinc-600"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (loadError) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

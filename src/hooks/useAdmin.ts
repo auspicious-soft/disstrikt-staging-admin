@@ -102,3 +102,21 @@ export const useGetCelebrationCruise = ({
     },
   });
 };
+export const useGetCelebrationCruiseById = (id:any) => {
+  return useQuery({
+    queryKey: ["celebrationCruiseById",id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/celebration-cruise/${id}`);
+      return data.data;
+    },
+    enabled: !!id,
+  });
+};
+export const CreateJobAdmin = () => {
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.post("/admin/jobs", payload);
+      return data;
+    },
+  });
+};

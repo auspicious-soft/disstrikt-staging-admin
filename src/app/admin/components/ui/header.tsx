@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { SidebarTrigger, useSidebar } from "./sidebar";
 import { Separator } from "./seperator";
@@ -14,6 +15,8 @@ interface SelectOption {
   value: string;
 }
 
+const COUNTRY_STORAGE_KEY = "selectedCountry";
+
 export function AppHeader() {
   const pathname = usePathname();
   const { state } = useSidebar();
@@ -24,6 +27,26 @@ export function AppHeader() {
   const pathSegments = pathname.split("/").filter(Boolean);
   const fromUserId = searchParams.get("fromUserId");
   const fr = searchParams.get("fr");
+
+  // Restore persisted country from localStorage on first mount,
+  // only if the context doesn't already have a value set.
+  useEffect(() => {
+    if (country) return;
+    const stored = window.localStorage.getItem(COUNTRY_STORAGE_KEY);
+    if (stored) {
+      setCountry(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCountryChange = (val: string) => {
+    setCountry(val);
+    if (val) {
+      window.localStorage.setItem(COUNTRY_STORAGE_KEY, val);
+    } else {
+      window.localStorage.removeItem(COUNTRY_STORAGE_KEY);
+    }
+  };
 
   const baseCountryOptions: SelectOption[] = [
     { label: "Netherlands", value: "NL" },
@@ -135,6 +158,7 @@ export function AppHeader() {
     "/admin/shoot-studio",
     "/admin/university-union",
     "/admin/model-market",
+    "/admin/celebration-cruise",
   ].some((path) => pathname === path || pathname === `${path}/`);
 
   let parentPath: string;
@@ -173,7 +197,7 @@ export function AppHeader() {
             placeholder="Select Country"
             icon={<ChevronsUpDown className="w-3 h-3 sm:w-4 sm:h-4" />}
             value={country}
-            onChange={(val) => setCountry(val)}
+            onChange={handleCountryChange}
             hideDefaultArrow
           />
         </div>

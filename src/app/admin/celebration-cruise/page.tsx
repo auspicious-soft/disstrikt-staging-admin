@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import CustomButton from "@/app/components/CustomButton";
 import { useGetCelebrationCruise } from "@/hooks/useAdmin";
 import Loader from "../components/ui/Loader";
+import { useDebouncedValue } from "@/hooks/useDebounce";
 
 interface SelectOption {
   label: string;
@@ -34,17 +35,6 @@ interface TableHeader {
 }
 type ApplicantFilter = "all" | "active" | "past";
 
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debounced;
-}
-
 const CelebrationCruise: React.FC = () => {
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
@@ -53,11 +43,12 @@ const CelebrationCruise: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const router = useRouter();
+  const country = localStorage.getItem("selectedCountry")
   const debouncedSearch = useDebouncedValue(search, 500);
   const { data, isPending } = useGetCelebrationCruise({
     page,
     limit,
-    country: "",
+    country : country ? country : "" ,
     search: debouncedSearch,
     activeFilter,
   });
@@ -119,11 +110,6 @@ const CelebrationCruise: React.FC = () => {
     setPage(1);
   }, [debouncedSearch, activeFilter]);
   const totalPages = data?.pagination?.totalPages ?? 1;
-
-  const baseSortOptions: SelectOption[] = [
-    { label: "Likes (High → Low)", value: "highToLowLikes" },
-    { label: "Likes (Low → High)", value: "lowToHighLikes" },
-  ];
 
   return (
     <>

@@ -33,7 +33,6 @@ export const generateSignedUrlToUploadOn = async (
   };
   try {
     const command = new PutObjectCommand(uploadParams);
-    console.log("command: ", command);
     const signedUrl = await getSignedUrl(await createS3Client(), command);
     // const signedUrl = await getSignedUrl(s3, command, { expiresIn: 900 });
     return { signedUrl, key: uploadParams.Key };

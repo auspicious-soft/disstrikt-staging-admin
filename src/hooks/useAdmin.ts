@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface GetCelebrationCruiseParams {
   page: number;
@@ -8,11 +8,30 @@ interface GetCelebrationCruiseParams {
   activeFilter?: string;
   country?: string;
 }
-
+interface GetStudiosParams {
+  page: number;
+  limit: number;
+}
+interface CreateStudioPayload {
+  timeZone: string;
+  name: string;
+  location: string;
+  city: string;
+  country: string;
+  slots: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    slot: number;
+  }[];
+}
 export const CreateEvent = () => {
   return useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await axiosInstance.post("/admin/celebration-cruise",payload);
+      const { data } = await axiosInstance.post(
+        "/admin/celebration-cruise",
+        payload,
+      );
 
       return data;
     },
@@ -57,26 +76,27 @@ export const useGetEmployees = ({
     },
   });
 };
-export const useGetEmployeesById = (id:any)=>{
+export const useGetEmployeesById = (id: any) => {
   return useQuery({
-    queryKey:["employeById"],
-    queryFn:async()=>{
-      const {data} = await axiosInstance.get(
-        `/admin/employee/${id}`,
-      );
+    queryKey: ["employeById"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/employee/${id}`);
       return data?.data ?? data;
-    }
-  })
-}
-export const useUpdateEmployeeById = (id:any)=>{
+    },
+  });
+};
+export const useUpdateEmployeeById = (id: any) => {
   return useMutation({
-     mutationFn: async (paylaod: any) => {
-      const { data } = await axiosInstance.put(`/admin/employee/${id}`, paylaod);
+    mutationFn: async (paylaod: any) => {
+      const { data } = await axiosInstance.put(
+        `/admin/employee/${id}`,
+        paylaod,
+      );
 
       return data;
-    }
-  })
-}
+    },
+  });
+};
 export const useGetCelebrationCruise = ({
   page,
   limit,
@@ -85,28 +105,23 @@ export const useGetCelebrationCruise = ({
   country = "",
 }: GetCelebrationCruiseParams) => {
   return useQuery({
-    queryKey: [
-      "celebrationCruise",
-      page,
-      limit,
-      search,
-      activeFilter,
-      country,
-    ],
+    queryKey: ["celebrationCruise", page, limit, search, activeFilter, country],
     queryFn: async () => {
       const { data } = await axiosInstance.get(
-        `/admin/celebration-cruise?page=${page}&limit=${limit}&search=${search}&country=${country}&status=${activeFilter}`
+        `/admin/celebration-cruise?page=${page}&limit=${limit}&search=${search}&country=${country}&status=${activeFilter}`,
       );
 
       return data.data;
     },
   });
 };
-export const useGetCelebrationCruiseById = (id:any) => {
+export const useGetCelebrationCruiseById = (id: any) => {
   return useQuery({
-    queryKey: ["celebrationCruiseById",id],
+    queryKey: ["celebrationCruiseById", id],
     queryFn: async () => {
-      const { data } = await axiosInstance.get(`/admin/celebration-cruise/${id}`);
+      const { data } = await axiosInstance.get(
+        `/admin/celebration-cruise/${id}`,
+      );
       return data.data;
     },
     enabled: !!id,
@@ -116,6 +131,179 @@ export const CreateJobAdmin = () => {
   return useMutation({
     mutationFn: async (payload: any) => {
       const { data } = await axiosInstance.post("/admin/jobs", payload);
+      return data;
+    },
+  });
+};
+export const useGetJobJunction = ({
+  page,
+  limit,
+  search,
+  country,
+  postedBy,
+  status,
+  role,
+}) => {
+  return useQuery({
+    queryKey: ["getjobJunction", search, postedBy, status, role,country,page,limit],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `admin/jobs?page=${page}&limit=${limit}&search=${search}&postedBy=${postedBy}&status=${status}&role=${role}&country=${country}`,
+      );
+      return data;
+    },
+  });
+};
+export const useGetJobById = ({id,status})=>{
+  return useQuery({
+    queryKey:["getjobById",id,status],
+    queryFn:async ()=>{
+      const {data}= await axiosInstance.get(`admin/jobsById/${id}?status=${status}`)
+      return data
+    }
+  })
+}
+export const useCompleteJobById = (id: string) => {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.patch(
+        `/admin/jobs/${id}/complete`
+      );
+
+      return data;
+    },
+  });
+};
+
+export const useRemoveJobById = (id: string) => {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.patch(
+        `/admin/jobs/${id}/remove`
+      );
+
+      return data;
+    },
+  });
+};
+export const useGetAllStudios = ({
+  page,
+  limit,
+}: GetStudiosParams) => {
+  return useQuery({
+    queryKey: ["studio", page, limit],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/admin/studio", {
+        params: {
+          page,
+          limit,
+        },
+      });
+
+      return data;
+    },
+    placeholderData: (previousData) => previousData,
+  });
+};
+export const useDeleteStudioById = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.delete(
+        `${"/admin/studio"}?id=${id}`
+      );
+
+      return data;
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["studio"],
+      });
+    },
+  });
+};
+export const useCreateStudio = () => {
+  return useMutation({
+    mutationFn: async (payload: CreateStudioPayload) => {
+      const { data } = await axiosInstance.post(
+        "/admin/studio",
+        payload
+      );
+
+      return data;
+    },
+  });
+};
+export const useGetStudioFeatures = () => {
+  return useQuery({
+    queryKey: ["studio-features"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        "/admin/shootFeatures"
+      );
+
+      return data;
+    },
+  });
+};
+export const useUpdateStudioFeatures = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.post(
+        "/admin/shootFeatures",
+        payload
+      );
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["studio-features"],
+      });
+    },
+  });
+};
+export const useGetStudioByID = (id?: string) => {
+  return useQuery({
+    queryKey: ["studio-by-id", id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `/admin/studioById?id=${id}`  
+      );
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+export const useUpdateStudio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.post(
+        "/admin/studio" ,
+        payload
+      );
+      return data;
+    },
+    onSuccess: (_data, variables: any) => {
+      queryClient.invalidateQueries({ queryKey: ["studios"] });
+      queryClient.invalidateQueries({
+        queryKey: ["studio-by-id", variables?.id],
+      });
+    },
+  });
+};
+export const useDeleteBookingDate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const { data } = await axiosInstance.delete(
+        `/admin/studioById?id=${bookingId}`
+      );
       return data;
     },
   });

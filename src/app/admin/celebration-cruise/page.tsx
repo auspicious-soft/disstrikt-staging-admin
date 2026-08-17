@@ -10,6 +10,7 @@ import CustomButton from "@/app/components/CustomButton";
 import { useGetCelebrationCruise } from "@/hooks/useAdmin";
 import Loader from "../components/ui/Loader";
 import { useDebouncedValue } from "@/hooks/useDebounce";
+import { useCountry } from "@/app/components/CountryContext";
 
 interface SelectOption {
   label: string;
@@ -43,12 +44,13 @@ const CelebrationCruise: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const router = useRouter();
-  const country = localStorage.getItem("selectedCountry")
+  const { country } = useCountry();
   const debouncedSearch = useDebouncedValue(search, 500);
+
   const { data, isPending } = useGetCelebrationCruise({
     page,
     limit,
-    country : country ? country : "" ,
+    country,
     search: debouncedSearch,
     activeFilter,
   });

@@ -17,7 +17,7 @@ interface DynamicTableProps {
   onclickFunction?: (id: string) => void; // For view
   renderCell?: (row: any, key: any) => React.ReactNode;
   isEyeShow?: boolean; // Default true
-  renderActions?: (row: TableRow) => React.ReactNode; // ✅ NEW
+  renderActions?: (row: any) => React.ReactNode;
   showActionsHeaderLabel?: boolean;
 }
 

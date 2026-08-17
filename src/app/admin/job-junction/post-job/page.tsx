@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
+import { CITY_MAP } from "@/config/city";
 
 type FieldProps = {
   label: string;
@@ -32,6 +33,7 @@ type TextInputProps = {
   type?: React.HTMLInputTypeAttribute;
   icon?: React.ReactNode;
   className?: string;
+  min?: string; // NEW: restricts date/time inputs (e.g. blocks past dates)
 };
 
 type SelectFieldProps = {
@@ -41,7 +43,29 @@ type SelectFieldProps = {
   options: string[];
   className?: string;
 };
+type CheckboxProps = {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+};
+// Lookup maps to translate form-friendly labels into the API's expected enum values.
+// Adjust these if the actual backend contract differs.
+const COMPENSATION_TYPE_MAP: Record<string, string> = {
+  Paid: "PAID",
+  Unpaid: "TFP",
+  Barter: "FREE_PRODUCT",
+};
 
+const COUNTRY_CODE_MAP: Record<string, string> = {
+  Netherlands: "NL",
+  Belgium: "BE",
+  France: "FR",
+  Spain: "ES",
+  "United Kingdom": "GB",
+  UK: "GB",
+};
+
+type DateTimeEntry = { date: string; time: string };
 const sectionClass =
   "rounded-md border border-stone-700 px-2.5 py-2.5 text-sm font-medium";
 const labelClass =
@@ -64,6 +88,7 @@ const TextInput = ({
   type = "text",
   icon,
   className = "",
+  min,
 }: TextInputProps) => (
   <Field label={label} className={className}>
     <div className="relative">
@@ -72,7 +97,22 @@ const TextInput = ({
         required
         placeholder={placeholder}
         value={value}
+        min={min}
         onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => {
+          // Force the native date/time picker modal to open on click,
+          // not just when the tiny built-in icon is clicked.
+          const target = e.target as HTMLInputElement & {
+            showPicker?: () => void;
+          };
+          if ((type === "date" || type === "time") && target.showPicker) {
+            try {
+              target.showPicker();
+            } catch {
+              // showPicker can throw if called too rapidly or is unsupported - ignore
+            }
+          }
+        }}
         className={`${controlClass} ${icon ? "pr-9" : ""}`}
       />
       {icon && (
@@ -129,31 +169,41 @@ const Section = ({
   </section>
 );
 
-// Lookup maps to translate form-friendly labels into the API's expected enum values.
-// Adjust these if the actual backend contract differs.
-const COMPENSATION_TYPE_MAP: Record<string, string> = {
-  Paid: "PAID",
-  Unpaid: "TFP",
-  Barter: "FREE_PRODUCT",
-};
-
-const COUNTRY_CODE_MAP: Record<string, string> = {
-  Netherlands: "NL",
-  Belgium: "BE",
-  France: "FR",
-  Spain: "ES",
-  "United Kingdom": "GB",
-  UK: "GB",
-};
-
-const parseExperienceYears = (label: string): number => {
-  const match = label.match(/\d+/);
-  return match ? Number(match[0]) : 0;
-};
+const Checkbox = ({ label, checked, onChange }: CheckboxProps) => (
+  <label className="flex cursor-pointer items-center gap-2 text-xs text-stone-300">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="h-4 w-4 cursor-pointer accent-rose-500"
+    />
+    <span>{label}</span>
+  </label>
+);
 
 const parseNumericValue = (value: string): number => {
   const match = value.match(/-?\d+(\.\d+)?/);
   return match ? Number(match[0]) : 0;
+};
+const parseExperienceYears = (value: string): string => {
+  return value.replace(" Years", "");
+};
+
+// Returns today's date as YYYY-MM-DD, matching the format <input type="date"> expects.
+const getTodayISO = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Returns the current time as HH:MM, matching the format <input type="time"> expects.
+const getCurrentTimeHHMM = (): string => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 };
 
 const PostJobPage = () => {
@@ -164,28 +214,11 @@ const PostJobPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [dates, setDates] = useState<string[]>([""]);
-  const [time, setTime] = useState("");
+  const [dates, setDates] = useState<DateTimeEntry[]>([{ date: "", time: "" }]);
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("Select");
   const [city, setCity] = useState("Select");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const storedCountry = window.localStorage.getItem("job-post-country");
-    if (storedCountry) {
-      setCountry(storedCountry);
-    }
-  }, []);
-  const [cityOptions, setCityOptions] = useState<string[]>([
-    "Select",
-    "Amsterdam",
-    "Brussels",
-    "Paris",
-    "Madrid",
-    "London",
-  ]);
+  const [cityOptions, setCityOptions] = useState<string[]>(["Select"]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
@@ -198,27 +231,73 @@ const PostJobPage = () => {
   const [maxAge, setMaxAge] = useState("");
   const [minHeight, setMinHeight] = useState("");
   const [maxHeight, setMaxHeight] = useState("");
+  const [niche, setNiche] = useState("");
+  const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [travelCovered, setTravelCovered] = useState(false);
+  const [style, setStyle] = useState({
+    fashion: false,
+    beauty: false,
+    commercial: false,
+    editorial: false,
+    product: false,
+    other: false,
+  });
+  const [equipmentRequired, setEquipmentRequired] = useState({
+    studio: false,
+    lighting: false,
+    drone: false,
+    video: false,
+    salon: false,
+    makeUpMirror: false,
+    highChair: false,
+    makeUpProducts: false,
+  });
+  const [deliverables, setDeliverables] = useState({
+    rawImages: false,
+    editedImages: false,
+    btsContent: false,
+    modelsAmount: false,
+  });
+  const [wardrobeRequired, setWardrobeRequired] = useState(false);
+  const [accessoriesRequired, setAccessoriesRequired] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleCountryChange = (value: string) => {
-    setCountry(value);
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("job-post-country", value);
-    }
-  };
+  // Computed once per render; used as the `min` bound for date/time pickers.
+  const todayISO = getTodayISO();
 
   const updateDate = (index: number, value: string) => {
-    setDates((prev) => prev.map((d, i) => (i === index ? value : d)));
+    setDates((prev) =>
+      prev.map((d, i) => (i === index ? { ...d, date: value } : d)),
+    );
   };
 
-  const addDateRow = () => setDates((prev) => [...prev, ""]);
+  const updateTime = (index: number, value: string) => {
+    setDates((prev) =>
+      prev.map((d, i) => (i === index ? { ...d, time: value } : d)),
+    );
+  };
+
+  const addDateRow = () =>
+    setDates((prev) => [...prev, { date: "", time: "" }]);
 
   const removeDateRow = (index: number) => {
     setDates((prev) =>
       prev.length > 1 ? prev.filter((_, i) => i !== index) : prev,
     );
   };
+
+  useEffect(() => {
+    const cities = CITY_MAP[country] || [];
+    const nextOptions = ["Select", ...cities];
+
+    setCityOptions(nextOptions);
+    setCity((prevCity) =>
+      prevCity && prevCity !== "Select" && cities.includes(prevCity)
+        ? prevCity
+        : "Select",
+    );
+  }, [country]);
 
   const normalizeCountryValue = (
     countryCode?: string,
@@ -303,15 +382,19 @@ const PostJobPage = () => {
         countryComponent?.long_name,
       );
       const resolvedCity = cityComponent?.long_name || "";
+      const resolvedCountryCities = CITY_MAP[resolvedCountry] || [];
+      const nextCityOptions = ["Select", ...resolvedCountryCities].concat(
+        resolvedCity && !resolvedCountryCities.includes(resolvedCity)
+          ? [resolvedCity]
+          : [],
+      );
 
       if (resolvedCountry) {
         setCountry(resolvedCountry);
       }
 
       if (resolvedCity) {
-        setCityOptions((prev) =>
-          prev.includes(resolvedCity) ? prev : [...prev, resolvedCity],
-        );
+        setCityOptions(nextCityOptions);
         setCity(resolvedCity);
       }
 
@@ -367,9 +450,72 @@ const PostJobPage = () => {
 
     return key;
   };
+  const handleReferenceUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(event.target.files || []);
+
+    if (!files.length) return;
+
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (imageFiles.length !== files.length) {
+      toast.error("Only image files are allowed.");
+    }
+
+    const availableSlots = 10 - referenceFiles.length;
+
+    if (availableSlots <= 0) {
+      toast.error("You can upload a maximum of 10 reference images.");
+      return;
+    }
+
+    const filesToAdd = imageFiles.slice(0, availableSlots);
+
+    if (imageFiles.length > availableSlots) {
+      toast.error(
+        `You can upload only ${availableSlots} more reference image${
+          availableSlots > 1 ? "s" : ""
+        }.`,
+      );
+    }
+
+    setReferenceFiles((prev) => [...prev, ...filesToAdd]);
+
+    // Allows selecting the same file again after removing it.
+    event.target.value = "";
+  };
+  const removeReferenceFile = (index: number) => {
+    setReferenceFiles((prev) =>
+      prev.filter((_, fileIndex) => fileIndex !== index),
+    );
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Fallback guard: reject any date/time entries that are in the past,
+    // in case the browser's native `min` restriction was bypassed or unsupported.
+    const now = new Date();
+    const hasPastEntry = dates.some((entry) => {
+      if (!entry.date) return false;
+      const candidate = new Date(`${entry.date}T${entry.time || "00:00"}`);
+      return candidate.getTime() < now.getTime();
+    });
+
+    if (hasPastEntry) {
+      toast.error("Please select a date and time that is not in the past.");
+      return;
+    }
+    if (country === "Select" || city === "Select") {
+      toast.error("Please select a country and city.");
+      return;
+    }
+
+    if (userMode === "MODEL" && niche === "Select") {
+      toast.error("Please select a niche.");
+      return;
+    }
 
     let imageKey: string | null = null;
 
@@ -386,8 +532,33 @@ const PostJobPage = () => {
         setIsUploading(false);
       }
     }
+    let uploadReference: string[] = [];
 
-    const schedule = dates.filter(Boolean).map((date) => ({ date }));
+    if (referenceFiles.length > 0) {
+      try {
+        setIsUploading(true);
+
+        uploadReference = await Promise.all(
+          referenceFiles.map((file) => uploadImage(file)),
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Reference image upload failed",
+        );
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    const schedule = dates
+      .filter((entry) => entry.date) // drop empty rows
+      .map((entry) => ({
+        date: entry.date,
+        time: entry.time,
+      }));
 
     // Plain JSON object — sent as application/json, never FormData.
     const payload = {
@@ -410,13 +581,50 @@ const PostJobPage = () => {
       countryCode: COUNTRY_CODE_MAP[country],
       userMode,
       compensationType: COMPENSATION_TYPE_MAP[compensationType],
+      travelCovered,
       city,
       lat,
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       lng,
-      time,
+      time: dates[0]?.time || "",
       schedule,
+      uploadReference,
+      additionalNotes,
       experience: parseExperienceYears(experience),
+      ...(userMode === "MODEL" && {
+        niche,
+      }),
+      ...(userMode === "PHOTOGRAPHER" && {
+        style,
+        equipmentRequired: {
+          studio: equipmentRequired.studio,
+          lighting: equipmentRequired.lighting,
+          drone: equipmentRequired.drone,
+          video: equipmentRequired.video,
+        },
+        deliverables: {
+          rawImages: deliverables.rawImages,
+          editedImages: deliverables.editedImages,
+          btsContent: deliverables.btsContent,
+        },
+      }),
+
+      // STYLIST
+      ...(userMode === "STYLIST" && {
+        style,
+        equipmentRequired: {
+          salon: equipmentRequired.salon,
+          makeUpMirror: equipmentRequired.makeUpMirror,
+          highChair: equipmentRequired.highChair,
+          makeUpProducts: equipmentRequired.makeUpProducts,
+        },
+        deliverables: {
+          btsContent: deliverables.btsContent,
+          modelsAmount: deliverables.modelsAmount,
+        },
+        wardrobeRequired,
+        accessoriesRequired,
+      }),
     };
 
     mutate(payload, {
@@ -449,7 +657,7 @@ const PostJobPage = () => {
                 label="What Are You Looking For ?"
                 value={userMode}
                 onChange={setUserMode}
-                options={["MODEL", "PHOTOGRAPHER", "DESIGNER", "MUA_STYLIST"]}
+                options={["MODEL", "PHOTOGRAPHER", "STYLIST"]}
               />
             </section>
 
@@ -500,46 +708,58 @@ const PostJobPage = () => {
                 onChange={setCompanyName}
                 className="mt-2"
               />
+              <div className="mt-3">
+                <Checkbox
+                  label="Travel Covered"
+                  checked={travelCovered}
+                  onChange={setTravelCovered}
+                />
+              </div>
             </Section>
 
             <Section title="Schedule & Location">
               <div className="space-y-2">
-                {dates.map((date, i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end"
-                  >
-                    <TextInput
-                      label={i === 0 ? "Date" : `Date ${i + 1}`}
-                      placeholder="Enter Date"
-                      type="date"
-                      value={date}
-                      onChange={(value) => updateDate(i, value)}
-                      icon={<Calendar className="h-3.5 w-3.5" />}
-                    />
-                    {i > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDateRow(i)}
-                        className="mb-[2px] inline-flex h-9 items-center justify-center rounded border border-stone-700 px-2 text-stone-400 hover:border-rose-500 hover:text-white"
-                        aria-label={`Remove Date ${i + 1}`}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                {dates.map((entry, i) => {
+                  const isToday = entry.date === todayISO;
+                  const timeMin = isToday ? getCurrentTimeHHMM() : undefined;
 
-              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-end">
-                <TextInput
-                  label="Time"
-                  placeholder="Select"
-                  type="time"
-                  value={time}
-                  onChange={setTime}
-                  icon={<Clock3 className="h-3.5 w-3.5" />}
-                />
+                  return (
+                    <div
+                      key={i}
+                      className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto] md:items-end"
+                    >
+                      <TextInput
+                        label={i === 0 ? "Date" : `Date ${i + 1}`}
+                        placeholder="Enter Date"
+                        type="date"
+                        value={entry.date}
+                        onChange={(value) => updateDate(i, value)}
+                        icon={<Calendar className="h-3.5 w-3.5" />}
+                        min={todayISO}
+                      />
+                      <TextInput
+                        label={i === 0 ? "Time" : `Time ${i + 1}`}
+                        placeholder="Select"
+                        type="time"
+                        value={entry.time}
+                        onChange={(value) => updateTime(i, value)}
+                        icon={<Clock3 className="h-3.5 w-3.5" />}
+                        min={timeMin}
+                      />
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDateRow(i)}
+                          className="mb-[2px] inline-flex h-9 items-center justify-center rounded border border-stone-700 px-2 text-stone-400 hover:border-rose-500 hover:text-white"
+                          aria-label={`Remove Date ${i + 1}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
                 <button
                   type="button"
                   onClick={addDateRow}
@@ -592,6 +812,7 @@ const PostJobPage = () => {
                     "Belgium",
                     "France",
                     "Spain",
+                    "United Kingdom",
                   ]}
                 />
                 <SelectField
@@ -627,54 +848,410 @@ const PostJobPage = () => {
             </Section>
 
             <Section title="Preferences">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <div
+                className={`grid grid-cols-1 gap-2 ${userMode !== "MODEL" ? "grid-cols-1" : "md:grid-cols-2"}`}
+              >
                 <SelectField
                   label="Experience"
                   value={experience}
                   onChange={setExperience}
                   options={[
-                    "1 Years",
-                    "2 Years",
-                    "3 Years",
-                    "4 Years",
-                    "5 Years",
-                    "6 Years",
+                    "1-2 Years",
+                    "2-3 Years",
+                    "3-4 Years",
+                    "4-5 Years",
+                    "5-6 Years",
+                    "6+ Years",
                   ]}
                 />
-                <SelectField
-                  label="Gender"
-                  value={gender}
-                  onChange={setGender}
-                  options={["Male", "Female", "Any"]}
-                />
+                {userMode === "MODEL" && (
+                  <SelectField
+                    label="Gender"
+                    value={gender}
+                    onChange={setGender}
+                    options={["Male", "Female", "Any"]}
+                  />
+                )}
               </div>
+              {userMode === "MODEL" && (
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <TextInput
+                    label="Min age"
+                    placeholder="24"
+                    value={minAge}
+                    onChange={setMinAge}
+                  />
+                  <TextInput
+                    label="Max Age"
+                    placeholder="45"
+                    value={maxAge}
+                    onChange={setMaxAge}
+                  />
+                  <TextInput
+                    label="Min Height (cm)"
+                    placeholder="160"
+                    value={minHeight}
+                    onChange={setMinHeight}
+                  />
+                  <TextInput
+                    label="Max height (cm)"
+                    placeholder="172"
+                    value={maxHeight}
+                    onChange={setMaxHeight}
+                  />
+                </div>
+              )}
 
-              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <TextInput
-                  label="Min age"
-                  placeholder="24"
-                  value={minAge}
-                  onChange={setMinAge}
-                />
-                <TextInput
-                  label="Max Age"
-                  placeholder="45"
-                  value={maxAge}
-                  onChange={setMaxAge}
-                />
-                <TextInput
-                  label="Min Height"
-                  placeholder="160cm"
-                  value={minHeight}
-                  onChange={setMinHeight}
-                />
-                <TextInput
-                  label="Max height"
-                  placeholder="172 cm"
-                  value={maxHeight}
-                  onChange={setMaxHeight}
-                />
+              {/* MODEL - Niche */}
+              {userMode === "MODEL" && (
+                <div className="mt-2">
+                  <SelectField
+                    label="Niche"
+                    value={niche}
+                    onChange={setNiche}
+                    options={[
+                      "Select",
+                      "Fashion",
+                      "Commercial",
+                      "Editorial",
+                      "Fitness",
+                      "Swimwear",
+                      "Lingrie",
+                      "Runway",
+                      "Influencer",
+                      "Other",
+                    ]}
+                  />
+                </div>
+              )}
+
+              {/* PHOTOGRAPHER - Style */}
+              {(userMode === "PHOTOGRAPHER" || userMode === "STYLIST") && (
+                <div className="mt-3">
+                  <span className={labelClass}>Style</span>
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <Checkbox
+                      label="Fashion"
+                      checked={style.fashion}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, fashion: checked }))
+                      }
+                    />
+
+                    <Checkbox
+                      label="Beauty"
+                      checked={style.beauty}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, beauty: checked }))
+                      }
+                    />
+
+                    <Checkbox
+                      label="Commercial"
+                      checked={style.commercial}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, commercial: checked }))
+                      }
+                    />
+
+                    <Checkbox
+                      label="Editorial"
+                      checked={style.editorial}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, editorial: checked }))
+                      }
+                    />
+
+                    <Checkbox
+                      label="Product"
+                      checked={style.product}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, product: checked }))
+                      }
+                    />
+
+                    <Checkbox
+                      label="Other"
+                      checked={style.other}
+                      onChange={(checked) =>
+                        setStyle((prev) => ({ ...prev, other: checked }))
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* PHOTOGRAPHER / STYLIST - Equipment */}
+              {(userMode === "PHOTOGRAPHER" || userMode === "STYLIST") && (
+                <div className="mt-3">
+                  <span className={labelClass}>Equipment Required</span>
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {/* Photographer equipment */}
+                    {userMode === "PHOTOGRAPHER" && (
+                      <>
+                        <Checkbox
+                          label="Studio"
+                          checked={equipmentRequired.studio}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              studio: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Lighting"
+                          checked={equipmentRequired.lighting}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              lighting: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Drone"
+                          checked={equipmentRequired.drone}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              drone: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Video"
+                          checked={equipmentRequired.video}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              video: checked,
+                            }))
+                          }
+                        />
+                      </>
+                    )}
+
+                    {/* Stylist equipment */}
+                    {userMode === "STYLIST" && (
+                      <>
+                        <Checkbox
+                          label="Salon"
+                          checked={equipmentRequired.salon}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              salon: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Make Up Mirror"
+                          checked={equipmentRequired.makeUpMirror}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              makeUpMirror: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="High Chair"
+                          checked={equipmentRequired.highChair}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              highChair: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Make Up Products"
+                          checked={equipmentRequired.makeUpProducts}
+                          onChange={(checked) =>
+                            setEquipmentRequired((prev) => ({
+                              ...prev,
+                              makeUpProducts: checked,
+                            }))
+                          }
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* PHOTOGRAPHER / STYLIST - Deliverables */}
+              {(userMode === "PHOTOGRAPHER" || userMode === "STYLIST") && (
+                <div className="mt-3">
+                  <span className={labelClass}>Deliverables</span>
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {/* Photographer deliverables */}
+                    {userMode === "PHOTOGRAPHER" && (
+                      <>
+                        <Checkbox
+                          label="Raw Images"
+                          checked={deliverables.rawImages}
+                          onChange={(checked) =>
+                            setDeliverables((prev) => ({
+                              ...prev,
+                              rawImages: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="Edited Images"
+                          checked={deliverables.editedImages}
+                          onChange={(checked) =>
+                            setDeliverables((prev) => ({
+                              ...prev,
+                              editedImages: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="BTS Content"
+                          checked={deliverables.btsContent}
+                          onChange={(checked) =>
+                            setDeliverables((prev) => ({
+                              ...prev,
+                              btsContent: checked,
+                            }))
+                          }
+                        />
+                      </>
+                    )}
+
+                    {/* Stylist deliverables */}
+                    {userMode === "STYLIST" && (
+                      <>
+                        <Checkbox
+                          label="BTS Content"
+                          checked={deliverables.btsContent}
+                          onChange={(checked) =>
+                            setDeliverables((prev) => ({
+                              ...prev,
+                              btsContent: checked,
+                            }))
+                          }
+                        />
+
+                        <Checkbox
+                          label="How many models (amount)"
+                          checked={deliverables.modelsAmount}
+                          onChange={(checked) =>
+                            setDeliverables((prev) => ({
+                              ...prev,
+                              modelsAmount: checked,
+                            }))
+                          }
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* STYLIST - Wardrobe / Accessories */}
+              {userMode === "STYLIST" && (
+                <div className="mt-3">
+                  <span className={labelClass}>Requirements</span>
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <Checkbox
+                      label="Wardrobe Required"
+                      checked={wardrobeRequired}
+                      onChange={setWardrobeRequired}
+                    />
+
+                    <Checkbox
+                      label="Accessories Required"
+                      checked={accessoriesRequired}
+                      onChange={setAccessoriesRequired}
+                    />
+                  </div>
+                </div>
+              )}
+            </Section>
+            <Section title="Upload References">
+              <div className="space-y-3">
+                <label
+                  className={`${controlClass} flex cursor-pointer items-center justify-between`}
+                >
+                  <span className="text-stone-500">
+                    {referenceFiles.length > 0
+                      ? `${referenceFiles.length}/10 images selected`
+                      : "Upload reference images"}
+                  </span>
+
+                  <Paperclip className="h-3.5 w-3.5 text-stone-500" />
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleReferenceUpload}
+                    disabled={referenceFiles.length >= 10}
+                  />
+                </label>
+
+                {referenceFiles.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                    {referenceFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="group relative overflow-hidden rounded border border-stone-700"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Reference ${index + 1}`}
+                          className="h-24 w-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => removeReferenceFile(index)}
+                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          aria-label={`Remove reference ${index + 1}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+
+                        <div className="absolute bottom-0 left-0 right-0 truncate bg-black/60 px-1.5 py-1 text-[9px] text-white">
+                          {file.name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-stone-500">
+                  You can upload up to 10 reference images.
+                </p>
               </div>
+            </Section>
+            <Section title="Additional Notes">
+              <Field label="Additional Notes">
+                <textarea
+                  placeholder="Bring your own makeup kit and two casual outfits."
+                  rows={5}
+                  value={additionalNotes}
+                  onChange={(e) => setAdditionalNotes(e.target.value)}
+                  className="min-h-24 w-full resize-none rounded border border-stone-700 bg-transparent px-3 py-3 text-[10px] font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-500"
+                />
+              </Field>
             </Section>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[260px_1fr]">

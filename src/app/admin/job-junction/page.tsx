@@ -1,18 +1,15 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Plus,
-  Tag,
-  User,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+import { Search, Plus, Tag, User, CheckCircle2, X } from "lucide-react";
 import { ArrowSeparateVertical } from "iconoir-react";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { JobCard } from "@/app/components/JobCard";
 import { useRouter } from "next/navigation";
+import { useGetJobJunction } from "@/hooks/useAdmin";
+import Pagination from "@/app/components/Pagination";
+import { useCountry } from "@/app/components/CountryContext";
+import Loader from "../components/ui/Loader";
 
 type JobStatus = "Completed" | "In Progress" | "Pending";
 
@@ -84,9 +81,15 @@ const jobs: Job[] = [
 ];
 
 const filterOptions = {
-  postedBy: ["Posted By", "Agencies", "Brands", "Agents"],
-  role: ["Role", "Models", "Designers", "Photographers"],
-  status: ["Status", "Completed", "In Progress", "Pending"],
+  postedBy: [
+    "Posted By",
+    "AGENCIES",
+    "DESIGNER",
+    "PHOTOGRAPHER",
+    "STYLIST",
+  ],
+  role: ["Role", "MODEL", "DESIGNER", "PHOTOGRAPHER", "STYLIST"],
+  status: ["Status", "Completed", "Pending"],
 };
 
 const FilterSelect = ({
@@ -115,72 +118,97 @@ const FilterSelect = ({
 );
 
 const JobJunction: React.FC = () => {
+  const router = useRouter();
   const [postedBy, setPostedBy] = useState(filterOptions.postedBy[0]);
   const [role, setRole] = useState(filterOptions.role[0]);
   const [status, setStatus] = useState(filterOptions.status[0]);
   const [search, setSearch] = useState("");
-  const router = useRouter();
-  const debouncedSearch = useDebouncedValue(search, 300);
-
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchesRole = role === filterOptions.role[0] || job.role === role;
-      const matchesStatus =
-        status === filterOptions.status[0] || job.status === status;
-      const matchesSearch = job.title
-        .toLowerCase()
-        .includes(debouncedSearch.toLowerCase());
-      return matchesRole && matchesStatus && matchesSearch;
-    });
-  }, [role, status, debouncedSearch]);
-
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const debouncedSearch = useDebouncedValue(search, 500);
+  const { country } = useCountry();
+  const { data, isPending } = useGetJobJunction({
+    search: debouncedSearch,
+    page,
+    limit,
+    country,
+    status: status === "Status" ? "" : status,
+    role: role === "Role" ? "" : role,
+    postedBy: postedBy === "Posted By" ? "" : postedBy,
+  });
+  const jobs = data?.data?.data ?? [];
+  const pagination = data?.data?.pagination;
+  const totalPages = pagination?.totalPages ?? 1;
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, postedBy, role, status,country]);
   return (
     <main className="min-h-screen w-full text-stone-100">
       <div className="mb-6 flex justify-end flex-col gap-3 sm:flex-row sm:items-center">
         {/* <div className="flex flex-1 flex-col gap-3 sm:flex-row"> */}
-          <FilterSelect
-            options={filterOptions.postedBy}
-            value={postedBy}
-            onChange={setPostedBy}
+        <FilterSelect
+          options={filterOptions.postedBy}
+          value={postedBy}
+          onChange={setPostedBy}
+        />
+        <FilterSelect
+          options={filterOptions.role}
+          value={role}
+          onChange={setRole}
+        />
+        <FilterSelect
+          options={filterOptions.status}
+          value={status}
+          onChange={setStatus}
+        />
+        <label className="relative block w-full sm:w-[220px]">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search"
+            className="h-10 w-full rounded-[8px] border border-[#2A2A2E] bg-[#151518] pl-4 pr-4 text-[13px] text-stone-300 outline-none placeholder:text-stone-500 focus:border-[#EF476F]"
           />
-          <FilterSelect
-            options={filterOptions.role}
-            value={role}
-            onChange={setRole}
-          />
-          <FilterSelect
-            options={filterOptions.status}
-            value={status}
-            onChange={setStatus}
-          />
-          <label className="relative block w-full sm:w-[220px]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search"
-              className="h-10 w-full rounded-[8px] border border-[#2A2A2E] bg-[#151518] pl-4 pr-4 text-[13px] text-stone-300 outline-none placeholder:text-stone-500 focus:border-[#EF476F]"
-            />
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
-          </label>
+          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+        </label>
         {/* </div> */}
-        <button className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
-        onClick={()=> router.push('/admin/job-junction/post-job')}
+        <button
+          className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
+          onClick={() => router.push("/admin/job-junction/post-job")}
         >
           <Plus className="h-4 w-4" />
           Post A New Job
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredJobs.map((job) => (
-          <JobCard key={job.id} job={job} href={`/admin/job-junction/${job.id}`} isjob={true} />
-        ))}
-      </div>
+      {isPending ? (
+        <Loader/>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {jobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
+                href={`/admin/job-junction/${job._id}`}
+                isjob={true}
+              />
+            ))}
+          </div>
 
-      {filteredJobs.length === 0 && (
-        <p className="mt-10 text-center text-[13px] text-stone-500">
-          No jobs match your filters.
-        </p>
+          {jobs.length === 0 && (
+            <p className="mt-10 text-center text-[13px] text-white">
+              No jobs found.
+            </p>
+          )}
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </main>
   );

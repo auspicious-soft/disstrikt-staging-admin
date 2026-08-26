@@ -11,6 +11,7 @@ import { useDebouncedValue } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { useDeleteStudioById, useGetAllStudios } from "@/hooks/useAdmin";
 import { Eye } from "iconoir-react";
+import Loader from "../components/ui/Loader";
 
 interface SelectOption {
   label: string;
@@ -65,6 +66,7 @@ const CelebrationCruise: React.FC = () => {
   } = useGetAllStudios({
     page,
     limit,
+    debouncedSearch 
   });
   const {
     mutate: deleteStudio,
@@ -231,16 +233,11 @@ const CelebrationCruise: React.FC = () => {
     },
   ];
 
-  const sortOptions = sort
-    ? [
-        ...baseSortOptions,
-        {
-          label: "Clear Sorting",
-          value: "",
-        },
-      ]
-    : baseSortOptions;
   return (
+    <>
+    {isFetching && !isLoading || deleteLoading ?
+    <Loader/>
+    :
     <>
       <div className="w-full inline-flex flex-col justify-center items-start gap-10">
         <div className="self-stretch flex flex-col justify-start items-end gap-4">
@@ -304,11 +301,7 @@ const CelebrationCruise: React.FC = () => {
 
             </div>
           </div>
-          {isFetching && !isLoading && (
-            <div className="text-sm text-neutral-400">
-              Loading...
-            </div>
-          )}
+          
           {totalPages > 1 && (
             <Pagination
               currentPage={page}
@@ -386,6 +379,8 @@ const CelebrationCruise: React.FC = () => {
           </div>
         </div>
       )}
+      </>
+    }
     </>
   );
 };

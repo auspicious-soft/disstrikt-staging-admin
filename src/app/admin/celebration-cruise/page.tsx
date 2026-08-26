@@ -34,12 +34,12 @@ interface TableHeader {
   align?: "start" | "end" | "center";
   fontWeight?: string;
 }
-type ApplicantFilter = "all" | "active" | "past";
+type ApplicantFilter = "ALL" | "ACTIVE" | "CLOSED" | "UPCOMING";
 
 const CelebrationCruise: React.FC = () => {
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -104,9 +104,10 @@ const CelebrationCruise: React.FC = () => {
   }, [data]);
 
   const filters: { label: string; value: ApplicantFilter }[] = [
-    { label: "All", value: "all" },
-    { label: "Active Events", value: "active" },
-    { label: "Past Events", value: "past" },
+    { label: "All", value: "ALL" },
+    { label: "Active Events", value: "ACTIVE" },
+    { label: "Upcoming Events", value: "UPCOMING" },
+    { label: "Past Events", value: "CLOSED" },
   ];
   useEffect(() => {
     setPage(1);

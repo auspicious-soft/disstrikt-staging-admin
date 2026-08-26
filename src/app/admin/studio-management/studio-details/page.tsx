@@ -114,8 +114,7 @@ const StudioDetails = () => {
       )
     );
   };
-  const timeValues = Array.from({ length: 23 }, (_, index) => {
-    const hour = index + 1;
+  const timeValues = Array.from({ length: 24 }, (_, hour) => {
     return [
       `${String(hour).padStart(2, "0")}:00`,
       `${String(hour).padStart(2, "0")}:30`,
@@ -127,6 +126,24 @@ const StudioDetails = () => {
   const timeToMinutes = (time: string) => {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
+  };
+
+  const minutesToTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(
+      remainingMinutes
+    ).padStart(2, "0")}`;
+  };
+
+  const getIntervalEndTime = (startTime: string, interval: string) => {
+    const intervalMinutes = Number(interval);
+    if (!startTime || !intervalMinutes) return "";
+
+    const endMinutes = timeToMinutes(startTime) + intervalMinutes;
+    if (endMinutes > 24 * 60) return "";
+
+    return minutesToTime(endMinutes);
   };
 
   const getAllowedStartTimes = (selectedDate: string) => {
@@ -148,7 +165,11 @@ const StudioDetails = () => {
     );
   };
 
-  const getAllowedEndTimes = (startTime: string, selectedDate: string) => {
+  const getAllowedEndTimes = (
+    startTime: string,
+    selectedDate: string,
+    interval = ""
+  ) => {
     const today = new Date();
     const todayString = new Date(
       today.getFullYear(),
@@ -157,6 +178,15 @@ const StudioDetails = () => {
     ).toISOString().split("T")[0];
     const startMinutes = timeToMinutes(startTime);
     const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
+    const intervalEndTime = getIntervalEndTime(startTime, interval);
+    if (intervalEndTime) {
+      const intervalEndMinutes = timeToMinutes(intervalEndTime);
+      if (selectedDate === todayString && intervalEndMinutes <= nowMinutes) {
+        return [];
+      }
+      return endTimeOptions.includes(intervalEndTime) ? [intervalEndTime] : [];
+    }
 
     return endTimeOptions.filter((time) => {
       const endMinutes = timeToMinutes(time);
@@ -309,10 +339,14 @@ const StudioDetails = () => {
           const nextStart = allowedStartTimes.includes(nextRow.startTime)
             ? nextRow.startTime
             : allowedStartTimes[0] || "01:00";
-          const allowedEndTimes = getAllowedEndTimes(nextStart, value);
+          const allowedEndTimes = getAllowedEndTimes(
+            nextStart,
+            value,
+            nextRow.interval
+          );
           const nextEnd = allowedEndTimes.includes(nextRow.endTime)
             ? nextRow.endTime
-            : allowedEndTimes[0] || "24:00";
+            : allowedEndTimes[0] || (nextRow.interval ? "" : "24:00");
 
           return {
             ...nextRow,
@@ -322,10 +356,14 @@ const StudioDetails = () => {
         }
 
         if (field === "startTime" && typeof value === "string") {
-          const allowedEndTimes = getAllowedEndTimes(value, row.date);
+          const allowedEndTimes = getAllowedEndTimes(
+            value,
+            row.date,
+            nextRow.interval
+          );
           const nextEnd = allowedEndTimes.includes(nextRow.endTime)
             ? nextRow.endTime
-            : allowedEndTimes[0] || "24:00";
+            : allowedEndTimes[0] || (nextRow.interval ? "" : "24:00");
 
           return {
             ...nextRow,
@@ -341,9 +379,22 @@ const StudioDetails = () => {
             const allowedEndTimes = getAllowedEndTimes(nextRow.startTime, row.date);
             return {
               ...nextRow,
-              endTime: allowedEndTimes[0] || "24:00",
+              endTime: allowedEndTimes[0] || (nextRow.interval ? "" : "24:00"),
             };
           }
+        }
+
+        if (field === "interval" && typeof value === "string") {
+          const allowedEndTimes = getAllowedEndTimes(
+            nextRow.startTime,
+            row.date,
+            value
+          );
+
+          return {
+            ...nextRow,
+            endTime: allowedEndTimes[0] || "",
+          };
         }
 
         return nextRow;
@@ -834,7 +885,11 @@ const StudioDetails = () => {
                               <option value="" disabled className="bg-gray-500 text-white">
                                 Select
                               </option>
-                              {getAllowedEndTimes(row.startTime, row.date).map((time) => (
+                              {getAllowedEndTimes(
+                                row.startTime,
+                                row.date,
+                                row.interval
+                              ).map((time) => (
                                 <option key={`end-${time}`} value={time} className="bg-gray-500 text-white">
                                   {time}
                                 </option>

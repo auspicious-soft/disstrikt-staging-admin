@@ -3,11 +3,8 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
-  ArrowDownToLine,
-  ChevronDown,
   ChevronsUpDown,
   Link2,
-  Pencil,
 } from "lucide-react";
 import referenceImage from "@/assets/images/dummyUserImg.png";
 import Pagination from "@/app/components/Pagination";
@@ -18,83 +15,8 @@ import { useGetJobById } from "@/hooks/useAdmin";
 import { useParams } from "next/navigation";
 import Loader from "../../components/ui/Loader";
 
-type ApplicantStatus = "PENDING" | "SELECTED" | "REJECTED";
+type ApplicantStatus = "PENDING" | "SHORTLISTED" | "SELECTED" | "REJECTED";
 type ApplicantFilter = "ALL" | ApplicantStatus;
-
-type Applicant = {
-  id: number;
-  _id: string;
-  name: string;
-  gender: string;
-  portfolio: string;
-  status: ApplicantStatus;
-  dateOfBirth: string;
-  country: string;
-};
-
-// Static table data — swap this out for `appliedJobs` once the API starts returning applicants.
-const applicants: Applicant[] = [
-  {
-    id: 1,
-    _id: "1",
-    name: "Alex Johnson",
-    gender: "Male",
-    portfolio: "Link",
-    status: "PENDING",
-    dateOfBirth: "15-08-81",
-    country: "Netherlands",
-  },
-  {
-    id: 2,
-    _id: "2",
-    name: "Daniel Martinez",
-    gender: "Female",
-    portfolio: "Link",
-    status: "SELECTED",
-    dateOfBirth: "22-11-86",
-    country: "Netherlands",
-  },
-  {
-    id: 3,
-    _id: "3",
-    name: "Laura Garcia",
-    gender: "Male",
-    portfolio: "Link",
-    status: "REJECTED",
-    dateOfBirth: "03-05-85",
-    country: "Belgium",
-  },
-  {
-    id: 4,
-    _id: "4",
-    name: "Olivia Hall",
-    gender: "Female",
-    portfolio: "Link",
-    status: "PENDING",
-    dateOfBirth: "03-05-85",
-    country: "Belgium",
-  },
-  {
-    id: 5,
-    _id: "5",
-    name: "James Young",
-    gender: "Male",
-    portfolio: "Link",
-    status: "SELECTED",
-    dateOfBirth: "27-12-83",
-    country: "Dutch",
-  },
-  {
-    id: 6,
-    _id: "6",
-    name: "Michael Wilson",
-    gender: "Female",
-    portfolio: "Link",
-    status: "REJECTED",
-    dateOfBirth: "09-04-90",
-    country: "Netherlands",
-  },
-];
 
 const filters: { label: string; value: ApplicantFilter }[] = [
   { label: "All (60)", value: "ALL" },
@@ -140,6 +62,7 @@ const applicantHeaders = [
 const statusClassName = (status: ApplicantStatus) => {
   switch (status) {
     case "SELECTED":
+    case "SHORTLISTED":
       return "bg-sky-500 text-white";
     case "REJECTED":
       return "bg-red-500 text-white";
@@ -227,45 +150,75 @@ const JobJunctionDetailsPage = () => {
   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const { id } = useParams();
-  const { data, isPending } = useGetJobById({ id, status: activeFilter });
+  const { data, isPending } = useGetJobById({
+    id,
+    status: activeFilter === "ALL" ? "ALL" : activeFilter,
+    page: currentPage,
+    limit: 10,
+  });
 
   const job = data?.data?.revisedData;
   const appliedJobs = data?.data?.appliedJobs ?? [];
   const pagination = data?.data?.pagination;
 
-  // Table stays static for now since appliedJobs is empty — swap `applicants`
-  // for a mapped version of `appliedJobs` once the API returns applicant records.
-  const visibleApplicants = useMemo(() => {
-    if (activeFilter === "ALL") return applicants;
-    return applicants.filter((applicant) => applicant.status === activeFilter);
-  }, [activeFilter]);
-
-  const applicantRows = visibleApplicants as unknown as TableRow[];
+  const applicantRows = useMemo(() => {
+    return appliedJobs.map((appliedJob: any) => ({
+      _id: appliedJob._id,
+      name: appliedJob.user?.fullName || "N/A",
+      gender: formatLabel(appliedJob.userInfo?.gender),
+      portfolio: appliedJob.link || "N/A",
+      status: appliedJob.status as ApplicantStatus,
+      dateOfBirth: appliedJob.userInfo?.dob
+        ? new Date(appliedJob.userInfo.dob).toLocaleDateString("en-GB")
+        : "N/A",
+      country: appliedJob.user?.country || "N/A",
+      userMode: appliedJob.user?.userMode || "",
+    })) as unknown as TableRow[];
+  }, [appliedJobs]);
 
   const renderApplicantCell = (row: TableRow, key: string) => {
     if (key === "portfolio") {
+      const isModel = String(row.userMode).toUpperCase() === "MODEL";
+
+      if (!isModel) {
+        return "N/A";
+      }
+
+      if (!row[key] || row[key] === "N/A") {
+        return "N/A";
+      }
+
       return (
-        <button className="inline-flex items-center gap-1 border-b border-sky-500 text-sky-500">
+        <a
+          href={String(row[key])}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 border-b border-sky-500 text-sky-500"
+        >
           <Link2 className="h-3 w-3" />
-          {row[key]}
-        </button>
+          Link
+        </a>
       );
     }
 
     if (key === "status") {
       return (
-        <button
-          className={`inline-flex min-w-28 items-center justify-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium ${statusClassName(
+        <select
+          defaultValue={String(row[key] ?? "PENDING")}
+          aria-label="Applicant status"
+          className={`min-w-32 appearance-none rounded-full px-3 py-1.5 text-center text-xs font-medium outline-none ${statusClassName(
             row[key] as ApplicantStatus,
           )}`}
         >
-          {row[key]}
-          <ChevronDown className="h-3 w-3" />
-        </button>
+          <option value="SHORTLISTED">Shortlisted</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="PENDING">Pending</option>
+          <option value="SELECTED">Selected</option>
+        </select>
       );
     }
 
-    return row[key];
+    return String(row[key] ?? "N/A");
   };
 
   const summarySections = useMemo(
@@ -323,9 +276,18 @@ const JobJunctionDetailsPage = () => {
                 </p>
               </div>
 
-              <span className="shrink-0 rounded-full bg-[#256533] px-4 py-1 text-base font-medium text-white">
-                {formatLabel(job?.userMode)}
-              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full bg-[#256533] px-4 py-1 text-base font-medium text-white">
+                  {formatLabel(job?.userMode)}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Edit job"
+                  className="rounded-md border border-stone-700 bg-stone-800 px-3 py-2 text-xs font-medium text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-x-16 gap-y-5 md:grid-cols-2">
@@ -432,20 +394,16 @@ const JobJunctionDetailsPage = () => {
                 data={applicantRows}
                 isEyeShow={false}
                 renderCell={renderApplicantCell}
-                renderActions={() => (
-                  <button className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 hover:bg-stone-700">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                )}
-                showActionsHeaderLabel={false}
               />
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={pagination?.totalPages || 10}
-              onPageChange={setCurrentPage}
-            />
+            {pagination.totalPages > 1 && (
+              <Pagination
+                currentPage={pagination?.page || currentPage}
+                totalPages={pagination?.totalPages || 1}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </section>
         </div>
       )}

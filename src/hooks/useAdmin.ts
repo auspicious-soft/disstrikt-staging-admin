@@ -11,6 +11,7 @@ interface GetCelebrationCruiseParams {
 interface GetStudiosParams {
   page: number;
   limit: number;
+  debouncedSearch:string;
 }
 interface CreateStudioPayload {
   timeZone: string;
@@ -154,11 +155,11 @@ export const useGetJobJunction = ({
     },
   });
 };
-export const useGetJobById = ({id,status})=>{
+export const useGetJobById = ({id,status,page,limit})=>{
   return useQuery({
-    queryKey:["getjobById",id,status],
+    queryKey:["getjobById",id,status,page,limit],
     queryFn:async ()=>{
-      const {data}= await axiosInstance.get(`admin/jobsById/${id}?status=${status}`)
+      const {data}= await axiosInstance.get(`admin/jobsById/${id}?status=${status}&page=${page}&limit=${limit}`);
       return data
     }
   })
@@ -189,14 +190,16 @@ export const useRemoveJobById = (id: string) => {
 export const useGetAllStudios = ({
   page,
   limit,
+  debouncedSearch,
 }: GetStudiosParams) => {
   return useQuery({
-    queryKey: ["studio", page, limit],
+    queryKey: ["studio", page, limit,debouncedSearch],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/admin/studio", {
         params: {
           page,
           limit,
+          search:debouncedSearch
         },
       });
 
@@ -225,6 +228,8 @@ export const useDeleteStudioById = () => {
   });
 };
 export const useCreateStudio = () => {
+   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateStudioPayload) => {
       const { data } = await axiosInstance.post(
@@ -233,6 +238,11 @@ export const useCreateStudio = () => {
       );
 
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["studio"],
+      });
     },
   });
 };

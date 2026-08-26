@@ -112,19 +112,36 @@ export function AppHeader() {
     pageName = "Review Activity";
   } else if (pathname.startsWith("/admin/shoot-studio/edit-booking")) {
     pageName = "Review Activity";
-  } else if (pathname.startsWith("/admin/university-union") &&
-    pathSegments.length > 2) {
+  } else if (
+    pathname.startsWith("/admin/university-union") &&
+    pathSegments.length > 2
+  ) {
     pageName = "Progress Overview";
-  } else if (pathname.startsWith("/admin/disstriktonites") &&
-    pathSegments.length > 2 && pathSegments[2] !== "add") {
+  } else if (
+    pathname.startsWith("/admin/disstriktonites") &&
+    pathSegments.length > 2 &&
+    pathSegments[2] !== "add"
+  ) {
     pageName = "ADD NEW ROLE";
+  } else if (
+    pathname.startsWith("/admin/studio-management") &&
+    pathSegments.length > 2 &&
+    pathSegments[2] !== "manage-shoot-features" &&
+    pathSegments[2] !== "studio-details"
+  ) {
+    pageName = "STUDIO DETAILS";
   } else if (pathname.startsWith("/admin/disstriktonites/add")) {
     pageName = "Add Disstriktonites";
-  } else if (pathname.startsWith("/admin/celebration-cruise") &&
-    pathSegments.length > 2 && pathSegments[2] !== "create-event") {
+  } else if (
+    pathname.startsWith("/admin/celebration-cruise") &&
+    pathSegments.length > 2 &&
+    pathSegments[2] !== "create-event"
+  ) {
     pageName = "Celebration Cruise";
-  } else if (pathname.startsWith("/admin/model-mansion/") &&
-    pathSegments.length > 2 ) {
+  } else if (
+    pathname.startsWith("/admin/model-mansion/") &&
+    pathSegments.length > 2
+  ) {
     pageName = "Model Mansion";
   } else if (pathname.startsWith("/admin/training-theater")) {
     pageName = "Training Theater";
@@ -187,7 +204,7 @@ export function AppHeader() {
           className="!h-4 sm:!h-5 md:!h-6 lg:!h-7"
         />
         <h1 className="text-stone-200 text-xl font-ovo sm:text-2xl md:text-3xl font-normal  capitalize truncate max-w-[50vw] sm:max-w-[60vw] md:max-w-[70vw]">
-          {(pageName).toUpperCase()}
+          {pageName.toUpperCase()}
         </h1>
       </div>
       {showInputField && (

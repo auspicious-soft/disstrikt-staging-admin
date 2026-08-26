@@ -69,7 +69,7 @@ export const JobCard = ({ job, href, isjob }: JobCardProps) => {
   );
 
   const { mutate: removeJob, isPending: isRemoving } = useRemoveJobById(
-    job?.id,
+    job?._id,
   );
   const loading = isCompleting || isRemoving;
 

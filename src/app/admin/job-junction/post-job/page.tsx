@@ -2,7 +2,11 @@
 
 import { generateSignedUrlToUploadOn } from "@/actions";
 import LocationPickerModal from "@/app/components/LocationPickerModal";
-import { CreateJobAdmin } from "@/hooks/useAdmin";
+import {
+  CreateJobAdmin,
+  useGetJobById,
+  useUpdateJobAdmin,
+} from "@/hooks/useAdmin";
 import axios from "axios";
 import { NavArrowDownSolid } from "iconoir-react";
 import {
@@ -13,7 +17,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
@@ -189,6 +193,15 @@ const parseExperienceYears = (value: string): string => {
   return value.replace(" Years", "");
 };
 
+const formatEnumValue = (value?: string | null): string => {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 // Returns today's date as YYYY-MM-DD, matching the format <input type="date"> expects.
 const getTodayISO = (): string => {
   const now = new Date();
@@ -206,12 +219,38 @@ const getCurrentTimeHHMM = (): string => {
   return `${hours}:${minutes}`;
 };
 
+const formatDateInputValue = (value?: string | null): string => {
+  if (!value) return "";
+  const dateOnly = value.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  if (dateOnly) return dateOnly;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+};
+
 const PostJobPage = () => {
-  const { mutate, isPending } = CreateJobAdmin();
+  const params = useParams<{ id?: string }>();
+  const editId = params?.id;
+  const isEditMode = Boolean(editId);
+  const { mutate: createJob, isPending: isCreating } = CreateJobAdmin();
+  const {
+    mutateAsync: updateJob,
+    isPending: isUpdating,
+  } = useUpdateJobAdmin();
+  const {
+    data: existingJobData,
+    isPending: isLoadingJob,
+  } = useGetJobById({
+    id: editId,
+    status: "ALL",
+    page: 1,
+    limit: 10,
+  });
   const router = useRouter();
   const [userMode, setUserMode] = useState("MODEL");
   const [title, setTitle] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImage, setExistingImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [dates, setDates] = useState<DateTimeEntry[]>([{ date: "", time: "" }]);
@@ -233,6 +272,7 @@ const PostJobPage = () => {
   const [maxHeight, setMaxHeight] = useState("");
   const [niche, setNiche] = useState("");
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
+  const [existingReferences, setExistingReferences] = useState<string[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [travelCovered, setTravelCovered] = useState(false);
   const [style, setStyle] = useState({
@@ -265,6 +305,52 @@ const PostJobPage = () => {
 
   // Computed once per render; used as the `min` bound for date/time pickers.
   const todayISO = getTodayISO();
+
+  useEffect(() => {
+    const job = existingJobData?.data?.revisedData;
+    if (!isEditMode || !job) return;
+
+    const compensationType = Object.entries(COMPENSATION_TYPE_MAP).find(
+      ([, value]) => value === job.compensationType,
+    )?.[0];
+    const startDate = job.startDateTime ? new Date(job.startDateTime) : null;
+    const schedule = job.schedule?.length
+      ? job.schedule.map((entry: { date?: string; time?: string }) => ({
+          date: formatDateInputValue(entry.date),
+          time: entry.time || "",
+        }))
+      : [
+          {
+            date: startDate ? startDate.toISOString().slice(0, 10) : "",
+            time: startDate ? startDate.toTimeString().slice(0, 5) : "",
+          },
+        ];
+
+    setUserMode(job.userMode || "MODEL");
+    setTitle(job.title || job.en?.title || "");
+    setDescription(job.description || job.en?.description || "");
+    setCompanyName(job.companyName || job.en?.companyName || "");
+    setDates(schedule);
+    setAddress(job.location || job.en?.location || "");
+    setCountry(job.country || "Select");
+    setCity(job.city || "Select");
+    setCompensationType(compensationType || "Paid");
+    setCurrency(String(job.currency || "GBP").toUpperCase());
+    setAmount(job.pay == null ? "" : String(job.pay));
+    setExperience(job.experience ? `${job.experience} Years` : "1-2 Years");
+    setGender(formatEnumValue(job.gender || job.en?.gender));
+    setMinAge(job.minAge == null ? "" : String(job.minAge));
+    setMaxAge(job.maxAge == null ? "" : String(job.maxAge));
+    setMinHeight(job.minHeightInCm == null ? "" : String(job.minHeightInCm));
+    setMaxHeight(job.maxHeightInCm == null ? "" : String(job.maxHeightInCm));
+    setNiche(job.niche || "Select");
+    setTravelCovered(Boolean(job.travelCovered));
+    setAdditionalNotes(job.additionalNotes || "");
+    setLat(job.lat ?? null);
+    setLng(job.lng ?? null);
+    setExistingImage(job.image || null);
+    setExistingReferences(job.uploadReference || []);
+  }, [existingJobData, isEditMode]);
 
   const updateDate = (index: number, value: string) => {
     setDates((prev) =>
@@ -463,7 +549,7 @@ const PostJobPage = () => {
       toast.error("Only image files are allowed.");
     }
 
-    const availableSlots = 10 - referenceFiles.length;
+    const availableSlots = 10 - existingReferences.length - referenceFiles.length;
 
     if (availableSlots <= 0) {
       toast.error("You can upload a maximum of 10 reference images.");
@@ -490,9 +576,13 @@ const PostJobPage = () => {
       prev.filter((_, fileIndex) => fileIndex !== index),
     );
   };
+  const removeExistingReference = (index: number) => {
+    setExistingReferences((prev) =>
+      prev.filter((_, referenceIndex) => referenceIndex !== index),
+    );
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
     // Fallback guard: reject any date/time entries that are in the past,
     // in case the browser's native `min` restriction was bypassed or unsupported.
@@ -517,6 +607,11 @@ const PostJobPage = () => {
       return;
     }
 
+    if (existingReferences.length + referenceFiles.length === 0) {
+      toast.error("Please keep at least one reference image.");
+      return;
+    }
+
     let imageKey: string | null = null;
 
     if (imageFile) {
@@ -532,15 +627,18 @@ const PostJobPage = () => {
         setIsUploading(false);
       }
     }
-    let uploadReference: string[] = [];
+    let uploadReference: string[] = existingReferences;
 
     if (referenceFiles.length > 0) {
       try {
         setIsUploading(true);
 
-        uploadReference = await Promise.all(
+        uploadReference = [
+          ...existingReferences,
+          ...(await Promise.all(
           referenceFiles.map((file) => uploadImage(file)),
-        );
+          )),
+        ];
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -562,6 +660,7 @@ const PostJobPage = () => {
 
     // Plain JSON object — sent as application/json, never FormData.
     const payload = {
+      ...(isEditMode && { id: editId }),
       en: {
         title,
         description,
@@ -627,24 +726,38 @@ const PostJobPage = () => {
       }),
     };
 
-    mutate(payload, {
+    const requestOptions = {
       onSuccess: () => {
         toast.success("Job Created Successfully");
-        router.push("/admin/job-junction");
+        router.replace("/admin/job-junction");
       },
       onError: (err) => {
         if (axios.isAxiosError(err)) {
           toast.error(err.response?.data?.message);
         }
       },
-    });
+    };
+
+    if (isEditMode) {
+      try {
+        await updateJob(payload);
+        toast.success("Job Updated Successfully");
+        router.replace("/admin/job-junction");
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          toast.error(err.response?.data?.message);
+        }
+      }
+    } else {
+      createJob(payload, requestOptions);
+    }
   };
 
-  const isBusy = isPending || isUploading;
+  const isBusy = isCreating || isUpdating || isUploading;
 
   return (
     <>
-      {isPending ? (
+      {isEditMode && isLoadingJob ? (
         <Loader />
       ) : (
         <>
@@ -1190,8 +1303,8 @@ const PostJobPage = () => {
                   className={`${controlClass} flex cursor-pointer items-center justify-between`}
                 >
                   <span className="text-stone-500">
-                    {referenceFiles.length > 0
-                      ? `${referenceFiles.length}/10 images selected`
+                    {existingReferences.length + referenceFiles.length > 0
+                      ? `${existingReferences.length + referenceFiles.length}/10 images selected`
                       : "Upload reference images"}
                   </span>
 
@@ -1203,12 +1316,40 @@ const PostJobPage = () => {
                     multiple
                     className="hidden"
                     onChange={handleReferenceUpload}
-                    disabled={referenceFiles.length >= 10}
+                    disabled={existingReferences.length + referenceFiles.length >= 10}
                   />
                 </label>
 
-                {referenceFiles.length > 0 && (
+                {existingReferences.length + referenceFiles.length > 0 && (
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                    {existingReferences.map((reference, index) => (
+                      <div
+                        key={`existing-reference-${reference}-${index}`}
+                        className="group relative overflow-hidden rounded border border-stone-700"
+                      >
+                        <img
+                          src={
+                            reference.startsWith("http")
+                              ? reference
+                              : `${process.env.NEXT_AWS_S3_BASE_URL}${reference}`
+                          }
+                          alt={`Existing reference ${index + 1}`}
+                          className="h-24 w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingReference(index)}
+                          className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-rose-500 text-white shadow-md transition-colors hover:bg-rose-600"
+                          aria-label={`Remove existing reference ${index + 1}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 truncate bg-black/60 px-1.5 py-1 text-[9px] text-white">
+                          Existing image
+                        </div>
+                      </div>
+                    ))}
+
                     {referenceFiles.map((file, index) => (
                       <div
                         key={`${file.name}-${index}`}
@@ -1223,7 +1364,7 @@ const PostJobPage = () => {
                         <button
                           type="button"
                           onClick={() => removeReferenceFile(index)}
-                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-rose-500 text-white shadow-md transition-colors hover:bg-rose-600"
                           aria-label={`Remove reference ${index + 1}`}
                         >
                           <X className="h-3.5 w-3.5" />
@@ -1257,6 +1398,7 @@ const PostJobPage = () => {
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[260px_1fr]">
               <button
                 type="button"
+                onClick={() => router.back()}
                 className="h-11 rounded-md border border-stone-500 text-xs font-medium text-stone-200 transition-colors hover:border-stone-300 hover:text-white"
               >
                 Cancel
@@ -1268,9 +1410,9 @@ const PostJobPage = () => {
               >
                 {isUploading
                   ? "Uploading..."
-                  : isPending
-                    ? "Posting..."
-                    : "Post Job"}
+                  : isCreating || isUpdating
+                    ? isEditMode ? "Updating..." : "Posting..."
+                    : isEditMode ? "Update Job" : "Post Job"}
               </button>
             </div>
           </form>

@@ -161,9 +161,29 @@ export const useGetJobById = ({id,status,page,limit})=>{
     queryFn:async ()=>{
       const {data}= await axiosInstance.get(`admin/jobsById/${id}?status=${status}&page=${page}&limit=${limit}`);
       return data
-    }
+    },
+    enabled: !!id,
   })
 }
+export const useUpdateJobAdmin = () => {
+   const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.put("/admin/jobs", payload);
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["getjobById"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["getjobJunction"],
+      });
+    },
+  });
+
+};
 export const useCompleteJobById = (id: string) => {
   return useMutation({
     mutationFn: async () => {

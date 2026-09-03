@@ -267,13 +267,20 @@ const EditStudioDetails = () => {
     const startMinutes = timeToMinutes(startTime);
     const nowMinutes = today.getHours() * 60 + today.getMinutes();
 
-    const intervalEndTime = getIntervalEndTime(startTime, interval);
-    if (intervalEndTime) {
-      const intervalEndMinutes = timeToMinutes(intervalEndTime);
-      if (selectedDate === todayString && intervalEndMinutes <= nowMinutes) {
-        return [];
-      }
-      return endTimeOptions.includes(intervalEndTime) ? [intervalEndTime] : [];
+    const intervalMinutes = Number(interval);
+    if (startTime && intervalMinutes > 0) {
+      return endTimeOptions.filter((time) => {
+        const endMinutes = timeToMinutes(time);
+        const elapsedMinutes = endMinutes - startMinutes;
+
+        if (elapsedMinutes < intervalMinutes) return false;
+        if (elapsedMinutes % intervalMinutes !== 0) return false;
+        if (selectedDate === todayString && endMinutes <= nowMinutes) {
+          return false;
+        }
+
+        return true;
+      });
     }
 
     return endTimeOptions.filter((time) => {

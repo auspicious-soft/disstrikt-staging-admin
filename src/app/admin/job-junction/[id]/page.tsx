@@ -12,7 +12,7 @@ import DynamicTable from "@/app/components/DynamicTable";
 import { TableRow } from "@/types/interface-types";
 import { ArrowDown, NavArrowDownSolid } from "iconoir-react";
 import { useGetJobById } from "@/hooks/useAdmin";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Loader from "../../components/ui/Loader";
 
 type ApplicantStatus = "PENDING" | "SHORTLISTED" | "SELECTED" | "REJECTED";
@@ -150,6 +150,7 @@ const JobJunctionDetailsPage = () => {
   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const { id } = useParams();
+  const router = useRouter();
   const { data, isPending } = useGetJobById({
     id,
     status: activeFilter === "ALL" ? "ALL" : activeFilter,
@@ -283,6 +284,7 @@ const JobJunctionDetailsPage = () => {
                 <button
                   type="button"
                   aria-label="Edit job"
+                  onClick={() => router.push(`/admin/job-junction/edit/${id}`)}
                   className="rounded-md border border-stone-700 bg-stone-800 px-3 py-2 text-xs font-medium text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
                 >
                   Edit

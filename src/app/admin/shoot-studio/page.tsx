@@ -6,11 +6,11 @@ import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
 import { Search, ChevronsUpDown, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-interface SelectOption {
-  label: string;
-  value: string;
-}
+import { useGetActivities } from "@/hooks/useAdmin";
+import Loader from "../components/ui/Loader";
+import { toast } from "sonner";
+import { useCountry } from "@/app/components/CountryContext";
+import { useDebouncedValue } from "@/hooks/useDebounce";
 
 interface TableRow {
   _id: string;
@@ -32,29 +32,41 @@ interface TableHeader {
 }
 type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
 
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debounced;
-}
-
 const ShootStudio: React.FC = () => {
-  const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
-   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("upcoming");
-    const [currentPage, setCurrentPage] = useState(1);
-  
+  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("upcoming");
   const [page, setPage] = useState(1);
-  const [limit] = useState(5);
-    const router = useRouter();
+  const { country } = useCountry();
+  const limit = 10;
+  const router = useRouter();
 
 
   const debouncedSearch = useDebouncedValue(search, 500);
+
+  const activityTypeByFilter: Record<ApplicantFilter, string> = {
+    upcoming: "Upcoming",
+    past: "Past",
+    reviewed: "Reviewed",
+    Rejected: "Cancelled",
+  };
+
+  const { data, isPending, isError, error } = useGetActivities({
+  page,
+  limit,
+  type: activityTypeByFilter[activeFilter],
+  country,
+  search:debouncedSearch
+});
+useEffect(() => {
+  if (isError) {
+    const errorMessage =
+      (error as any)?.response?.data?.message ||
+      (error as any)?.message ||
+      "Failed to fetch activities";
+
+    toast.error(errorMessage);
+  }
+}, [isError, error]);
 
  const headers: TableHeader[] = [
   {
@@ -89,99 +101,6 @@ const ShootStudio: React.FC = () => {
   },
 ];
 
- const dummyUsers: TableRow[] = [
-  {
-    _id: "1",
-    userId: "USR001",
-    modelName: "Naomi",
-    activityType: "Photoshoot",
-    studio: "London Studio",
-    date: "24 Jul 2026",
-    timeSlot: "10:30 AM - 12:30 PM",
-  },
-  {
-    _id: "2",
-    userId: "USR002",
-    modelName: "Emily Smith",
-    activityType: "Fashion Shoot",
-    studio: "Manchester Studio",
-    date: "25 Jul 2026",
-    timeSlot: "11:00 AM - 1:00 PM",
-  },
-  {
-    _id: "3",
-    userId: "USR003",
-    modelName: "David Wilson",
-    activityType: "Commercial Shoot",
-    studio: "Birmingham Studio",
-    date: "26 Jul 2026",
-    timeSlot: "2:00 PM - 4:00 PM",
-  },
-  {
-    _id: "4",
-    userId: "USR004",
-    modelName: "Sophia Brown",
-    activityType: "Portfolio Shoot",
-    studio: "London Studio",
-    date: "27 Jul 2026",
-    timeSlot: "9:00 AM - 11:00 AM",
-  },
-  {
-    _id: "5",
-    userId: "USR005",
-    modelName: "Liam Johnson",
-    activityType: "Fitness Shoot",
-    studio: "Leeds Studio",
-    date: "28 Jul 2026",
-    timeSlot: "1:00 PM - 3:00 PM",
-  },
-  {
-    _id: "6",
-    userId: "USR006",
-    modelName: "Noah Williams",
-    activityType: "Editorial Shoot",
-    studio: "Liverpool Studio",
-    date: "29 Jul 2026",
-    timeSlot: "10:00 AM - 12:00 PM",
-  },
-  {
-    _id: "7",
-    userId: "USR007",
-    modelName: "Ava Davis",
-    activityType: "Runway Practice",
-    studio: "London Studio",
-    date: "30 Jul 2026",
-    timeSlot: "3:00 PM - 5:00 PM",
-  },
-  {
-    _id: "8",
-    userId: "USR008",
-    modelName: "James Miller",
-    activityType: "Catalog Shoot",
-    studio: "Bristol Studio",
-    date: "31 Jul 2026",
-    timeSlot: "12:00 PM - 2:00 PM",
-  },
-  {
-    _id: "9",
-    userId: "USR009",
-    modelName: "Charlotte Moore",
-    activityType: "Beauty Shoot",
-    studio: "Oxford Studio",
-    date: "01 Aug 2026",
-    timeSlot: "9:30 AM - 11:30 AM",
-  },
-  {
-    _id: "10",
-    userId: "USR010",
-    modelName: "Benjamin Taylor",
-    activityType: "Product Shoot",
-    studio: "Cambridge Studio",
-    date: "02 Aug 2026",
-    timeSlot: "4:00 PM - 6:00 PM",
-  },
-];
-
   const filters: { label: string; value: ApplicantFilter }[] = [
   { label: "Upcoming Activities", value: "upcoming" },
   { label: "Past Activities", value: "past" },
@@ -189,43 +108,41 @@ const ShootStudio: React.FC = () => {
   { label: "Rejected", value: "Rejected" },
 ];
 
-  const filteredUsers = useMemo(() => {
-    let data = [...dummyUsers];
+  const tableData: TableRow[] = useMemo(() => {
+    const keyword = debouncedSearch.toLowerCase();
 
-  if (debouncedSearch) {
-  const keyword = debouncedSearch.toLowerCase();
+    return (data?.data ?? [])
+      .map((activity: any) => ({
+        _id: activity._id,
+        userId: activity.userId?._id ?? "-",
+        modelName: activity.userId?.fullName ?? "-",
+        activityType: activity.activityType ?? "-",
+        studio: activity.studioId?.name ?? "-",
+        date: new Date(activity.date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        timeSlot: `${activity.startTime} - ${activity.endtime}`,
+      }))
+      .filter((activity: TableRow) =>
+        keyword
+          ? Object.values(activity).some((value) =>
+              value.toLowerCase().includes(keyword)
+            )
+          : true
+      );
+  }, [data, debouncedSearch]);
 
-  data = data.filter(
-    (user) =>
-      user.userId.toLowerCase().includes(keyword) ||
-      user.modelName.toLowerCase().includes(keyword) ||
-      user.activityType.toLowerCase().includes(keyword) ||
-      user.studio.toLowerCase().includes(keyword)
-  );
-}
-
-    return data;
-  }, [debouncedSearch, sort]);
-
-  const totalPages = Math.ceil(filteredUsers.length / limit);
-
-  const paginatedUsers = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredUsers.slice(start, start + limit);
-  }, [filteredUsers, page, limit]);
+  const totalPages = data?.pagination?.totalPages ?? 1;
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sort]);
+  }, [debouncedSearch, activeFilter]);
 
-  const baseSortOptions: SelectOption[] = [
-    { label: "Likes (High → Low)", value: "highToLowLikes" },
-    { label: "Likes (Low → High)", value: "lowToHighLikes" },
-  ];
-
-  const sortOptions = sort
-    ? [...baseSortOptions, { label: "Clear Sorting", value: "" }]
-    : baseSortOptions;
+  if (isPending) {
+    return <Loader />;
+  }
 
   return (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
@@ -239,7 +156,7 @@ const ShootStudio: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setActiveFilter(filter.value);
-                    setCurrentPage(1);
+                    setPage(1);
                   }}
                   className={`rounded-full px-4 py-2 text-xs font-normal transition-colors ${
                     activeFilter === filter.value
@@ -266,7 +183,7 @@ const ShootStudio: React.FC = () => {
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
-            data={paginatedUsers}
+            data={tableData}
             isEyeShow={false}
             renderActions={(row) =>
               activeFilter === "past" ? (

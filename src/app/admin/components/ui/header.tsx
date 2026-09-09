@@ -54,6 +54,7 @@ export function AppHeader() {
     { label: "Spain", value: "ES" },
     { label: "France", value: "FR" },
     { label: "United Kingdom", value: "UK" },
+    { label: "United States", value: "US" },
   ];
 
   // final options with conditional "Clear"

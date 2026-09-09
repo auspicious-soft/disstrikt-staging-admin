@@ -1,5 +1,6 @@
 import { axiosInstance } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ADMIN_URLS } from "@/constants/apiUrls";
 
 interface GetCelebrationCruiseParams {
   page: number;
@@ -12,6 +13,28 @@ interface GetStudiosParams {
   page: number;
   limit: number;
   debouncedSearch:string;
+}
+interface GetActivitiesParams {
+  page: number;
+  limit: number;
+  type: string;
+  country: string;
+  search?: string;
+}
+interface GetActivityByIdParams {
+  slotId: string;
+  type?: string;
+}
+interface ReviewActivityPayload {
+  slotId: string;
+  attended: "yes" | "no";
+  rating: number;
+  images: string[];
+  comments: string;
+}
+interface CancelActivityPayload {
+  slotId: string;
+  comments: string;
 }
 interface CreateStudioPayload {
   timeZone: string;
@@ -116,6 +139,68 @@ export const useGetCelebrationCruise = ({
     },
   });
 };
+export const useGetActivities = ({
+  page,
+  limit,
+  type,
+  country,
+  search,
+}: GetActivitiesParams) => {
+  return useQuery({
+    queryKey: ["activities", page, limit, type, country, search],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/admin/activities", {
+        params: { type, page, limit, country, search },
+      });
+
+      return data.data;
+    },
+  });
+};
+
+export const useGetActivityById = ({
+  slotId,
+  type,
+}: GetActivityByIdParams) => {
+  return useQuery({
+    queryKey: ["activityById", slotId, type],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/admin/activitiesById", {
+        params: { slotId, ...(type ? { type } : {}) },
+      });
+
+      return data?.data ?? data;
+    },
+    enabled: Boolean(slotId),
+  });
+};
+
+export const useReviewActivity = () => {
+  return useMutation({
+    mutationFn: async (payload: ReviewActivityPayload) => {
+      const { data } = await axiosInstance.post(
+        "admin/activitiesById",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
+export const useCancelActivity = () => {
+  return useMutation({
+    mutationFn: async (payload: CancelActivityPayload) => {
+      const { data } = await axiosInstance.put(
+        "admin/activitiesById",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
 export const useGetCelebrationCruiseById = (id: any) => {
   return useQuery({
     queryKey: ["celebrationCruiseById", id],

@@ -290,7 +290,7 @@ const EditDisstriktonitePage = () => {
                   onChange={handleChange}
                   disabled={isLoading}
                 >
-                  <option value="">Select Role</option>
+                  <option value="" className="bg-[#151518]">Select Role</option>
 
                   {roleOptions.map((role: any, index: number) => {
                     const roleValue =
@@ -302,7 +302,7 @@ const EditDisstriktonitePage = () => {
                       `Role ${index + 1}`;
 
                     return (
-                      <option key={roleValue || index} value={roleValue}>
+                      <option key={roleValue || index} value={roleValue} className="bg-[#151518]">
                         {roleLabel}
                       </option>
                     );

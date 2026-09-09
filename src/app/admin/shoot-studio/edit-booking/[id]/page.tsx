@@ -1,11 +1,12 @@
 "use client";
 
-import CustomSelect from "@/app/components/CustomSelect";
 import { NavArrowDownSolid } from "iconoir-react";
-import { ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { useGetActivityById } from "@/hooks/useAdmin";
+import { useCancelActivity } from "@/hooks/useAdmin";
+import Loader from "@/app/admin/components/ui/Loader";
 
 const detailClass = "space-y-2";
 const labelClass = "text-xs font-normal text-stone-400";
@@ -60,7 +61,40 @@ const Panel = ({
 
 const EditBookingPage = () => {
   const router = useRouter();
-  const [country, setCountry] = useState("");
+  const params = useParams<{ id: string }>();
+  const { data, isPending } = useGetActivityById({
+    slotId: params.id,
+    type: "Upcoming",
+  });
+  const activity = Array.isArray(data) ? data[0] ?? {} : data ?? {};
+  const user = activity.userId ?? activity.user ?? {};
+    const { mutateAsync: cancelActivity, isPending: isCancelling } =
+      useCancelActivity();
+  const shootDetails = activity.shootDetails ?? activity.details ?? {};
+  const formatValue = (value: unknown, fallback = "-") =>
+    value === undefined || value === null || value === "" ? fallback : String(value);
+  const formatDate = (value: unknown) => {
+    if (!value) return "-";
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime())
+      ? formatValue(value)
+      : date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+  };
+  const addons = activity.addOnFeatures ?? shootDetails.addOnFeatures ?? [];
+
+  const handleCancelBooking = async () => {
+    await cancelActivity({
+      slotId: params.id,
+      comments: "",
+    });
+    router.push("/admin/shoot-studio");
+  };
+
+  if (isPending) return <Loader />;
 
   return (
     <div className="w-full text-stone-100">
@@ -69,52 +103,60 @@ const EditBookingPage = () => {
       </div>
 
       <Panel title="Model Details">
-        <DetailItem label="Model Name" value="Naomi" />
-        <DetailItem label="Gender" value="Male" />
-        <DetailItem label="Phone Number" value="+7 457 458 7896" />
-        <DetailItem label="Email Address" value="johnsonalexu@gmail.com" />
+        <DetailItem label="Model Name" value={formatValue(user.fullName)} />
+        <DetailItem label="Gender" value={formatValue(user.gender)} />
+        <DetailItem label="Phone Number" value={formatValue(user.phoneNumber ?? user.phone)} />
+        <DetailItem label="Email Address" value={formatValue(user.email)} />
       </Panel>
 
       <Panel title="Booking Details" columns={3}>
-        <DetailItem label="Studio" value="London" />
-        <DetailItem label="Date" value="24 July 2026" />
-        <DetailItem label="Time" value="10:30 AM" />
+        <DetailItem label="Studio" value={formatValue(activity.studioId?.name)} />
+        <DetailItem label="Date" value={formatDate(activity.date)} />
+        <DetailItem
+          label="Time"
+          value={`${formatValue(activity.startTime)} - ${formatValue(activity.endtime)}`}
+        />
       </Panel>
       <Panel title="Shoot Details">
-        <DetailItem label="Shoot Goal" value="Digitals" />
-        <DetailItem label="Shoot Format" value="Portraits" />
+        <DetailItem label="Shoot Goal" value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)} />
+        <DetailItem label="Shoot Format" value={formatValue(shootDetails.shootFormat ?? activity.shootFormat)} />
 
-        <DetailItem label="Shoot Vibes" value="Clean & Minimal" />
-        <DetailItem label="Outfit" value="1" />
+        <DetailItem label="Shoot Vibes" value={formatValue(activity.vibes ?? shootDetails.vibes)} />
+        <DetailItem label="Outfit" value={formatValue(activity.canBringOutfits ?? shootDetails.canBringOutfits)} />
 
         <div className="md:col-span-2 space-y-2">
           <p className={labelClass}>Requested addons</p>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-stone-100">
-            <div className="flex items-center gap-2">
-              <span className="text-stone-400">•</span>
-              <span>Retouch 3 Pictures (Charges $9.99)</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-stone-400">•</span>
-              <span>Retouch 3 Pictures (Charges $9.99)</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-stone-400">•</span>
-              <span>Retouch 3 Pictures (Charges $9.99)</span>
-            </div>
+            {Array.isArray(addons) && addons.length > 0 ? (
+              addons.map((addon: unknown, index: number) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-stone-400">•</span>
+                  <span>
+                    {typeof addon === "string"
+                      ? addon
+                      : `${formatValue((addon as { key?: unknown }).key)}${
+                          (addon as { value?: unknown }).value !== undefined
+                            ? ` (Charges $${formatValue((addon as { value?: unknown }).value)})`
+                            : ""
+                        }`}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <span className="text-stone-400">-</span>
+            )}
           </div>
         </div>
       </Panel>
 
       <button
         type="button"
-        onClick={() => router.push("/admin/training-theater")}
-        className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600"
+        onClick={handleCancelBooking}
+        disabled={isCancelling}
+        className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Cancel Booking
+        {isCancelling ? "Cancelling..." : "Cancel Booking"}
       </button>
     </div>
   );

@@ -191,7 +191,7 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={() =>
-                    router.push(`/admin/shoot-studio/review-activity/${row._id}`)
+                    router.push(`/admin/training-theater/review-activity/${row._id}`)
                   }
                   className="text-xs font-medium text-blue-500 hover:underline"
                 >

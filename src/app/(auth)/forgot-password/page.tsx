@@ -38,11 +38,6 @@ export default function Home() {
   };
 
   return (
-    <>
-      {loading ? (
-        <Loader />
-      ) : (
-        <>
           <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
             <div className="absolute inset-0">
               <Image
@@ -102,7 +97,7 @@ export default function Home() {
 
                   <ArrowButton
                     type="submit"
-                    text="Next"
+                    text={loading ? "Loading":"Next"}
                     onClick={handleFogetPassword}
                     disabled={loading}
                   />
@@ -120,8 +115,5 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </>
-      )}
-    </>
   );
 }

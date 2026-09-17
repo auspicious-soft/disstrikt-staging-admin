@@ -120,8 +120,19 @@ const ReviewActivityPage = () => {
     value === undefined || value === null || value === "" ? fallback : String(value);
 
   const getImageUrl = (image: string) => {
-    if (image.startsWith("http")) return image;
-    return `${process.env.NEXT_PUBLIC_AWS_BUCKET_PATH ?? ""}${image}`;
+    if (/^(https?:|blob:|data:)/.test(image)) return image;
+    const baseUrl = process.env.NEXT_PUBLIC_AWS_BUCKET_PATH ?? "";
+    return `${baseUrl.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
+  };
+
+  const getImageKey = (image: string) => {
+    if (!image.startsWith("http")) return image;
+
+    try {
+      return decodeURIComponent(new URL(image).pathname).replace(/^\//, "");
+    } catch {
+      return image;
+    }
   };
 
   const getImageValue = (image: unknown) => {
@@ -145,7 +156,7 @@ const ReviewActivityPage = () => {
     });
 
     if (!response.ok) throw new Error("Image upload failed");
-    return getImageUrl(key);
+    return key;
   };
 
   const handleSave = async () => {
@@ -160,7 +171,7 @@ const ReviewActivityPage = () => {
         ...existingPictures
           .map(getImageValue)
           .filter(Boolean)
-          .map(getImageUrl),
+          .map(getImageKey),
         ...uploadedImages,
       ],
       comments: isPresent ? comments || initialComments : "",

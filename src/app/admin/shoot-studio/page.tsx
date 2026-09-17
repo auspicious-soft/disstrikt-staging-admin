@@ -74,6 +74,9 @@ const ShootStudio: React.FC = () => {
   activity:"shootStudio"
 });
 useEffect(() => {
+  localStorage.setItem("shootStudioActiveFilter", activeFilter);
+}, [activeFilter]);
+useEffect(() => {
   if (isError) {
     const errorMessage =
       (error as any)?.response?.data?.message ||

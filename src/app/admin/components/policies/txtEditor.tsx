@@ -84,7 +84,7 @@ export const TextEditor = ({
                   </div>
                 ) : (
                   <Editor
-                    apiKey="bfiif5l897h0tnz5633ntzuzxtnccbq360798pls2ilxjs0o"
+                    apiKey="i3y7w8pix5hu1az8npcsfq12hpoad2fwmncoil6vh40brkif"
                     value={value}
                     onInit={handleEditorInit}
                     init={{

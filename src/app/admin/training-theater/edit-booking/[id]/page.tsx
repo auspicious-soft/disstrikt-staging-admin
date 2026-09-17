@@ -117,7 +117,7 @@ const EditBookingPage = () => {
           value={`${formatValue(activity.startTime)} - ${formatValue(activity.endtime)}`}
         />
       </Panel>
-      <Panel title="Shoot Details">
+      {/* <Panel title="Shoot Details">
         <DetailItem label="Shoot Goal" value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)} />
         <DetailItem label="Shoot Format" value={formatValue(shootDetails.shootFormat ?? activity.shootFormat)} />
 
@@ -148,7 +148,7 @@ const EditBookingPage = () => {
             )}
           </div>
         </div>
-      </Panel>
+      </Panel> */}
 
       <button
         type="button"

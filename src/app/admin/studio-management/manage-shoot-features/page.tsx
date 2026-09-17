@@ -433,7 +433,7 @@ const ManageShootFeatures = () => {
           ...section.fields,
         ];
 
-        updatedFields[index] = value;
+        updatedFields[index] = value.trimStart();
 
         return {
           ...section,
@@ -731,7 +731,7 @@ const ManageShootFeatures = () => {
 
         {/* Add On Features */}
 
-        <section className="overflow-hidden rounded-xl border border-stone-700">
+        {/* <section className="overflow-hidden rounded-xl border border-stone-700">
 
           <SectionHeader
             title="Add On Features"
@@ -811,7 +811,7 @@ const ManageShootFeatures = () => {
 
           </div>
 
-        </section>
+        </section> */}
 
         {/* Shoot Policy */}
 

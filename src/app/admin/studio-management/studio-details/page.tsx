@@ -525,7 +525,7 @@ const StudioDetails = () => {
       timeZone:
         Intl.DateTimeFormat().resolvedOptions().timeZone,
 
-      name: studioName,
+      name: studioName.trim(),
       location,
       city,
       country,

@@ -761,7 +761,7 @@ const EditStudioDetails = () => {
 
     const basePayload = {
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      name: studioName,
+      name: studioName.trim(),
       location,
       city,
       country,

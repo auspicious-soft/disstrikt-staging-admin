@@ -11,6 +11,7 @@ import Loader from "../components/ui/Loader";
 import { toast } from "sonner";
 import { useCountry } from "@/app/components/CountryContext";
 import { useDebouncedValue } from "@/hooks/useDebounce";
+import { Eye } from "iconoir-react";
 
 interface TableRow {
   _id: string;
@@ -20,6 +21,7 @@ interface TableRow {
   studio: string;
   date: string;
   timeSlot: string;
+  comments: string;
 }
 
 interface TableHeader {
@@ -35,26 +37,25 @@ type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
 const ShootStudio: React.FC = () => {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>(() => {
-  if (typeof window !== "undefined") {
-    const savedFilter = localStorage.getItem("shootStudioActiveFilter");
+    if (typeof window !== "undefined") {
+      const savedFilter = localStorage.getItem("shootStudioActiveFilter");
 
-    if (
-      savedFilter === "upcoming" ||
-      savedFilter === "past" ||
-      savedFilter === "reviewed" ||
-      savedFilter === "Rejected"
-    ) {
-      return savedFilter;
+      if (
+        savedFilter === "upcoming" ||
+        savedFilter === "past" ||
+        savedFilter === "reviewed" ||
+        savedFilter === "Rejected"
+      ) {
+        return savedFilter;
+      }
     }
-  }
 
-  return "upcoming";
-});
+    return "upcoming";
+  });
   const [page, setPage] = useState(1);
   const { country } = useCountry();
   const limit = 10;
   const router = useRouter();
-
 
   const debouncedSearch = useDebouncedValue(search, 500);
 
@@ -66,66 +67,66 @@ const ShootStudio: React.FC = () => {
   };
 
   const { data, isPending, isError, error } = useGetActivities({
-  page,
-  limit,
-  type: activityTypeByFilter[activeFilter],
-  country,
-  search:debouncedSearch,
-  activity:"shootStudio"
-});
-useEffect(() => {
-  localStorage.setItem("shootStudioActiveFilter", activeFilter);
-}, [activeFilter]);
-useEffect(() => {
-  if (isError) {
-    const errorMessage =
-      (error as any)?.response?.data?.message ||
-      (error as any)?.message ||
-      "Failed to fetch activities";
+    page,
+    limit,
+    type: activityTypeByFilter[activeFilter],
+    country,
+    search: debouncedSearch,
+    activity: "shootStudio",
+  });
+  useEffect(() => {
+    localStorage.setItem("shootStudioActiveFilter", activeFilter);
+  }, [activeFilter]);
+  useEffect(() => {
+    if (isError) {
+      const errorMessage =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        "Failed to fetch activities";
 
-    toast.error(errorMessage);
-  }
-}, [isError, error]);
+      toast.error(errorMessage);
+    }
+  }, [isError, error]);
 
- const headers: TableHeader[] = [
-  {
-    label: "User ID",
-    key: "userId",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-  {
-    label: "Model Name",
-    key: "modelName",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-  {
-    label: "Activity Type",
-    key: "activityType",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-  {
-    label: "Studio",
-    key: "studio",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-  {
-    label: "Date",
-    key: "date",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-  {
-    label: "Time Slot",
-    key: "timeSlot",
-    icon: <ChevronsUpDown className="w-4 h-4" />,
-  },
-];
+  const headers: TableHeader[] = [
+    {
+      label: "User ID",
+      key: "userId",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Model Name",
+      key: "modelName",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Activity Type",
+      key: "activityType",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Studio",
+      key: "studio",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Date",
+      key: "date",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Time Slot",
+      key: "timeSlot",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+  ];
 
   const filters: { label: string; value: ApplicantFilter }[] = [
-  { label: "Upcoming Activities", value: "upcoming" },
-  { label: "Past Activities", value: "past" },
-  { label: "Reviewed", value: "reviewed" },
-  { label: "Rejected", value: "Rejected" },
-];
+    { label: "Upcoming Activities", value: "upcoming" },
+    { label: "Past Activities", value: "past" },
+    { label: "Reviewed", value: "reviewed" },
+    { label: "Rejected", value: "Rejected" },
+  ];
 
   const tableData: TableRow[] = useMemo(() => {
     const keyword = debouncedSearch.toLowerCase();
@@ -143,13 +144,16 @@ useEffect(() => {
           year: "numeric",
         }),
         timeSlot: `${activity.startTime} - ${activity.endtime}`,
+        comments: activity.comments?.trim()
+          ? activity.comments
+          : "No reason provided",
       }))
       .filter((activity: TableRow) =>
         keyword
           ? Object.values(activity).some((value) =>
-              value.toLowerCase().includes(keyword)
+              value.toLowerCase().includes(keyword),
             )
-          : true
+          : true,
       );
   }, [data, debouncedSearch]);
 
@@ -209,7 +213,9 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={() =>
-                    router.push(`/admin/shoot-studio/review-activity/${row._id}`)
+                    router.push(
+                      `/admin/shoot-studio/review-activity/${row._id}`,
+                    )
                   }
                   className="text-xs font-medium text-blue-500 hover:underline"
                 >
@@ -220,12 +226,44 @@ useEffect(() => {
                   type="button"
                   aria-label="Edit booking"
                   onClick={() =>
-                    router.push(`/admin/shoot-studio/edit-booking/${row._id}`)
+                    router.push(
+                      `/admin/training-theater/edit-booking/${row._id}`,
+                    )
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
+              ) : activeFilter === "reviewed" || activeFilter === "Rejected" ? (
+                <div className="relative inline-block group">
+                  <button
+                    type="button"
+                    aria-label="View activity"
+                    onClick={() =>
+                      router.push(
+                        `/admin/training-theater/review-activity/${row._id}`,
+                      )
+                    }
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Tooltip */}
+                  <div
+                    role="tooltip"
+                    className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 w-max max-w-[240px] scale-95 rounded-md bg-stone-900 px-3 py-2 text-xs text-stone-200 opacity-0 shadow-lg ring-1 ring-stone-700 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100"
+                  >
+                    <span className="block font-medium text-stone-400">
+                      Cancellation reason
+                    </span>
+                    <span className="block whitespace-normal">
+                      {row.comments}
+                    </span>
+                    {/* little arrow */}
+                    <div className="absolute right-3 top-full h-2 w-2 -translate-y-1 rotate-45 bg-stone-900 ring-1 ring-stone-700" />
+                  </div>
+                </div>
               ) : null
             }
             showActionsHeaderLabel={true}

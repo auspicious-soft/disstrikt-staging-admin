@@ -31,6 +31,47 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   isEyeShow = true,
   showActionsHeaderLabel = true,
 }) => {
+  const [sort, setSort] = React.useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+
+  const handleSort = (key: string) => {
+    setSort((currentSort) => {
+      if (!currentSort || currentSort.key !== key) {
+        return { key, direction: "asc" };
+      }
+
+      if (currentSort.direction === "asc") {
+        return { key, direction: "desc" };
+      }
+
+      return null;
+    });
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!sort) return data;
+
+    return [...data].sort((left, right) => {
+      const leftValue = left[sort.key];
+      const rightValue = right[sort.key];
+
+      if (leftValue === rightValue) return 0;
+      if (leftValue === null || leftValue === undefined) return 1;
+      if (rightValue === null || rightValue === undefined) return -1;
+
+      const comparison =
+        typeof leftValue === "number" && typeof rightValue === "number"
+          ? leftValue - rightValue
+          : String(leftValue).localeCompare(String(rightValue), undefined, {
+              sensitivity: "base",
+            });
+
+      return sort.direction === "asc" ? comparison : -comparison;
+    });
+  }, [data, sort]);
+
   const columnCount =
     headers.length + ((rowIcon && isEyeShow) || renderActions ? 1 : 0);
   const defaultWidth = `${100 / columnCount}%`;
@@ -52,18 +93,35 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           {headers.map((header, index) => (
             <th
               key={index}
+              aria-sort={
+                sort?.key === header.key
+                  ? sort.direction === "asc"
+                    ? "ascending"
+                    : "descending"
+                  : "none"
+              }
               className={`px-5 py-px text-${header.align || "start"} ${
                 header.width || defaultWidth
               } font-medium text-stone-200 text-sm  leading-tight truncate`}
             >
-              <div
-                className={`flex items-center text-white/90 text-sm gap-1 ${
+              <button
+                type="button"
+                onClick={() => handleSort(header.key)}
+                disabled={!header.icon}
+                className={`flex w-full items-center text-white/90 text-sm gap-1 disabled:cursor-default ${
                   headerJustifyClasses[header.align || "start"]
                 }`}
               >
                 <span className="truncate">{header.label}</span>
                 {header.icon && (
-                  <div className="w-4 h-4 relative opacity-50">
+                  <span
+                    className={`relative h-4 w-4 shrink-0 ${
+                      sort?.key === header.key
+                        ? "text-rose-400 opacity-100"
+                        : "opacity-50"
+                    }`}
+                    aria-hidden="true"
+                  >
                     {typeof header.icon === "string" ? (
                       <img
                         src={header.icon}
@@ -73,9 +131,9 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
                     ) : (
                       header.icon
                     )}
-                  </div>
+                  </span>
                 )}
-              </div>
+              </button>
             </th>
           ))}
 
@@ -92,7 +150,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
 
       <tbody>
         {data.length > 0 ? (
-          data.map((row, rowIndex) => (
+          sortedData.map((row, rowIndex) => (
             <tr
               key={rowIndex}
               className="h-12 border-b text-white/70 border-stone-700 last:border-b-0"

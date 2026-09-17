@@ -5,7 +5,12 @@ import CustomInput from "@/app/components/CustomInput";
 import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
 import CustomButton from "@/app/components/CustomButton";
-import { Search, ChevronsUpDown, Trash2, X } from "lucide-react";
+import {
+  Search,
+  ChevronsUpDown,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { toast } from "sonner";
@@ -49,7 +54,6 @@ interface TableHeader {
 const CelebrationCruise: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -133,7 +137,7 @@ const CelebrationCruise: React.FC = () => {
     1;
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sort]);
+  }, [debouncedSearch]);
   useEffect(() => {
     if (isError) {
       toast.error("Error fetching studios");

@@ -20,6 +20,7 @@ interface GetActivitiesParams {
   type: string;
   country: string;
   search?: string;
+  activity:string;
 }
 interface GetActivityByIdParams {
   slotId: string;
@@ -145,12 +146,13 @@ export const useGetActivities = ({
   type,
   country,
   search,
+  activity,
 }: GetActivitiesParams) => {
   return useQuery({
-    queryKey: ["activities", page, limit, type, country, search],
+    queryKey: ["activities", page, limit, type, country, search,activity],
     queryFn: async () => {
       const { data } = await axiosInstance.get("/admin/activities", {
-        params: { type, page, limit, country, search },
+        params: { type, page, limit, country, search,activity },
       });
 
       return data.data;
@@ -176,6 +178,7 @@ export const useGetActivityById = ({
 };
 
 export const useReviewActivity = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: ReviewActivityPayload) => {
       const { data } = await axiosInstance.post(
@@ -185,10 +188,16 @@ export const useReviewActivity = () => {
 
       return data;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["activities"],
+      });
+    },
   });
 };
 
 export const useCancelActivity = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CancelActivityPayload) => {
       const { data } = await axiosInstance.put(
@@ -197,6 +206,11 @@ export const useCancelActivity = () => {
       );
 
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["activities"],
+      });
     },
   });
 };

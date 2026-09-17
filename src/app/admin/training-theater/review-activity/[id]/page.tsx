@@ -1,11 +1,13 @@
 "use client";
 
-import Image from "next/image";
-import dummyUserImg from "@/assets/images/dummyUserImg.png";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState, type ReactNode } from "react";
 import { NavArrowDownSolid } from "iconoir-react";
+import { generateSignedUrlToUploadOn } from "@/actions";
+import { useGetActivityById } from "@/hooks/useAdmin";
+import { useReviewActivity } from "@/hooks/useAdmin";
+import Loader from "@/app/admin/components/ui/Loader";
 
 const labelClass = "text-xs font-normal text-stone-400";
 const valueClass = "text-sm font-medium text-stone-100";
@@ -55,13 +57,25 @@ const Panel = ({
   );
 };
 
-const SelectControl = ({ label }: { label: string }) => (
+const SelectControl = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => (
   <label className="block">
     <span className="mb-2 block text-xs font-normal text-stone-200">
       {label}
     </span>
     <div className="relative">
-      <select defaultValue="1 Star" className={`${controlClass} pr-9`}>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${controlClass} pr-9`}
+      >
         <option className="bg-neutral-900">1 Star</option>
         <option className="bg-neutral-900">2 Stars</option>
         <option className="bg-neutral-900">3 Stars</option>
@@ -75,15 +89,124 @@ const SelectControl = ({ label }: { label: string }) => (
 
 const ReviewActivityPage = () => {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const { data, isPending } = useGetActivityById({
+    slotId: params.id,
+    type: "Review",
+  });
+  const [wasPresent, setWasPresent] = useState<boolean | null>(null);
+  const [rating, setRating] = useState("");
+  const [comments, setComments] = useState("");
+  const [pictures, setPictures] = useState<string[]>([]);
+  const [pictureFiles, setPictureFiles] = useState<File[]>([]);
+  const { mutateAsync: reviewActivity, isPending: isSaving } = useReviewActivity();
+
+  const activity = useMemo(() => {
+    if (Array.isArray(data)) return data[0] ?? {};
+    return data ?? {};
+  }, [data]);
+  const user = activity.userId ?? activity.user ?? {};
+  const shootDetails = activity.shootDetails ?? activity.details ?? {};
+  const existingPictures = activity.images ?? activity.pictures ?? [];
+  const addons = activity.addOnFeatures ?? shootDetails.addOnFeatures ?? [];
+
+  const isPresent =
+    wasPresent ??
+    (activity.attended === "yes" || activity.attended === true || activity.attended == null);
+  const initialRating = activity.rating ? `${activity.rating} Star${activity.rating === 1 ? "" : "s"}` : "";
+  const initialComments = activity.comments ?? "";
+
+  const formatValue = (value: unknown, fallback = "-") =>
+    value === undefined || value === null || value === "" ? fallback : String(value);
+
+  const getImageUrl = (image: string) => {
+    if (image.startsWith("http")) return image;
+    return `${process.env.NEXT_PUBLIC_AWS_BUCKET_PATH ?? ""}${image}`;
+  };
+
+  const getImageValue = (image: unknown) => {
+    if (typeof image === "string") return image;
+    if (image && typeof image === "object") {
+      const imageObject = image as { url?: unknown; path?: unknown; key?: unknown };
+      return String(imageObject.url ?? imageObject.path ?? imageObject.key ?? "");
+    }
+    return "";
+  };
+
+  const uploadImage = async (file: File) => {
+    const { signedUrl, key } = await generateSignedUrlToUploadOn(
+      `${Date.now()}-${file.name}`,
+      file.type,
+    );
+    const response = await fetch(signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!response.ok) throw new Error("Image upload failed");
+    return getImageUrl(key);
+  };
+
+  const handleSave = async () => {
+    const uploadedImages = await Promise.all(pictureFiles.map(uploadImage));
+    await reviewActivity({
+      slotId: params.id,
+      attended: isPresent ? "yes" : "no",
+      rating: isPresent
+        ? Number((rating || initialRating).split(" ")[0]) || 0
+        : 0,
+      images: [
+        ...existingPictures
+          .map(getImageValue)
+          .filter(Boolean)
+          .map(getImageUrl),
+        ...uploadedImages,
+      ],
+      comments: isPresent ? comments || initialComments : "",
+    });
+    router.push("/admin/training-theater");
+  };
+
+  if (isPending) return <Loader />;
 
   return (
     <div className="w-full space-y-5 text-stone-100">
       <Panel title="Model Details" collapsible>
         <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-2">
-          <DetailItem label="Model Name" value="Naomi" />
-          <DetailItem label="Gender" value="Male" />
-          <DetailItem label="Phone Number" value="+7 457 458 7896" />
-          <DetailItem label="Email Address" value="johnsonalexu@gmail.com" />
+          <DetailItem label="Model Name" value={formatValue(user.fullName)} />
+          <DetailItem label="Gender" value={formatValue(user.gender)} />
+          <DetailItem label="Phone Number" value={formatValue(user.phoneNumber ?? user.phone)} />
+          <DetailItem label="Email Address" value={formatValue(user.email)} />
+        </div>
+      </Panel>
+      <Panel title="Shoot Details" collapsible>
+        <div className="grid grid-cols-1 gap-x-20 gap-y-6 md:grid-cols-2 mb-2 md:mb-4">
+          <DetailItem label="Shoot Goal" value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)} />
+          <DetailItem label="Shoot Format" value={formatValue(activity.shootFormat ?? shootDetails.shootFormat)} />
+
+          <DetailItem label="Shoot Vibes" value={formatValue(activity.vibes ?? shootDetails.vibes)} />
+          <DetailItem label="Outfit" value={formatValue(activity.canBringOutfits ?? shootDetails.canBringOutfits)} />
+        </div>
+        <div className="md:col-span-2 space-y-2">
+          <p className={labelClass}>Requested add ons</p>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-stone-100">
+            {Array.isArray(addons) && addons.length > 0 ? addons.map((addon: unknown, index: number) => (
+              <div key={index} className="flex items-center gap-2">
+                <span className="text-stone-400">•</span>
+                <span>
+                  {typeof addon === "string"
+                    ? addon
+                    : `${formatValue((addon as { key?: unknown }).key)}${
+                        (addon as { value?: unknown }).value !== undefined
+                          ? ` (Charges $${formatValue((addon as { value?: unknown }).value)})`
+                          : ""
+                      }`}
+                </span>
+              </div>
+            )) : <span className="text-stone-400">-</span>}
+          </div>
         </div>
       </Panel>
 
@@ -98,7 +221,8 @@ const ReviewActivityPage = () => {
                 <input
                   type="radio"
                   name="presence"
-                  defaultChecked
+                  checked={isPresent}
+                  onChange={() => setWasPresent(true)}
                   className="h-3 w-3 accent-rose-500"
                 />
                 Yes, was present.
@@ -107,6 +231,8 @@ const ReviewActivityPage = () => {
                 <input
                   type="radio"
                   name="presence"
+                  checked={!isPresent}
+                  onChange={() => setWasPresent(false)}
                   className="h-3 w-3 accent-rose-500"
                 />
                 No, did not show up
@@ -114,53 +240,70 @@ const ReviewActivityPage = () => {
             </div>
           </div>
 
-          <div>
+          {isPresent && <div>
             <p className="mb-3 text-xs font-normal text-white/60">
               Upload Pictures
             </p>
             <div className="flex flex-wrap gap-2">
-              {[0, 1, 2].map((item) => (
+              {[...existingPictures, ...pictures].map((picture: string | { url?: string; path?: string }, item: number) => (
                 <div
                   key={item}
                   className="relative h-28 w-32 overflow-hidden rounded-md border border-stone-600 bg-stone-900"
                 >
-                  <Image
-                    src={dummyUserImg}
+                  <img
+                    src={getImageUrl(getImageValue(picture))}
                     alt="Uploaded activity"
-                    fill
-                    sizes="128px"
-                    className="object-cover"
+                    className="h-full w-full object-cover"
                   />
                 </div>
               ))}
-              <button
-                type="button"
-                className="flex h-28 w-32 items-center justify-center gap-2 rounded-md border border-stone-700 bg-[#1A1A1ACC] text-[10px] font-normal text-stone-300 transition-colors hover:bg-white/10"
-              >
+              <label className="flex h-28 w-32 cursor-pointer items-center justify-center gap-2 rounded-md border border-stone-700 bg-[#1A1A1ACC] text-[10px] font-normal text-stone-300 transition-colors hover:bg-white/10">
                 <Plus className="h-3 w-3" />
                 Add More
-              </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    setPictureFiles((current) => [...current, ...files]);
+                    setPictures((current) => [
+                      ...current,
+                      ...files.map((file) => URL.createObjectURL(file)),
+                    ]);
+                  }}
+                />
+              </label>
             </div>
-          </div>
+          </div>}
         </div>
       </Panel>
 
       <Panel title="Ratings & Review" collapsible>
         <div className="space-y-4">
-          <SelectControl label="Rate this activity" />
+          {isPresent && (
+            <SelectControl
+              label="Rate this activity"
+              value={rating || initialRating}
+              onChange={setRating}
+            />
+          )}
 
-          <label className="block">
+          {isPresent && <label className="block">
             <span className="mb-2 block text-xs font-normal text-stone-200">
               Comments
             </span>
             <div className="relative">
               <textarea
                 placeholder="Add Comments"
+                value={comments || initialComments}
+                onChange={(event) => setComments(event.target.value)}
                 rows={5}
                 className="w-full resize-none rounded-md border border-stone-700 bg-transparent px-3 py-3 text-xs font-normal text-stone-200 outline-none transition-colors focus:border-rose-500"
               />
             </div>
-          </label>
+          </label>}
         </div>
       </Panel>
 
@@ -174,10 +317,11 @@ const ReviewActivityPage = () => {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/training-theater")}
+          onClick={handleSave}
+          disabled={isSaving}
           className="h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600"
         >
-          Save
+          {isSaving ? "Saving..." : "Save"}
         </button>
       </div>
     </div>

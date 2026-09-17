@@ -1,10 +1,12 @@
 "use client";
 
-import CustomSelect from "@/app/components/CustomSelect";
-import { ChevronsUpDown } from "lucide-react";
+import { NavArrowDownSolid } from "iconoir-react";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { useGetActivityById } from "@/hooks/useAdmin";
+import { useCancelActivity } from "@/hooks/useAdmin";
+import Loader from "@/app/admin/components/ui/Loader";
 
 const detailClass = "space-y-2";
 const labelClass = "text-xs font-normal text-stone-400";
@@ -25,52 +27,136 @@ const Panel = ({
   title: string;
   children: ReactNode;
   columns?: 2 | 3;
-}) => (
-  <section className="mb-4 overflow-hidden rounded-md border border-stone-700 bg-black/10">
-    <div className="flex h-10 items-center bg-white/10 px-4">
-      <h2 className="text-sm font-medium text-stone-100">{title}</h2>
-    </div>
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
 
-    <div
-      className={`grid grid-cols-1 gap-x-20 gap-y-6 px-4 py-5 ${
-        columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
-      }`}
-    >
-      {children}
-    </div>
-  </section>
-);
+  return (
+    <section className="mb-4 overflow-hidden rounded-md border border-stone-700 bg-black/10">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-10 w-full items-center justify-between bg-white/10 px-4"
+      >
+        <h2 className="text-sm font-medium text-stone-100">{title}</h2>
+
+        <NavArrowDownSolid
+          className={`h-5 w-5 transition-transform duration-300 ${
+            isOpen ? "rotate-0" : "-rotate-180"
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className={`grid grid-cols-1 gap-x-20 gap-y-6 px-4 py-5 ${
+            columns === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
+          }`}
+        >
+          {children}
+        </div>
+      )}
+    </section>
+  );
+};
 
 const EditBookingPage = () => {
   const router = useRouter();
-  const [country, setCountry] = useState("");
+  const params = useParams<{ id: string }>();
+  const { data, isPending } = useGetActivityById({
+    slotId: params.id,
+    type: "Upcoming",
+  });
+  const activity = Array.isArray(data) ? data[0] ?? {} : data ?? {};
+  const user = activity.userId ?? activity.user ?? {};
+    const { mutateAsync: cancelActivity, isPending: isCancelling } =
+      useCancelActivity();
+  const shootDetails = activity.shootDetails ?? activity.details ?? {};
+  const formatValue = (value: unknown, fallback = "-") =>
+    value === undefined || value === null || value === "" ? fallback : String(value);
+  const formatDate = (value: unknown) => {
+    if (!value) return "-";
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime())
+      ? formatValue(value)
+      : date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+  };
+  const addons = activity.addOnFeatures ?? shootDetails.addOnFeatures ?? [];
+
+  const handleCancelBooking = async () => {
+    await cancelActivity({
+      slotId: params.id,
+      comments: "",
+    });
+    router.push("/admin/training-theater");
+  };
+
+  if (isPending) return <Loader />;
 
   return (
     <div className="w-full text-stone-100">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full sm:w-64">
-        </div>
+        <div className="w-full sm:w-64"></div>
       </div>
 
       <Panel title="Model Details">
-        <DetailItem label="Model Name" value="Naomi" />
-        <DetailItem label="Gender" value="Male" />
-        <DetailItem label="Phone Number" value="+7 457 458 7896" />
-        <DetailItem label="Email Address" value="johnsonalexu@gmail.com" />
+        <DetailItem label="Model Name" value={formatValue(user.fullName)} />
+        <DetailItem label="Gender" value={formatValue(user.gender)} />
+        <DetailItem label="Phone Number" value={formatValue(user.phoneNumber ?? user.phone)} />
+        <DetailItem label="Email Address" value={formatValue(user.email)} />
       </Panel>
 
       <Panel title="Booking Details" columns={3}>
-        <DetailItem label="Studio" value="London" />
-        <DetailItem label="Date" value="24 July 2026" />
-        <DetailItem label="Time" value="10:30 AM" />
+        <DetailItem label="Studio" value={formatValue(activity.studioId?.name)} />
+        <DetailItem label="Date" value={formatDate(activity.date)} />
+        <DetailItem
+          label="Time"
+          value={`${formatValue(activity.startTime)} - ${formatValue(activity.endtime)}`}
+        />
+      </Panel>
+      <Panel title="Shoot Details">
+        <DetailItem label="Shoot Goal" value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)} />
+        <DetailItem label="Shoot Format" value={formatValue(shootDetails.shootFormat ?? activity.shootFormat)} />
+
+        <DetailItem label="Shoot Vibes" value={formatValue(activity.vibes ?? shootDetails.vibes)} />
+        <DetailItem label="Outfit" value={formatValue(activity.canBringOutfits ?? shootDetails.canBringOutfits)} />
+
+        <div className="md:col-span-2 space-y-2">
+          <p className={labelClass}>Requested addons</p>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-stone-100">
+            {Array.isArray(addons) && addons.length > 0 ? (
+              addons.map((addon: unknown, index: number) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-stone-400">•</span>
+                  <span>
+                    {typeof addon === "string"
+                      ? addon
+                      : `${formatValue((addon as { key?: unknown }).key)}${
+                          (addon as { value?: unknown }).value !== undefined
+                            ? ` (Charges $${formatValue((addon as { value?: unknown }).value)})`
+                            : ""
+                        }`}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <span className="text-stone-400">-</span>
+            )}
+          </div>
+        </div>
       </Panel>
 
       <button
         type="button"
-        onClick={() => router.push("/admin/training-theater")}
-        className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600"
+        onClick={handleCancelBooking}
+        disabled={isCancelling}
+        className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Cancel Booking
+        {isCancelling ? "Cancelling..." : "Cancel Booking"}
       </button>
     </div>
   );

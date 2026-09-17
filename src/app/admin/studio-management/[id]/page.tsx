@@ -39,6 +39,13 @@ interface ExistingSchedule {
   bookedSlots?: number;
 }
 
+interface AddOnFeatureRow {
+  feature: string;
+  usd: string;
+  eur: string;
+  gbp: string;
+}
+
 const inputClass =
   "h-12 w-full rounded-md border border-stone-700 bg-transparent px-3 text-sm text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400";
 
@@ -47,6 +54,28 @@ const timeInputClass =
 
 const selectClass =
   "h-10 w-full appearance-none rounded-md border border-stone-700 bg-transparent px-3 pr-9 text-xs text-stone-200 outline-none focus:border-rose-400";
+
+const DeleteButton = ({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    aria-label="Delete row"
+    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-white transition-colors ${
+      disabled
+        ? "bg-stone-600 cursor-not-allowed"
+        : "bg-rose-500 hover:bg-rose-400"
+    }`}
+  >
+    <Trash2 className="h-3.5 w-3.5" />
+  </button>
+);
 
 const EditStudioDetails = () => {
   const router = useRouter();
@@ -65,6 +94,16 @@ const EditStudioDetails = () => {
   const [availabilityRows, setAvailabilityRows] = React.useState<
     AvailabilityRow[]
   >([]);
+
+  // Add-on features: feature name plus 3 currency prices (usd/eur/gbp)
+  const [addOnRows, setAddOnRows] = React.useState<AddOnFeatureRow[]>([
+    {
+      feature: "",
+      usd: "",
+      eur: "",
+      gbp: "",
+    },
+  ]);
 
   // Existing slots (edit mode only) + sub-slot expand/delete state
   const [existingSchedules, setExistingSchedules] = React.useState<
@@ -136,6 +175,39 @@ const EditStudioDetails = () => {
       setExistingSchedules(mapped);
     } else {
       setExistingSchedules([]);
+    }
+
+    if (
+      studio.addOnFeatures &&
+      Array.isArray(studio.addOnFeatures) &&
+      studio.addOnFeatures.length > 0
+    ) {
+      setAddOnRows(
+        studio.addOnFeatures.map(
+          (feature: {
+            featureName?: string;
+            prices?: {
+              usd?: number;
+              eur?: number;
+              gbp?: number;
+            };
+          }) => ({
+            feature: feature.featureName ?? "",
+            usd:
+              feature.prices?.usd !== undefined
+                ? String(feature.prices.usd)
+                : "",
+            eur:
+              feature.prices?.eur !== undefined
+                ? String(feature.prices.eur)
+                : "",
+            gbp:
+              feature.prices?.gbp !== undefined
+                ? String(feature.prices.gbp)
+                : "",
+          })
+        )
+      );
     }
   }, [isEditMode, studioResponse]);
 
@@ -508,6 +580,44 @@ const EditStudioDetails = () => {
     setAvailabilityRows((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // ---- Add On Features handlers ----
+  const addAddOnRow = () => {
+    setAddOnRows((current) => [
+      ...current,
+      {
+        feature: "",
+        usd: "",
+        eur: "",
+        gbp: "",
+      },
+    ]);
+  };
+
+  const updateAddOnRow = (
+    index: number,
+    field: "feature" | "usd" | "eur" | "gbp",
+    value: string
+  ) => {
+    setAddOnRows((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index
+          ? {
+              ...row,
+              [field]: value,
+            }
+          : row
+      )
+    );
+  };
+
+  const removeAddOnRow = (index: number) => {
+    setAddOnRows((current) =>
+      current.length === 1
+        ? current
+        : current.filter((_, rowIndex) => rowIndex !== index)
+    );
+  };
+
   // ---------- Existing slot expand / sub-slot delete (edit mode) ----------
   const toggleSlotExpansion = (id: string) => {
     setExpandedSlots((prev) => {
@@ -628,6 +738,24 @@ const EditStudioDetails = () => {
     return true;
   };
 
+  const buildAddOnFeaturesPayload = () =>
+    addOnRows
+      .filter(
+        (row) =>
+          row.feature.trim() !== "" &&
+          (row.usd.trim() !== "" ||
+            row.eur.trim() !== "" ||
+            row.gbp.trim() !== "")
+      )
+      .map((row) => ({
+        featureName: row.feature.trim(),
+        prices: {
+          usd: parseFloat(row.usd.trim()) || 0,
+          eur: parseFloat(row.eur.trim()) || 0,
+          gbp: parseFloat(row.gbp.trim()) || 0,
+        },
+      }));
+
   const handleSubmit = () => {
     if (!validateForm()) return;
 
@@ -643,6 +771,7 @@ const EditStudioDetails = () => {
         endTime: row.endTime,
         slot: Number(row.interval),
       })),
+      addOnFeatures: buildAddOnFeaturesPayload(),
     };
 
     if (isEditMode) {
@@ -654,6 +783,7 @@ const EditStudioDetails = () => {
               toast.success("Studio updated successfully!");
               setAvailabilityRows([]);
               refetchStudio();
+              router.push("/admin/studio-management")
             } else {
               toast.error("Failed to update studio");
             }
@@ -677,6 +807,14 @@ const EditStudioDetails = () => {
           setCountry("");
           setCity("");
           setAvailabilityRows([]);
+          setAddOnRows([
+            {
+              feature: "",
+              usd: "",
+              eur: "",
+              gbp: "",
+            },
+          ]);
 
           router.push("/admin/studio-management");
         } else {
@@ -1212,6 +1350,102 @@ const EditStudioDetails = () => {
                 </table>
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Add On Features */}
+
+        <section className="overflow-hidden rounded-xl border border-stone-700">
+          <div className="bg-white/15 px-4 py-3 rounded-t-lg">
+            <h2 className="text-sm font-medium text-stone-100">
+              Add On Features
+            </h2>
+          </div>
+
+          <div className="space-y-4 px-5 py-4">
+            {addOnRows.map((row, index) => (
+              <div
+                key={index}
+                className="grid items-end gap-3 sm:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_32px]"
+              >
+                <div className="relative">
+                  <label className="mb-1 block text-[10px] text-stone-400">
+                    Feature
+                  </label>
+                  <input
+                    className="h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-sm text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400"
+                    placeholder="Feature name"
+                    value={row.feature}
+                    onChange={(e) =>
+                      updateAddOnRow(index, "feature", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="relative">
+                  <label className="mb-1 block text-[10px] text-stone-400">
+                    USD ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-sm text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400"
+                    placeholder="0.00"
+                    value={row.usd}
+                    onChange={(e) =>
+                      updateAddOnRow(index, "usd", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="relative">
+                  <label className="mb-1 block text-[10px] text-stone-400">
+                    EUR (€)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-sm text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400"
+                    placeholder="0.00"
+                    value={row.eur}
+                    onChange={(e) =>
+                      updateAddOnRow(index, "eur", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="relative">
+                  <label className="mb-1 block text-[10px] text-stone-400">
+                    GBP (£)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-sm text-stone-200 outline-none placeholder:text-stone-500 focus:border-rose-400"
+                    placeholder="0.00"
+                    value={row.gbp}
+                    onChange={(e) =>
+                      updateAddOnRow(index, "gbp", e.target.value)
+                    }
+                  />
+                </div>
+
+                <DeleteButton
+                  onClick={() => removeAddOnRow(index)}
+                  disabled={addOnRows.length === 1}
+                />
+              </div>
+            ))}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={addAddOnRow}
+                className="inline-flex items-center gap-3 text-xs font-medium text-stone-300 underline-offset-2 hover:text-white underline"
+              >
+                + Add Another
+              </button>
+            </div>
           </div>
         </section>
 

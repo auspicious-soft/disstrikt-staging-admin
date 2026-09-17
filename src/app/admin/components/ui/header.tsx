@@ -177,6 +177,7 @@ export function AppHeader() {
     "/admin/university-union",
     "/admin/model-market",
     "/admin/celebration-cruise",
+    "/admin/training-theater",
   ].some((path) => pathname === path || pathname === `${path}/`);
 
   let parentPath: string;

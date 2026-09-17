@@ -55,7 +55,8 @@ const ShootStudio: React.FC = () => {
   limit,
   type: activityTypeByFilter[activeFilter],
   country,
-  search:debouncedSearch
+  search:debouncedSearch,
+  activity:"shootStudio"
 });
 useEffect(() => {
   if (isError) {
@@ -175,7 +176,7 @@ useEffect(() => {
               placeholder="Search"
               icon={<Search className="w-4 h-4" />}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value.trimStart())}
             />
           </div>
         </div>

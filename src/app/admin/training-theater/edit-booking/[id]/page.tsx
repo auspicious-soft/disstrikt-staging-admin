@@ -1,6 +1,7 @@
 "use client";
 
 import { NavArrowDownSolid } from "iconoir-react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -70,6 +71,8 @@ const EditBookingPage = () => {
   const user = activity.userId ?? activity.user ?? {};
     const { mutateAsync: cancelActivity, isPending: isCancelling } =
       useCancelActivity();
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const shootDetails = activity.shootDetails ?? activity.details ?? {};
   const formatValue = (value: unknown, fallback = "-") =>
     value === undefined || value === null || value === "" ? fallback : String(value);
@@ -89,7 +92,7 @@ const EditBookingPage = () => {
   const handleCancelBooking = async () => {
     await cancelActivity({
       slotId: params.id,
-      comments: "",
+      comments: cancelReason.trim(),
     });
     router.push("/admin/training-theater");
   };
@@ -152,12 +155,63 @@ const EditBookingPage = () => {
 
       <button
         type="button"
-        onClick={handleCancelBooking}
+        onClick={() => setShowCancelModal(true)}
         disabled={isCancelling}
         className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isCancelling ? "Cancelling..." : "Cancel Booking"}
       </button>
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-lg border border-stone-700 bg-stone-900 p-6">
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(false)}
+              disabled={isCancelling}
+              aria-label="Close cancellation dialog"
+              className="absolute right-4 top-4 text-stone-400 transition-colors hover:text-white disabled:opacity-50"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h2 className="mb-4 text-lg font-medium text-stone-100">
+              Cancel Booking
+            </h2>
+            <label className="block">
+              <span className="mb-2 block text-sm text-stone-300">
+                Cancellation reason
+              </span>
+              <textarea
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                placeholder="Enter cancellation reason"
+                rows={4}
+                className="w-full resize-none rounded-md border border-stone-700 bg-transparent px-3 py-3 text-sm text-stone-200 outline-none focus:border-rose-500"
+              />
+            </label>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                disabled={isCancelling}
+                className="h-11 flex-1 rounded-md border border-stone-700 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10 disabled:opacity-50"
+              >
+                Keep Booking
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelBooking}
+                disabled={isCancelling || !cancelReason.trim()}
+                className="h-11 flex-1 rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isCancelling ? "Cancelling..." : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

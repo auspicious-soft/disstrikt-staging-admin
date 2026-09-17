@@ -179,7 +179,7 @@ const ReviewActivityPage = () => {
     router.push("/admin/shoot-studio");
   };
 
-  if (isPending) return <Loader />;
+  if (isPending || isSaving) return <Loader />;
 
   return (
     <div className="w-full space-y-5 text-stone-100">

@@ -894,7 +894,7 @@ const StudioDetails = () => {
                       </th>
 
                       <th className="w-[17%] px-2 text-xs font-normal">
-                        Interval in hours
+                        Interval
                       </th>
 
                       <th className="w-[16%] px-2 text-xs font-normal">
@@ -927,7 +927,7 @@ const StudioDetails = () => {
                             }
                           >
                             <option value="" disabled className="bg-gray-500 text-white">
-                              Select start time
+                              Select interval
                             </option>
                             {[
                               ["30", "0.5 hour"], ["60", "1 hour"],
@@ -948,7 +948,7 @@ const StudioDetails = () => {
                             onChange={(e) => updateAvailabilityRow(index, "startTime", e.target.value)}
                             disabled={!row.interval}
                           >
-                            <option value="" disabled className="bg-gray-500 text-white">Select end time</option>
+                            <option value="" disabled className="bg-gray-500 text-white">Select start time</option>
                             {getAllowedStartTimes(row.date, row.interval).map((time) => (
                               <option key={`start-${time}`} value={time} className="bg-gray-500 text-white">{time}</option>
                             ))}
@@ -961,7 +961,7 @@ const StudioDetails = () => {
                             onChange={(e) => updateAvailabilityRow(index, "endTime", e.target.value)}
                             disabled={!row.interval || !row.startTime}
                           >
-                            <option value="" disabled className="bg-gray-500 text-white">Select interval</option>
+                            <option value="" disabled className="bg-gray-500 text-white">Select end time</option>
                             {getAllowedEndTimes(row.startTime, row.date, row.interval).map((time) => (
                               <option key={`end-${time}`} value={time} className="bg-gray-500 text-white">{time}</option>
                             ))}

@@ -1188,7 +1188,7 @@ const EditStudioDetails = () => {
                       </th>
 
                       <th className="w-[17%] px-2 text-xs font-normal">
-                        Interval in hours
+                        Interval
                       </th>
 
                       <th className="w-[16%] px-2 text-xs font-normal">

@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { NavArrowDownSolid } from "iconoir-react";
 import { generateSignedUrlToUploadOn } from "@/actions";
@@ -90,6 +90,8 @@ const SelectControl = ({
 const ReviewActivityPage = () => {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const isReadOnly = searchParams.get("mode") === "view";
   const { data, isPending } = useGetActivityById({
     slotId: params.id,
     type: "Review",
@@ -115,6 +117,7 @@ const ReviewActivityPage = () => {
     (activity.attended === "yes" || activity.attended === true || activity.attended == null);
   const initialRating = activity.rating ? `${activity.rating} Star${activity.rating === 1 ? "" : "s"}` : "";
   const initialComments = activity.comments ?? "";
+  const reviewRating = Number(activity.rating) || 0;
 
   const formatValue = (value: unknown, fallback = "-") =>
     value === undefined || value === null || value === "" ? fallback : String(value);
@@ -221,7 +224,7 @@ const ReviewActivityPage = () => {
         </div>
       </Panel>
 
-      <Panel title="More Information" collapsible>
+      {!isReadOnly && <Panel title="More Information" collapsible>
         <div className="space-y-6">
           <div>
             <p className="mb-3 text-xs font-normal text-white/60">
@@ -289,9 +292,40 @@ const ReviewActivityPage = () => {
             </div>
           </div>}
         </div>
-      </Panel>
+      </Panel>}
 
-      <Panel title="Ratings & Review" collapsible>
+      {isReadOnly && (
+        <Panel title="Ratings & Review" collapsible>
+          <div className="space-y-5">
+            <DetailItem label="Rating" value={`${reviewRating}/5`} />
+            <div className="space-y-2">
+              <p className={labelClass}>Comments</p>
+              <p className="text-sm font-medium text-stone-100">
+                {formatValue(initialComments)}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <p className={labelClass}>Pictures</p>
+              {existingPictures.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {existingPictures.map((picture: unknown, item: number) => (
+                    <img
+                      key={item}
+                      src={getImageUrl(getImageValue(picture))}
+                      alt="Activity review"
+                      className="h-28 w-32 rounded-md border border-stone-600 object-cover"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-stone-400">No pictures</p>
+              )}
+            </div>
+          </div>
+        </Panel>
+      )}
+
+      {!isReadOnly && <Panel title="Ratings & Review" collapsible>
         <div className="space-y-4">
           {isPresent && (
             <SelectControl
@@ -316,24 +350,26 @@ const ReviewActivityPage = () => {
             </div>
           </label>}
         </div>
-      </Panel>
+      </Panel>}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[260px_1fr]">
+      <div className={`grid grid-cols-1 gap-3 ${isReadOnly ? "" : "md:grid-cols-[260px_1fr]"}`}>
         <button
           type="button"
           onClick={() => router.push("/admin/shoot-studio")}
           className="h-11 rounded-md border border-stone-500 text-xs font-medium text-stone-200 transition-colors hover:border-stone-300 hover:text-white"
         >
-          Cancel
+          {isReadOnly ? "Back" : "Cancel"}
         </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600"
-        >
-          {isSaving ? "Saving..." : "Save"}
-        </button>
+        {!isReadOnly && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600"
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        )}
       </div>
     </div>
   );

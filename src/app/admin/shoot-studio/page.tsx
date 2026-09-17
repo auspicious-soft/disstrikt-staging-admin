@@ -227,29 +227,36 @@ const ShootStudio: React.FC = () => {
                   aria-label="Edit booking"
                   onClick={() =>
                     router.push(
-                      `/admin/training-theater/edit-booking/${row._id}`,
+                      `/admin/shoot-studio/edit-booking/${row._id}`,
                     )
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-              ) : activeFilter === "reviewed" || activeFilter === "Rejected" ? (
+              ) : activeFilter === "reviewed" ? (
+                <button
+                  type="button"
+                  aria-label="View activity"
+                  onClick={() =>
+                    router.push(
+                      `/admin/shoot-studio/review-activity/${row._id}?mode=view`,
+                    )
+                  }
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </button>
+              ) : activeFilter === "Rejected" ? (
                 <div className="relative inline-block group">
                   <button
                     type="button"
-                    aria-label="View activity"
-                    onClick={() =>
-                      router.push(
-                        `/admin/training-theater/review-activity/${row._id}`,
-                      )
-                    }
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-stone-800 text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
+                    aria-label="View cancellation reason"
+                    disabled
+                    className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-md bg-stone-800 text-stone-300"
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </button>
-
-                  {/* Tooltip */}
                   <div
                     role="tooltip"
                     className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 w-max max-w-[240px] scale-95 rounded-md bg-stone-900 px-3 py-2 text-xs text-stone-200 opacity-0 shadow-lg ring-1 ring-stone-700 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100"
@@ -260,7 +267,6 @@ const ShootStudio: React.FC = () => {
                     <span className="block whitespace-normal">
                       {row.comments}
                     </span>
-                    {/* little arrow */}
                     <div className="absolute right-3 top-full h-2 w-2 -translate-y-1 rotate-45 bg-stone-900 ring-1 ring-stone-700" />
                   </div>
                 </div>

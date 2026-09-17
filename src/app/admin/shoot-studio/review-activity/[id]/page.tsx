@@ -121,6 +121,32 @@ const ReviewActivityPage = () => {
 
   const formatValue = (value: unknown, fallback = "-") =>
     value === undefined || value === null || value === "" ? fallback : String(value);
+  const currencySymbols: Record<string, string> = {
+    usd: "$",
+    eur: "€",
+    gbp: "£",
+  };
+  const formatAddon = (addon: unknown) => {
+    if (typeof addon === "string") return addon;
+    if (!addon || typeof addon !== "object") return "-";
+
+    const addonData = addon as {
+      featureName?: unknown;
+      key?: unknown;
+      price?: unknown;
+      value?: unknown;
+      currency?: unknown;
+      prices?: Record<string, unknown>;
+    };
+    const name = addonData.featureName ?? addonData.key ?? "-";
+    const currency = String(addonData.currency ?? "").toLowerCase();
+    const price = addonData.price ?? addonData.value ?? addonData.prices?.[currency];
+    const symbol = currencySymbols[currency] ?? (currency ? `${currency.toUpperCase()} ` : "");
+
+    return price !== undefined && price !== null
+      ? `${String(name)} (${symbol}${String(price)})`
+      : String(name);
+  };
 
   const getImageUrl = (image: string) => {
     if (/^(https?:|blob:|data:)/.test(image)) return image;
@@ -209,15 +235,7 @@ const ReviewActivityPage = () => {
             {Array.isArray(addons) && addons.length > 0 ? addons.map((addon: unknown, index: number) => (
               <div key={index} className="flex items-center gap-2">
                 <span className="text-stone-400">•</span>
-                <span>
-                  {typeof addon === "string"
-                    ? addon
-                    : `${formatValue((addon as { key?: unknown }).key)}${
-                        (addon as { value?: unknown }).value !== undefined
-                          ? ` (Charges $${formatValue((addon as { value?: unknown }).value)})`
-                          : ""
-                      }`}
-                </span>
+                <span>{formatAddon(addon)}</span>
               </div>
             )) : <span className="text-stone-400">-</span>}
           </div>

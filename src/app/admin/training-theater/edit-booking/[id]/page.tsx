@@ -76,6 +76,21 @@ const EditBookingPage = () => {
   const shootDetails = activity.shootDetails ?? activity.details ?? {};
   const formatValue = (value: unknown, fallback = "-") =>
     value === undefined || value === null || value === "" ? fallback : String(value);
+  const formatPhoneNumber = () => {
+    const phone = user.phoneNumber ?? user.phone;
+    if (phone === undefined || phone === null || phone === "") return "-";
+
+    const countryCode = user.countryCode ? String(user.countryCode) : "";
+    const normalizedCountryCode = countryCode
+      ? countryCode.startsWith("+")
+        ? countryCode
+        : `+${countryCode}`
+      : "";
+
+    return normalizedCountryCode
+      ? `${normalizedCountryCode} ${String(phone)}`
+      : String(phone);
+  };
   const formatDate = (value: unknown) => {
     if (!value) return "-";
     const date = new Date(String(value));
@@ -108,7 +123,7 @@ const EditBookingPage = () => {
       <Panel title="Model Details">
         <DetailItem label="Model Name" value={formatValue(user.fullName)} />
         <DetailItem label="Gender" value={formatValue(user.gender)} />
-        <DetailItem label="Phone Number" value={formatValue(user.phoneNumber ?? user.phone)} />
+        <DetailItem label="Phone Number" value={formatPhoneNumber()} />
         <DetailItem label="Email Address" value={formatValue(user.email)} />
       </Panel>
 

@@ -34,7 +34,22 @@ type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
 
 const ShootStudio: React.FC = () => {
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("upcoming");
+  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>(() => {
+    if (typeof window !== "undefined") {
+      const savedFilter = localStorage.getItem("trainingtheaterActiveFilter");
+  
+      if (
+        savedFilter === "upcoming" ||
+        savedFilter === "past" ||
+        savedFilter === "reviewed" ||
+        savedFilter === "Rejected"
+      ) {
+        return savedFilter;
+      }
+    }
+  
+    return "upcoming";
+  });
   const [page, setPage] = useState(1);
   const { country } = useCountry();
   const limit = 10;
@@ -58,6 +73,9 @@ const ShootStudio: React.FC = () => {
   search:debouncedSearch,
   activity:"trainingTheater"
 });
+useEffect(() => {
+  localStorage.setItem("trainingtheaterActiveFilter", activeFilter);
+}, [activeFilter]);
 useEffect(() => {
   if (isError) {
     const errorMessage =

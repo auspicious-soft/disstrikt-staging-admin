@@ -848,7 +848,7 @@ const EditStudioDetails = () => {
               placeholder="Name"
               type="text"
               value={studioName}
-              onChange={(e) => setStudioName(e.target.value)}
+              onChange={(e) => setStudioName(e.target.value.trimStart())}
             />
           </label>
 
@@ -1377,7 +1377,7 @@ const EditStudioDetails = () => {
                     placeholder="Feature name"
                     value={row.feature}
                     onChange={(e) =>
-                      updateAddOnRow(index, "feature", e.target.value)
+                      updateAddOnRow(index, "feature", e.target.value.trimStart())
                     }
                   />
                 </div>

@@ -61,9 +61,6 @@ const StudioDetails = () => {
   const [city, setCity] = React.useState("");
   const [selectedDate, setSelectedDate] = React.useState("");
   const [isLocationPickerOpen, setIsLocationPickerOpen] = React.useState(false);
-  const [startTime, setStartTime] = React.useState("09:00");
-  const [endTime, setEndTime] = React.useState("16:00");
-  const [interval, setInterval] = React.useState("");
   const [showCalendar, setShowCalendar] = React.useState(false);
   const [calendarMonth, setCalendarMonth] = React.useState(new Date());
   const [availabilityRows, setAvailabilityRows] = React.useState<
@@ -168,24 +165,6 @@ const StudioDetails = () => {
     return hours * 60 + minutes;
   };
 
-  const minutesToTime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${String(hours).padStart(2, "0")}:${String(
-      remainingMinutes
-    ).padStart(2, "0")}`;
-  };
-
-  const getIntervalEndTime = (startTime: string, interval: string) => {
-    const intervalMinutes = Number(interval);
-    if (!startTime || !intervalMinutes) return "";
-
-    const endMinutes = timeToMinutes(startTime) + intervalMinutes;
-    if (endMinutes > 24 * 60) return "";
-
-    return minutesToTime(endMinutes);
-  };
-
   const getAllowedStartTimes = (selectedDate: string) => {
     const today = new Date();
     const todayString = new Date(
@@ -219,13 +198,20 @@ const StudioDetails = () => {
     const startMinutes = timeToMinutes(startTime);
     const nowMinutes = today.getHours() * 60 + today.getMinutes();
 
-    const intervalEndTime = getIntervalEndTime(startTime, interval);
-    if (intervalEndTime) {
-      const intervalEndMinutes = timeToMinutes(intervalEndTime);
-      if (selectedDate === todayString && intervalEndMinutes <= nowMinutes) {
-        return [];
-      }
-      return endTimeOptions.includes(intervalEndTime) ? [intervalEndTime] : [];
+    const intervalMinutes = Number(interval);
+    if (startTime && intervalMinutes > 0) {
+      return endTimeOptions.filter((time) => {
+        const endMinutes = timeToMinutes(time);
+        const elapsedMinutes = endMinutes - startMinutes;
+
+        if (elapsedMinutes < intervalMinutes) return false;
+        if (elapsedMinutes % intervalMinutes !== 0) return false;
+        if (selectedDate === todayString && endMinutes <= nowMinutes) {
+          return false;
+        }
+
+        return true;
+      });
     }
 
     return endTimeOptions.filter((time) => {

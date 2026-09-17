@@ -37,7 +37,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const allowedCountries = ["FR", "ES", "GB","BE", "NL"];
+  const allowedCountries = ["FR", "ES", "GB","BE", "NL","US"];
   
   const googleMapsApiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||

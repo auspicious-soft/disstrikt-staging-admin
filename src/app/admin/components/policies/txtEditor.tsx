@@ -103,88 +103,99 @@ export const TextEditor = ({
                         "Serif=serif;" +
                         "Monospace=monospace",
                       content_style: `
-                        body { 
-                          font-family: arial,helvetica,sans-serif;
-                          font-size: 14px;
-                          margin: 0;
-                          padding: 16px;
-                          background-color: #27272a !important; 
-                          color: #e4e4e7; 
-                        }
-                        table {
-                          border-collapse: collapse;
-                          width: 100%;
-                          border-color: #4b5563;
-                        }
-                        th, td {
-                          border: 1px solid #4b5563;
-                          padding: 8px;
-                        }
-                        th {
-                          background-color: #3f3f46; 
-                          color: #e4e4e7;
-                        }
-                        p, span, div {
-                          color: #e4e4e7;
-                        }
-                      `,
+  body {
+    font-family: arial, helvetica, sans-serif;
+    font-size: 14px;
+    margin: 0;
+    padding: 16px;
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    border-color: #d1d5db;
+  }
+
+  th,
+  td {
+    border: 1px solid #d1d5db;
+    padding: 8px;
+  }
+
+  th {
+    background-color: #f3f4f6;
+    color: #000000;
+  }
+
+  p,
+  span,
+  div {
+    color: #000000;
+  }
+`,
                       setup: (editor) => {
                         editor.on("init", () => {
                           const doc = document;
                           const style = doc.createElement("style");
-                          style.textContent = `
-                            .tox-editor-header,
-                            .tox-toolbar,
-                            .tox-toolbar__primary,
-                            .tox-toolbar-overlord,
-                            .tox-toolbar__group {
-                              background-color: #27272a !important;
-                              border: none !important; 
-                            }
-                            .tox-tbtn,
-                            .tox-tbtn__select-label,
-                            .tox-tbtn__icon,
-                            .tox-selectfield select,
-                            .tox-selectfield select option {
-                              color: #000000 !important;
-                            }
-                            .tox-tbtn svg,
-                            .tox-tbtn__icon svg {
-                              fill: #000000 !important;
-                            }
-                            .tox-tbtn:hover,
-                            .tox-tbtn:focus,
-                            .tox-tbtn--enabled,
-                            .tox-tbtn--enabled:hover,
-                            .tox-tbtn--enabled:focus {
-                              background-color: #3f3f46 !important;
-                              color: #000000 !important;
-                            }
-                              .tox, .tox-tinymce{
-                              border:0px 
-                              }
-                              .tox-tbtn, .tox-tbtn--select , .tox-tbtn--disabled, .tox-number-input{
-                               background-color: #3f3f46 !important;
-                              color: #000000 !important; 
-                              }
-                              .tok-number-input:hover{
-                               background-color: #3f3f46 !important; 
-                              color: #000000 !important; 
-                              }
-                              .minus, .tox-input-wrapper, .plus{
-                                background-color: #3f3f46 !important;
-                              color: #000000 !important; 
-                              }
-                                .minus:hover, .tox-input-wrapper:hover, .plus:hover{
-                                
-                              color: #000000 !important; 
-                              }
 
-                              .top-input-wrapper input{
-                               background-color: #3f3f46 !important; 
-                              color: #000000 !important; 
-                              }
-                          `;
+                          style.textContent = `
+      .tox-editor-header,
+      .tox-toolbar,
+      .tox-toolbar__primary,
+      .tox-toolbar-overlord,
+      .tox-toolbar__group {
+        background-color: #ffffff !important;
+        border: none !important;
+      }
+
+      .tox-tbtn,
+      .tox-tbtn__select-label,
+      .tox-tbtn__icon,
+      .tox-selectfield select,
+      .tox-selectfield select option {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .tox-tbtn svg,
+      .tox-tbtn__icon svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+      }
+
+      .tox-tbtn:hover,
+      .tox-tbtn:focus,
+      .tox-tbtn--enabled,
+      .tox-tbtn--enabled:hover,
+      .tox-tbtn--enabled:focus {
+        background-color: #e5e5e5 !important;
+        color: #000000 !important;
+      }
+
+      .tox,
+      .tox-tinymce {
+        border: 0 !important;
+      }
+
+      .tox-number-input,
+      .minus,
+      .tox-input-wrapper,
+      .plus,
+      .top-input-wrapper input {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+
+      .minus:hover,
+      .tox-input-wrapper:hover,
+      .plus:hover {
+        background-color: #e5e5e5 !important;
+        color: #000000 !important;
+      }
+    `;
+
                           doc.head.appendChild(style);
                         });
                       },

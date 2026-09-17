@@ -76,7 +76,7 @@ export default function Home() {
           setPassword("");
           setConfirmPassword("");
 
-          toast.success(response.message);
+          // toast.success(response.message);
           setIsModalOpen(true);
         },
         onError: (error: any) => {

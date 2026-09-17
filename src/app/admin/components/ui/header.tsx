@@ -59,7 +59,7 @@ export function AppHeader() {
 
   // final options with conditional "Clear"
   const countryOptions: SelectOption[] = country
-    ? [{ label: "Clear", value: "" }, ...baseCountryOptions]
+    ? [{ label: "All", value: "" }, ...baseCountryOptions]
     : baseCountryOptions;
 
   let pageName = "Dashboard";

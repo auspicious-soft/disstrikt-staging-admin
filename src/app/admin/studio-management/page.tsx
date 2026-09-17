@@ -254,7 +254,7 @@ const CelebrationCruise: React.FC = () => {
                 }
                 value={search}
                 onChange={(e) =>
-                  setSearch(e.target.value)
+                  setSearch(e.target.value.trimStart())
                 }
               />
             </div>

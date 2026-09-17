@@ -165,7 +165,9 @@ const StudioDetails = () => {
     return hours * 60 + minutes;
   };
 
-  const getAllowedStartTimes = (selectedDate: string) => {
+  const getAllowedStartTimes = (selectedDate: string, interval = "") => {
+    if (!interval) return [];
+
     const today = new Date();
     const todayString = new Date(
       today.getFullYear(),
@@ -189,6 +191,8 @@ const StudioDetails = () => {
     selectedDate: string,
     interval = ""
   ) => {
+    if (!startTime || !interval) return [];
+
     const today = new Date();
     const todayString = new Date(
       today.getFullYear(),
@@ -329,16 +333,11 @@ const StudioDetails = () => {
       return;
     }
 
-    const validStartTimes = getAllowedStartTimes(selectedDate);
-    const defaultStart = validStartTimes[0] || "01:00";
-    const validEndTimes = getAllowedEndTimes(defaultStart, selectedDate);
-    const defaultEnd = validEndTimes[0] || "24:00";
-
     const newRow: AvailabilityRow = {
       date: selectedDate,
       activitiesBooked: 0,
-      startTime: defaultStart,
-      endTime: defaultEnd,
+      startTime: "",
+      endTime: "",
       interval: "",
     };
 
@@ -361,10 +360,10 @@ const StudioDetails = () => {
         const nextRow = { ...row, [field]: value };
 
         if (field === "date" && typeof value === "string") {
-          const allowedStartTimes = getAllowedStartTimes(value);
+          const allowedStartTimes = getAllowedStartTimes(value, nextRow.interval);
           const nextStart = allowedStartTimes.includes(nextRow.startTime)
             ? nextRow.startTime
-            : allowedStartTimes[0] || "01:00";
+            : allowedStartTimes[0] || "";
           const allowedEndTimes = getAllowedEndTimes(
             nextStart,
             value,
@@ -372,7 +371,7 @@ const StudioDetails = () => {
           );
           const nextEnd = allowedEndTimes.includes(nextRow.endTime)
             ? nextRow.endTime
-            : allowedEndTimes[0] || (nextRow.interval ? "" : "24:00");
+            : allowedEndTimes[0] || "";
 
           return {
             ...nextRow,
@@ -411,15 +410,10 @@ const StudioDetails = () => {
         }
 
         if (field === "interval" && typeof value === "string") {
-          const allowedEndTimes = getAllowedEndTimes(
-            nextRow.startTime,
-            row.date,
-            value
-          );
-
           return {
             ...nextRow,
-            endTime: allowedEndTimes[0] || "",
+            startTime: "",
+            endTime: "",
           };
         }
 
@@ -522,10 +516,8 @@ const StudioDetails = () => {
     if (!validateForm()) return;
 
     const payload = {
-      timeZone:
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-
-      name: studioName.trim(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      name: studioName,
       location,
       city,
       country,
@@ -884,6 +876,9 @@ const StudioDetails = () => {
 
             {availabilityRows.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-stone-700">
+                <p className="px-6 py-3 text-xs text-stone-400">
+                  Select the interval first, then choose the start and end time.
+                </p>
 
                 <table className="w-full min-w-[880px] table-fixed border-collapse">
 
@@ -898,16 +893,16 @@ const StudioDetails = () => {
                         Activities Booked
                       </th>
 
+                      <th className="w-[17%] px-2 text-xs font-normal">
+                        Interval in hours
+                      </th>
+
                       <th className="w-[16%] px-2 text-xs font-normal">
                         Start Time
                       </th>
 
                       <th className="w-[16%] px-2 text-xs font-normal">
                         End Time
-                      </th>
-
-                      <th className="w-[17%] px-2 text-xs font-normal">
-                        Interval in hours
                       </th>
 
                       <th className="w-[7%] px-2 text-xs font-normal text-center">
@@ -919,154 +914,70 @@ const StudioDetails = () => {
 
                   <tbody>
 
-                    {availabilityRows.map(
-                      (row, index) => (
-                        <tr
-                          key={index}
-                          className="h-14 text-xs text-stone-200"
-                        >
-
-                          <td className="px-6">
-                            {row.date}
-                          </td>
-
-                          <td className="px-6">
-                            {row.activitiesBooked}
-                          </td>
-
-                          <td className="px-2">
-
-                            <select
-                              className={timeInputClass}
-                              value={row.startTime}
-                              onChange={(e) =>
-                                updateAvailabilityRow(
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                            >
-                              <option value="" disabled className="bg-gray-500 text-white">
-                                Select
+                    {availabilityRows.map((row, index) => (
+                      <tr key={index} className="h-14 text-xs text-stone-200">
+                        <td className="px-6">{row.date}</td>
+                        <td className="px-6">{row.activitiesBooked}</td>
+                        <td className="px-2">
+                          <select
+                            className={selectClass}
+                            value={row.interval}
+                            onChange={(e) =>
+                              updateAvailabilityRow(index, "interval", e.target.value)
+                            }
+                          >
+                            <option value="" disabled className="bg-gray-500 text-white">
+                              Select start time
+                            </option>
+                            {[
+                              ["30", "0.5 hour"], ["60", "1 hour"],
+                              ["90", "1.5 hours"], ["120", "2 hours"],
+                              ["150", "2.5 hours"], ["180", "3 hours"],
+                              ["210", "3.5 hours"], ["240", "4 hours"],
+                            ].map(([value, label]) => (
+                              <option key={value} value={value} className="bg-gray-500 text-white">
+                                {label}
                               </option>
-                              {getAllowedStartTimes(row.date).map((time) => (
-                                <option key={`start-${time}`} value={time} className="bg-gray-500 text-white">
-                                  {time}
-                                </option>
-                              ))}
-                            </select>
-
-                          </td>
-
-                          <td className="px-2">
-
-                            <select
-                              className={timeInputClass}
-                              value={row.endTime}
-                              onChange={(e) =>
-                                updateAvailabilityRow(
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                            >
-                              <option value="" disabled className="bg-gray-500 text-white">
-                                Select
-                              </option>
-                              {getAllowedEndTimes(
-                                row.startTime,
-                                row.date,
-                                row.interval
-                              ).map((time) => (
-                                <option key={`end-${time}`} value={time} className="bg-gray-500 text-white">
-                                  {time}
-                                </option>
-                              ))}
-                            </select>
-
-                          </td>
-
-                          <td className="px-2">
-
-                            <select
-                              className={
-                                selectClass
-                              }
-                              value={row.interval}
-                              onChange={(e) =>
-                                updateAvailabilityRow(
-                                  index,
-                                  "interval",
-                                  e.target.value
-                                )
-                              }
-                            >
-
-                              <option
-                                value=""
-                                disabled
-                                className="bg-gray-500 text-white"
-                              >
-                                Select
-                              </option>
-
-                              <option value="30" className="bg-gray-500 text-white">
-                                0.5 hour
-                              </option>
-
-                              <option value="60" className="bg-gray-500 text-white">
-                                1 hour
-                              </option>
-
-                              <option value="90" className="bg-gray-500 text-white">
-                                1.5 hours
-                              </option>
-
-                              <option value="120" className="bg-gray-500 text-white">
-                                2 hours
-                              </option>
-
-                              <option value="150" className="bg-gray-500 text-white">
-                                2.5 hours
-                              </option>
-
-                              <option value="180" className="bg-gray-500 text-white">
-                                3 hours
-                              </option>
-
-                              <option value="210" className="bg-gray-500 text-white">
-                                3.5 hours
-                              </option>
-
-                              <option value="240" className="bg-gray-500 text-white">
-                                4 hours
-                              </option>
-
-                            </select>
-
-                          </td>
-
-                          <td className="px-2 text-center">
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                deleteAvailabilityRow(
-                                  index
-                                )
-                              }
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-500 text-white transition-colors hover:bg-rose-400"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-
-                          </td>
-
-                        </tr>
-                      )
-                    )}
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-2">
+                          <select
+                            className={timeInputClass}
+                            value={row.startTime}
+                            onChange={(e) => updateAvailabilityRow(index, "startTime", e.target.value)}
+                            disabled={!row.interval}
+                          >
+                            <option value="" disabled className="bg-gray-500 text-white">Select end time</option>
+                            {getAllowedStartTimes(row.date, row.interval).map((time) => (
+                              <option key={`start-${time}`} value={time} className="bg-gray-500 text-white">{time}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-2">
+                          <select
+                            className={timeInputClass}
+                            value={row.endTime}
+                            onChange={(e) => updateAvailabilityRow(index, "endTime", e.target.value)}
+                            disabled={!row.interval || !row.startTime}
+                          >
+                            <option value="" disabled className="bg-gray-500 text-white">Select interval</option>
+                            {getAllowedEndTimes(row.startTime, row.date, row.interval).map((time) => (
+                              <option key={`end-${time}`} value={time} className="bg-gray-500 text-white">{time}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => deleteAvailabilityRow(index)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-500 text-white transition-colors hover:bg-rose-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
 
                   </tbody>
 

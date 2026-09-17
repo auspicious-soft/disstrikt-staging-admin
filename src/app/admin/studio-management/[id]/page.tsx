@@ -304,7 +304,9 @@ const EditStudioDetails = () => {
     return minutesToTime(endMinutes);
   };
 
-  const getAllowedStartTimes = (selectedDate: string) => {
+  const getAllowedStartTimes = (selectedDate: string, interval = "") => {
+    if (!interval) return [];
+
     const today = new Date();
     const todayString = new Date(
       today.getFullYear(),
@@ -328,6 +330,8 @@ const EditStudioDetails = () => {
     selectedDate: string,
     interval = ""
   ) => {
+    if (!startTime || !interval) return [];
+
     const today = new Date();
     const todayString = new Date(
       today.getFullYear(),
@@ -478,16 +482,11 @@ const EditStudioDetails = () => {
       return;
     }
 
-    const validStartTimes = getAllowedStartTimes(selectedDate);
-    const defaultStart = validStartTimes[0] || "01:00";
-    const validEndTimes = getAllowedEndTimes(defaultStart, selectedDate);
-    const defaultEnd = validEndTimes[0] || "24:00";
-
     const newRow: AvailabilityRow = {
       date: selectedDate,
       activitiesBooked: 0,
-      startTime: defaultStart,
-      endTime: defaultEnd,
+      startTime: "",
+      endTime: "",
       interval: "",
     };
 
@@ -507,10 +506,10 @@ const EditStudioDetails = () => {
         const nextRow = { ...row, [field]: value };
 
         if (field === "date" && typeof value === "string") {
-          const allowedStartTimes = getAllowedStartTimes(value);
+          const allowedStartTimes = getAllowedStartTimes(value, nextRow.interval);
           const nextStart = allowedStartTimes.includes(nextRow.startTime)
             ? nextRow.startTime
-            : allowedStartTimes[0] || "01:00";
+            : allowedStartTimes[0] || "";
           const allowedEndTimes = getAllowedEndTimes(
             nextStart,
             value,
@@ -518,7 +517,7 @@ const EditStudioDetails = () => {
           );
           const nextEnd = allowedEndTimes.includes(nextRow.endTime)
             ? nextRow.endTime
-            : allowedEndTimes[0] || (nextRow.interval ? "" : "24:00");
+            : allowedEndTimes[0] || "";
 
           return {
             ...nextRow,
@@ -560,15 +559,10 @@ const EditStudioDetails = () => {
         }
 
         if (field === "interval" && typeof value === "string") {
-          const allowedEndTimes = getAllowedEndTimes(
-            nextRow.startTime,
-            row.date,
-            value
-          );
-
           return {
             ...nextRow,
-            endTime: allowedEndTimes[0] || "",
+            startTime: "",
+            endTime: "",
           };
         }
 
@@ -1179,6 +1173,9 @@ const EditStudioDetails = () => {
 
             {availabilityRows.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-stone-700">
+                <p className="px-6 py-3 text-xs text-stone-400">
+                  Select the interval first, then choose the start and end time.
+                </p>
                 <table className="w-full min-w-[880px] table-fixed border-collapse">
                   <thead>
                     <tr className="h-11 text-left text-xs font-normal text-stone-100">
@@ -1190,16 +1187,16 @@ const EditStudioDetails = () => {
                         Activities Booked
                       </th>
 
+                      <th className="w-[17%] px-2 text-xs font-normal">
+                        Interval in hours
+                      </th>
+
                       <th className="w-[16%] px-2 text-xs font-normal">
                         Start Time
                       </th>
 
                       <th className="w-[16%] px-2 text-xs font-normal">
                         End Time
-                      </th>
-
-                      <th className="w-[17%] px-2 text-xs font-normal">
-                        Interval in hours
                       </th>
 
                       <th className="w-[7%] px-2 text-xs font-normal text-center">
@@ -1217,8 +1214,33 @@ const EditStudioDetails = () => {
 
                         <td className="px-2">
                           <select
+                            className={selectClass}
+                            value={row.interval}
+                            onChange={(e) =>
+                              updateAvailabilityRow(index, "interval", e.target.value)
+                            }
+                          >
+                            <option value="" disabled className="bg-gray-500 text-white">
+                              Select interval
+                            </option>
+                            {[
+                              ["30", "0.5 hour"], ["60", "1 hour"],
+                              ["90", "1.5 hours"], ["120", "2 hours"],
+                              ["150", "2.5 hours"], ["180", "3 hours"],
+                              ["210", "3.5 hours"], ["240", "4 hours"],
+                            ].map(([value, label]) => (
+                              <option key={value} value={value} className="bg-gray-500 text-white">
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="px-2">
+                          <select
                             className={timeInputClass}
                             value={row.startTime}
+                            disabled={!row.interval}
                             onChange={(e) =>
                               updateAvailabilityRow(
                                 index,
@@ -1232,9 +1254,9 @@ const EditStudioDetails = () => {
                               disabled
                               className="bg-gray-500 text-white"
                             >
-                              Select
+                              Select start time
                             </option>
-                            {getAllowedStartTimes(row.date).map((time) => (
+                            {getAllowedStartTimes(row.date, row.interval).map((time) => (
                               <option
                                 key={`start-${time}`}
                                 value={time}
@@ -1250,6 +1272,7 @@ const EditStudioDetails = () => {
                           <select
                             className={timeInputClass}
                             value={row.endTime}
+                            disabled={!row.interval || !row.startTime}
                             onChange={(e) =>
                               updateAvailabilityRow(
                                 index,
@@ -1263,7 +1286,7 @@ const EditStudioDetails = () => {
                               disabled
                               className="bg-gray-500 text-white"
                             >
-                              Select
+                              Select end time
                             </option>
                             {getAllowedEndTimes(
                               row.startTime,
@@ -1278,60 +1301,6 @@ const EditStudioDetails = () => {
                                   {time}
                                 </option>
                             ))}
-                          </select>
-                        </td>
-
-                        <td className="px-2">
-                          <select
-                            className={selectClass}
-                            value={row.interval}
-                            onChange={(e) =>
-                              updateAvailabilityRow(
-                                index,
-                                "interval",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <option
-                              value=""
-                              disabled
-                              className="bg-gray-500 text-white"
-                            >
-                              Select
-                            </option>
-
-                            <option value="30" className="bg-gray-500 text-white">
-                              0.5 hour
-                            </option>
-
-                            <option value="60" className="bg-gray-500 text-white">
-                              1 hour
-                            </option>
-
-                            <option value="90" className="bg-gray-500 text-white">
-                              1.5 hours
-                            </option>
-
-                            <option value="120" className="bg-gray-500 text-white">
-                              2 hours
-                            </option>
-
-                            <option value="150" className="bg-gray-500 text-white">
-                              2.5 hours
-                            </option>
-
-                            <option value="180" className="bg-gray-500 text-white">
-                              3 hours
-                            </option>
-
-                            <option value="210" className="bg-gray-500 text-white">
-                              3.5 hours
-                            </option>
-
-                            <option value="240" className="bg-gray-500 text-white">
-                              4 hours
-                            </option>
                           </select>
                         </td>
 

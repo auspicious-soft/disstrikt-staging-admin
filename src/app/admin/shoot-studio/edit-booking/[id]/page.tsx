@@ -103,6 +103,36 @@ const EditBookingPage = () => {
         });
   };
   const addons = activity.addOnFeatures ?? shootDetails.addOnFeatures ?? [];
+  const currencySymbols: Record<string, string> = {
+    usd: "$",
+    eur: "€",
+    gbp: "£",
+  };
+  const formatAddon = (addon: unknown) => {
+    if (typeof addon === "string") return addon;
+    if (!addon || typeof addon !== "object") return "-";
+
+    const addonData = addon as {
+      featureName?: unknown;
+      key?: unknown;
+      price?: unknown;
+      value?: unknown;
+      currency?: unknown;
+      prices?: Record<string, unknown>;
+    };
+    const name = addonData.featureName ?? addonData.key ?? "-";
+    const currency = String(addonData.currency ?? "").toLowerCase();
+    const price = addonData.price ?? addonData.value;
+    const fallbackPrice = currency
+      ? addonData.prices?.[currency]
+      : undefined;
+    const selectedPrice = price ?? fallbackPrice;
+    const symbol = currencySymbols[currency] ?? (currency ? `${currency.toUpperCase()} ` : "");
+
+    return selectedPrice !== undefined && selectedPrice !== null
+      ? `${String(name)} (${symbol}${String(selectedPrice)})`
+      : String(name);
+  };
 
   const handleCancelBooking = async () => {
     await cancelActivity({
@@ -150,15 +180,7 @@ const EditBookingPage = () => {
               addons.map((addon: unknown, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <span className="text-stone-400">•</span>
-                  <span>
-                    {typeof addon === "string"
-                      ? addon
-                      : `${formatValue((addon as { key?: unknown }).key)}${
-                          (addon as { value?: unknown }).value !== undefined
-                            ? ` (Charges $${formatValue((addon as { value?: unknown }).value)})`
-                            : ""
-                        }`}
-                  </span>
+                  <span>{formatAddon(addon)}</span>
                 </div>
               ))
             ) : (

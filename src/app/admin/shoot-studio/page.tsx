@@ -13,11 +13,18 @@ import { useCountry } from "@/app/components/CountryContext";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { Eye } from "iconoir-react";
 
+interface AddOnFeature {
+  featureName?: string;
+  prices?: Record<string, number>;
+  price?: number;
+  currency?: string;
+}
+
 interface TableRow {
   _id: string;
-  userId: string;
   modelName: string;
   activityType: string;
+  addOnPrice: string;
   studio: string;
   date: string;
   timeSlot: string;
@@ -33,6 +40,45 @@ interface TableHeader {
   fontWeight?: string;
 }
 type ApplicantFilter = "upcoming" | "past" | "reviewed" | "Rejected";
+
+// Formats an amount with its currency symbol, e.g. (56, "gbp") -> "£56".
+// Falls back to "56 GBP" if the currency code is not recognised.
+const formatPrice = (amount: number, currency: string): string => {
+  try {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${amount} ${currency.toUpperCase()}`;
+  }
+};
+
+// Sums the add-on feature prices per currency and returns a display string.
+// No add-ons -> "-". Mixed currencies -> "£56 + $20".
+const getAddOnPrice = (addOnFeatures?: AddOnFeature[]): string => {
+  if (!addOnFeatures?.length) return "-";
+
+  const totals: Record<string, number> = {};
+
+  addOnFeatures.forEach((feature) => {
+    const currency = (feature.currency || "").toLowerCase();
+    if (!currency) return;
+
+    const amount = feature.price ?? feature.prices?.[currency];
+    if (typeof amount !== "number") return;
+
+    totals[currency] = (totals[currency] ?? 0) + amount;
+  });
+
+  const parts = Object.entries(totals).map(([currency, amount]) =>
+    formatPrice(amount, currency),
+  );
+
+  return parts.length ? parts.join(" + ") : "-";
+};
 
 const ShootStudio: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -90,11 +136,6 @@ const ShootStudio: React.FC = () => {
 
   const headers: TableHeader[] = [
     {
-      label: "User ID",
-      key: "userId",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
       label: "Model Name",
       key: "modelName",
       icon: <ChevronsUpDown className="w-4 h-4" />,
@@ -102,6 +143,11 @@ const ShootStudio: React.FC = () => {
     {
       label: "Activity Type",
       key: "activityType",
+      icon: <ChevronsUpDown className="w-4 h-4" />,
+    },
+    {
+      label: "Add-on Price",
+      key: "addOnPrice",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
@@ -134,9 +180,13 @@ const ShootStudio: React.FC = () => {
     return (data?.data ?? [])
       .map((activity: any) => ({
         _id: activity._id,
-        userId: activity.userId?._id ?? "-",
         modelName: activity.userId?.fullName ?? "-",
         activityType: activity.activityType ?? "-",
+        // Most tabs return addOnFeatures on the activity itself; the Cancelled
+        // tab returns it nested under slotId (which can be null).
+        addOnPrice: getAddOnPrice(
+          activity.addOnFeatures ?? activity.slotId?.addOnFeatures,
+        ),
         studio: activity.studioId?.name ?? "-",
         date: new Date(activity.date).toLocaleDateString("en-GB", {
           day: "2-digit",

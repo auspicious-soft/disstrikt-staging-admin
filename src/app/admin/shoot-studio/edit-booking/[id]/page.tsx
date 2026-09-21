@@ -67,15 +67,17 @@ const EditBookingPage = () => {
     slotId: params.id,
     type: "Upcoming",
   });
-  const activity = Array.isArray(data) ? data[0] ?? {} : data ?? {};
+  const activity = Array.isArray(data) ? (data[0] ?? {}) : (data ?? {});
   const user = activity.userId ?? activity.user ?? {};
-    const { mutateAsync: cancelActivity, isPending: isCancelling } =
-      useCancelActivity();
+  const { mutateAsync: cancelActivity, isPending: isCancelling } =
+    useCancelActivity();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const shootDetails = activity.shootDetails ?? activity.details ?? {};
   const formatValue = (value: unknown, fallback = "-") =>
-    value === undefined || value === null || value === "" ? fallback : String(value);
+    value === undefined || value === null || value === ""
+      ? fallback
+      : String(value);
   const formatPhoneNumber = () => {
     const phone = user.phoneNumber ?? user.phone;
     if (phone === undefined || phone === null || phone === "") return "-";
@@ -123,11 +125,11 @@ const EditBookingPage = () => {
     const name = addonData.featureName ?? addonData.key ?? "-";
     const currency = String(addonData.currency ?? "").toLowerCase();
     const price = addonData.price ?? addonData.value;
-    const fallbackPrice = currency
-      ? addonData.prices?.[currency]
-      : undefined;
+    const fallbackPrice = currency ? addonData.prices?.[currency] : undefined;
     const selectedPrice = price ?? fallbackPrice;
-    const symbol = currencySymbols[currency] ?? (currency ? `${currency.toUpperCase()} ` : "");
+    const symbol =
+      currencySymbols[currency] ??
+      (currency ? `${currency.toUpperCase()} ` : "");
 
     return selectedPrice !== undefined && selectedPrice !== null
       ? `${String(name)} (${symbol}${String(selectedPrice)})`
@@ -158,37 +160,58 @@ const EditBookingPage = () => {
       </Panel>
 
       <Panel title="Booking Details" columns={3}>
-        <DetailItem label="Studio" value={formatValue(activity.studioId?.name)} />
+        <DetailItem
+          label="Studio"
+          value={formatValue(activity.studioId?.name)}
+        />
         <DetailItem label="Date" value={formatDate(activity.date)} />
         <DetailItem
           label="Time"
           value={`${formatValue(activity.startTime)} - ${formatValue(activity.endtime)}`}
         />
       </Panel>
-      <Panel title="Shoot Details">
-        <DetailItem label="Shoot Goal" value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)} />
-        <DetailItem label="Shoot Format" value={formatValue(shootDetails.shootFormat ?? activity.shootFormat)} />
-
-        <DetailItem label="Shoot Vibes" value={formatValue(activity.vibes ?? shootDetails.vibes)} />
-        <DetailItem label="Outfit" value={formatValue(activity.canBringOutfits ?? shootDetails.canBringOutfits)} />
-
-        <div className="md:col-span-2 space-y-2">
-          <p className={labelClass}>Requested addons</p>
-
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-stone-100">
-            {Array.isArray(addons) && addons.length > 0 ? (
-              addons.map((addon: unknown, index: number) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="text-stone-400">•</span>
-                  <span>{formatAddon(addon)}</span>
-                </div>
-              ))
-            ) : (
-              <span className="text-stone-400">-</span>
+      {activity.activityType === "Create a Shoot" ? (
+        <Panel title="Shoot Details">
+          <DetailItem
+            label="Shoot Goal"
+            value={formatValue(activity.shootGoals ?? shootDetails.shootGoals)}
+          />
+          <DetailItem
+            label="Shoot Format"
+            value={formatValue(
+              shootDetails.shootFormat ?? activity.shootFormat,
             )}
+          />
+
+          <DetailItem
+            label="Shoot Vibes"
+            value={formatValue(activity.vibes ?? shootDetails.vibes)}
+          />
+          <DetailItem
+            label="Outfit"
+            value={formatValue(
+              activity.canBringOutfits ?? shootDetails.canBringOutfits,
+            )}
+          />
+
+          <div className="md:col-span-2 space-y-2">
+            <p className={labelClass}>Requested addons</p>
+
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-stone-100">
+              {Array.isArray(addons) && addons.length > 0 ? (
+                addons.map((addon: unknown, index: number) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-stone-400">•</span>
+                    <span>{formatAddon(addon)}</span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-stone-400">-</span>
+              )}
+            </div>
           </div>
-        </div>
-      </Panel>
+        </Panel>
+      ) : null}
 
       <button
         type="button"

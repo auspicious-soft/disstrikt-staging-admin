@@ -147,7 +147,7 @@ export const JobCard = ({ job, href, isjob }: JobCardProps) => {
         {isjob && (
           <>
             <span className="mb-2 inline-block rounded-[6px] bg-[#EF476F]/15 px-2.5 py-1 border border-[#501C2E] text-xs font-semibold text-[#EF476F]">
-              {job.postedBy}
+              {job.postedBy === "FOUNDER" ? "DISTRIKT" : job.postedBy}
             </span>
             <h3 className="mb-3 text-base font-medium leading-snug">
               {job.title}

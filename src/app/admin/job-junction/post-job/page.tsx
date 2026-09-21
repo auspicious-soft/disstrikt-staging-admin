@@ -37,14 +37,16 @@ type TextInputProps = {
   type?: React.HTMLInputTypeAttribute;
   icon?: React.ReactNode;
   className?: string;
-  min?: string; // NEW: restricts date/time inputs (e.g. blocks past dates)
+  min?: string; // restricts date/time/number inputs (e.g. blocks past dates)
 };
+
+type SelectOption = string | { label: string; value: string };
 
 type SelectFieldProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: SelectOption[];
   className?: string;
 };
 type CheckboxProps = {
@@ -68,6 +70,22 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
   "United Kingdom": "GB",
   UK: "GB",
 };
+
+// Multi-select niche options for MODEL jobs.
+const NICHE_OPTIONS = [
+  "Fashion",
+  "Commercial",
+  "Editorial",
+  "Fitness",
+  "Swimwear",
+  "Lingrie",
+  "Runway",
+  "Influencer",
+  "Acting",
+  "Content Creation",
+  "Hostess",
+  "Other",
+];
 
 type DateTimeEntry = { date: string; time: string };
 const sectionClass =
@@ -143,15 +161,22 @@ const SelectField = ({
         onChange={(e) => onChange(e.target.value)}
         className={`${controlClass} appearance-none pr-9`}
       >
-        {options.map((option) => (
-          <option
-            key={option}
-            value={option}
-            className="bg-neutral-900 text-sm font-light text-white/20"
-          >
-            {option}
-          </option>
-        ))}
+        {options.map((option) => {
+          const optionValue =
+            typeof option === "string" ? option : option.value;
+          const optionLabel =
+            typeof option === "string" ? option : option.label;
+
+          return (
+            <option
+              key={optionValue}
+              value={optionValue}
+              className="bg-neutral-900 text-sm font-light text-white/20"
+            >
+              {optionLabel}
+            </option>
+          );
+        })}
       </select>
       <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
     </div>
@@ -188,9 +213,6 @@ const Checkbox = ({ label, checked, onChange }: CheckboxProps) => (
 const parseNumericValue = (value: string): number => {
   const match = value.match(/-?\d+(\.\d+)?/);
   return match ? Number(match[0]) : 0;
-};
-const parseExperienceYears = (value: string): string => {
-  return value.replace(" Years", "");
 };
 
 const formatEnumValue = (value?: string | null): string => {
@@ -233,14 +255,8 @@ const PostJobPage = () => {
   const editId = params?.id;
   const isEditMode = Boolean(editId);
   const { mutate: createJob, isPending: isCreating } = CreateJobAdmin();
-  const {
-    mutateAsync: updateJob,
-    isPending: isUpdating,
-  } = useUpdateJobAdmin();
-  const {
-    data: existingJobData,
-    isPending: isLoadingJob,
-  } = useGetJobById({
+  const { mutateAsync: updateJob, isPending: isUpdating } = useUpdateJobAdmin();
+  const { data: existingJobData, isPending: isLoadingJob } = useGetJobById({
     id: editId,
     status: "ALL",
     page: 1,
@@ -264,13 +280,15 @@ const PostJobPage = () => {
   const [compensationType, setCompensationType] = useState("Paid");
   const [currency, setCurrency] = useState("GBP");
   const [amount, setAmount] = useState("");
-  const [experience, setExperience] = useState("1-2 Years");
+  const [minExperience, setMinExperience] = useState("");
+  const [maxExperience, setMaxExperience] = useState("");
   const [gender, setGender] = useState("Male");
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [minHeight, setMinHeight] = useState("");
   const [maxHeight, setMaxHeight] = useState("");
-  const [niche, setNiche] = useState("");
+  const [niches, setNiches] = useState<string[]>([]);
+  const [numberOfModels, setNumberOfModels] = useState("");
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [existingReferences, setExistingReferences] = useState<string[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState("");
@@ -337,13 +355,42 @@ const PostJobPage = () => {
     setCompensationType(compensationType || "Paid");
     setCurrency(String(job.currency || "GBP").toUpperCase());
     setAmount(job.pay == null ? "" : String(job.pay));
-    setExperience(job.experience ? `${job.experience} Years` : "1-2 Years");
+
+    // Experience (falls back to the old "1-2" style string for legacy jobs)
+    const legacyExp = String(job.experience ?? "").match(
+      /(\d+)\s*(?:-\s*(\d+))?/,
+    );
+    setMinExperience(
+      job.minExperience != null
+        ? String(job.minExperience)
+        : (legacyExp?.[1] ?? ""),
+    );
+    setMaxExperience(
+      job.maxExperience != null
+        ? String(job.maxExperience)
+        : (legacyExp?.[2] ?? ""),
+    );
+
     setGender(formatEnumValue(job.gender || job.en?.gender));
     setMinAge(job.minAge == null ? "" : String(job.minAge));
     setMaxAge(job.maxAge == null ? "" : String(job.maxAge));
     setMinHeight(job.minHeightInCm == null ? "" : String(job.minHeightInCm));
     setMaxHeight(job.maxHeightInCm == null ? "" : String(job.maxHeightInCm));
-    setNiche(job.niche || "Select");
+
+    // Niche (handles both array and legacy single string)
+    setNiches(
+      Array.isArray(job.niche) ? job.niche : job.niche ? [job.niche] : [],
+    );
+
+    // Stylist: number of models
+    setNumberOfModels(
+      job.numberOfModels == null ? "" : String(job.numberOfModels),
+    );
+    setDeliverables((prev) => ({
+      ...prev,
+      modelsAmount: Boolean(job.numberOfModels),
+    }));
+
     setTravelCovered(Boolean(job.travelCovered));
     setAdditionalNotes(job.additionalNotes || "");
     setLat(job.lat ?? null);
@@ -370,6 +417,14 @@ const PostJobPage = () => {
   const removeDateRow = (index: number) => {
     setDates((prev) =>
       prev.length > 1 ? prev.filter((_, i) => i !== index) : prev,
+    );
+  };
+
+  const toggleNiche = (value: string, checked: boolean) => {
+    setNiches((prev) =>
+      checked
+        ? [...prev.filter((n) => n !== value), value]
+        : prev.filter((n) => n !== value),
     );
   };
 
@@ -549,7 +604,8 @@ const PostJobPage = () => {
       toast.error("Only image files are allowed.");
     }
 
-    const availableSlots = 10 - existingReferences.length - referenceFiles.length;
+    const availableSlots =
+      10 - existingReferences.length - referenceFiles.length;
 
     if (availableSlots <= 0) {
       toast.error("You can upload a maximum of 10 reference images.");
@@ -583,6 +639,8 @@ const PostJobPage = () => {
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    // Stop the browser's native form submit (full page reload).
+    event.preventDefault();
 
     // Fallback guard: reject any date/time entries that are in the past,
     // in case the browser's native `min` restriction was bypassed or unsupported.
@@ -602,8 +660,25 @@ const PostJobPage = () => {
       return;
     }
 
-    if (userMode === "MODEL" && niche === "Select") {
-      toast.error("Please select a niche.");
+    const minExp = parseNumericValue(minExperience);
+    const maxExp = parseNumericValue(maxExperience);
+
+    if (minExp > maxExp) {
+      toast.error("Min experience cannot be greater than max experience.");
+      return;
+    }
+
+    if (userMode === "MODEL" && niches.length === 0) {
+      toast.error("Please select at least one niche.");
+      return;
+    }
+
+    if (
+      userMode === "STYLIST" &&
+      deliverables.modelsAmount &&
+      parseNumericValue(numberOfModels) <= 0
+    ) {
+      toast.error("Please enter the number of models.");
       return;
     }
 
@@ -636,7 +711,7 @@ const PostJobPage = () => {
         uploadReference = [
           ...existingReferences,
           ...(await Promise.all(
-          referenceFiles.map((file) => uploadImage(file)),
+            referenceFiles.map((file) => uploadImage(file)),
           )),
         ];
       } catch (error) {
@@ -689,9 +764,10 @@ const PostJobPage = () => {
       schedule,
       uploadReference,
       additionalNotes,
-      experience: parseExperienceYears(experience),
+      minExperience: minExp,
+      maxExperience: maxExp,
       ...(userMode === "MODEL" && {
-        niche,
+        niche: niches, // string[]
       }),
       ...(userMode === "PHOTOGRAPHER" && {
         style,
@@ -721,6 +797,9 @@ const PostJobPage = () => {
           btsContent: deliverables.btsContent,
           modelsAmount: deliverables.modelsAmount,
         },
+        numberOfModels: deliverables.modelsAmount
+          ? parseNumericValue(numberOfModels)
+          : 0,
         wardrobeRequired,
         accessoriesRequired,
       }),
@@ -770,7 +849,11 @@ const PostJobPage = () => {
                 label="What Are You Looking For ?"
                 value={userMode}
                 onChange={setUserMode}
-                options={["MODEL", "PHOTOGRAPHER", "STYLIST"]}
+                options={[
+                  "MODEL",
+                  "PHOTOGRAPHER",
+                  { label: "BEAUTY PROFESSIONAL", value: "STYLIST" },
+                ]}
               />
             </section>
 
@@ -943,13 +1026,17 @@ const PostJobPage = () => {
                   label="Type"
                   value={compensationType}
                   onChange={setCompensationType}
-                  options={["Paid", "Unpaid", "Barter"]}
+                  options={[
+                    "Paid",
+                    "Barter",
+                    { label: "TFP (Time for Print)", value: "Unpaid" },
+                  ]}
                 />
                 <SelectField
                   label="Currency"
                   value={currency}
                   onChange={setCurrency}
-                  options={["GBP", "EUR"]}
+                  options={["GBP", "EUR", "USD"]}
                 />
                 <TextInput
                   label="Amount"
@@ -962,20 +1049,25 @@ const PostJobPage = () => {
 
             <Section title="Preferences">
               <div
-                className={`grid grid-cols-1 gap-2 ${userMode !== "MODEL" ? "grid-cols-1" : "md:grid-cols-2"}`}
+                className={`grid grid-cols-1 gap-2 sm:grid-cols-2 ${
+                  userMode === "MODEL" ? "lg:grid-cols-3" : ""
+                }`}
               >
-                <SelectField
-                  label="Experience"
-                  value={experience}
-                  onChange={setExperience}
-                  options={[
-                    "1-2 Years",
-                    "2-3 Years",
-                    "3-4 Years",
-                    "4-5 Years",
-                    "5-6 Years",
-                    "6+ Years",
-                  ]}
+                <TextInput
+                  label="Min Experience (years)"
+                  placeholder="1"
+                  type="number"
+                  min="0"
+                  value={minExperience}
+                  onChange={setMinExperience}
+                />
+                <TextInput
+                  label="Max Experience (years)"
+                  placeholder="5"
+                  type="number"
+                  min="0"
+                  value={maxExperience}
+                  onChange={setMaxExperience}
                 />
                 {userMode === "MODEL" && (
                   <SelectField
@@ -1015,26 +1107,20 @@ const PostJobPage = () => {
                 </div>
               )}
 
-              {/* MODEL - Niche */}
+              {/* MODEL - Niche (multi-select) */}
               {userMode === "MODEL" && (
-                <div className="mt-2">
-                  <SelectField
-                    label="Niche"
-                    value={niche}
-                    onChange={setNiche}
-                    options={[
-                      "Select",
-                      "Fashion",
-                      "Commercial",
-                      "Editorial",
-                      "Fitness",
-                      "Swimwear",
-                      "Lingrie",
-                      "Runway",
-                      "Influencer",
-                      "Other",
-                    ]}
-                  />
+                <div className="mt-3">
+                  <span className={labelClass}>Niche</span>
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {NICHE_OPTIONS.map((option) => (
+                      <Checkbox
+                        key={option}
+                        label={option}
+                        checked={niches.includes(option)}
+                        onChange={(checked) => toggleNiche(option, checked)}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -1260,16 +1346,32 @@ const PostJobPage = () => {
                           }
                         />
 
-                        <Checkbox
-                          label="How many models (amount)"
-                          checked={deliverables.modelsAmount}
-                          onChange={(checked) =>
-                            setDeliverables((prev) => ({
-                              ...prev,
-                              modelsAmount: checked,
-                            }))
-                          }
-                        />
+                        <div className="col-span-2 space-y-2 md:col-span-4">
+                          <Checkbox
+                            label="How many models (amount)"
+                            checked={deliverables.modelsAmount}
+                            onChange={(checked) => {
+                              setDeliverables((prev) => ({
+                                ...prev,
+                                modelsAmount: checked,
+                              }));
+                              if (!checked) setNumberOfModels("");
+                            }}
+                          />
+
+                          {deliverables.modelsAmount && (
+                            <div className="max-w-xs">
+                              <TextInput
+                                label="Number of Models"
+                                placeholder="e.g. 5"
+                                type="number"
+                                min="1"
+                                value={numberOfModels}
+                                onChange={setNumberOfModels}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
@@ -1316,7 +1418,9 @@ const PostJobPage = () => {
                     multiple
                     className="hidden"
                     onChange={handleReferenceUpload}
-                    disabled={existingReferences.length + referenceFiles.length >= 10}
+                    disabled={
+                      existingReferences.length + referenceFiles.length >= 10
+                    }
                   />
                 </label>
 
@@ -1384,7 +1488,7 @@ const PostJobPage = () => {
               </div>
             </Section>
             <Section title="Additional Notes">
-              <Field label="Additional Notes">
+              {/* <Field label="Additional Notes"> */}
                 <textarea
                   placeholder="Bring your own makeup kit and two casual outfits."
                   rows={5}
@@ -1392,7 +1496,7 @@ const PostJobPage = () => {
                   onChange={(e) => setAdditionalNotes(e.target.value)}
                   className="min-h-24 w-full resize-none rounded border border-stone-700 bg-transparent px-3 py-3 text-[10px] font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-500"
                 />
-              </Field>
+              {/* </Field> */}
             </Section>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[260px_1fr]">
@@ -1411,8 +1515,12 @@ const PostJobPage = () => {
                 {isUploading
                   ? "Uploading..."
                   : isCreating || isUpdating
-                    ? isEditMode ? "Updating..." : "Posting..."
-                    : isEditMode ? "Update Job" : "Post Job"}
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Posting..."
+                    : isEditMode
+                      ? "Update Job"
+                      : "Post Job"}
               </button>
             </div>
           </form>

@@ -15,7 +15,7 @@ const AppLogo = () => {
           width={0}
           height={0}
           sizes="100vw"
-          className="h-18 w-26"
+          className="h-16 w-32"
         />
       </Link>
     </div>

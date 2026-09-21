@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowSeparateVertical } from "iconoir-react";
 
-type RangeKey = "3" | "6";
+type RangeKey = "3" | "6" | "12";
 type TabKey = "revenue" | "subscription";
 type BarSeries = {
   label: string;
@@ -14,6 +14,7 @@ type BarSeries = {
 const ranges: Array<{ label: string; value: RangeKey }> = [
   { label: "Last 3 Months", value: "3" },
   { label: "Last 6 Months", value: "6" },
+  { label: "Last 12 Months", value: "12" },
 ];
 
 const revenueTabs: Array<{ label: string; value: TabKey }> = [
@@ -24,6 +25,7 @@ const revenueTabs: Array<{ label: string; value: TabKey }> = [
 const monthLabels: Record<RangeKey, string[]> = {
   "3": ["Jan", "Feb", "Mar"],
   "6": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  "12": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
 };
 
 const revenueData: Record<RangeKey, BarSeries[]> = {
@@ -41,6 +43,13 @@ const revenueData: Record<RangeKey, BarSeries[]> = {
     { label: "Country", color: "#3D4BCC", values: [160, 180, 210, 230, 260, 290] },
     { label: "Country", color: "#303448", values: [130, 150, 180, 200, 220, 250] },
   ],
+  "12": [
+    { label: "Country", color: "#EF476F", values: [300, 320, 350, 380, 400, 430, 450, 470, 500, 520, 540, 560] },
+    { label: "Country", color: "#FFB229", values: [280, 300, 320, 350, 370, 390, 410, 430, 450, 470, 490, 510] },
+    { label: "Country", color: "#C21FCF", values: [180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400] },
+    { label: "Country", color: "#3D4BCC", values: [120, 130, 150, 170, 180, 200, 220, 230, 250, 260, 280, 300] },
+    { label: "Country", color: "#303448", values: [100, 110, 120, 140, 150, 160, 180, 190, 200, 220, 230, 250] },
+  ],
 };
 
 const jobData: Record<RangeKey, BarSeries[]> = {
@@ -55,6 +64,12 @@ const jobData: Record<RangeKey, BarSeries[]> = {
     { label: "Designers", color: "#FFB229", values: [85, 95, 105, 115, 125, 135] },
     { label: "Photographers", color: "#C21FCF", values: [65, 75, 85, 95, 105, 115] },
     { label: "Designers", color: "#303448", values: [55, 65, 75, 85, 95, 105] },
+  ],
+  "12": [
+    { label: "Agent", color: "#EF476F", values: [80, 90, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145] },
+    { label: "Designers", color: "#FFB229", values: [60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115] },
+    { label: "Photographers", color: "#C21FCF", values: [45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100] },
+    { label: "Designers", color: "#303448", values: [40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95] },
   ],
 };
 
@@ -72,6 +87,13 @@ const signupData: Record<RangeKey, BarSeries[]> = {
     { label: "Photographers", color: "#C21FCF", values: [62, 68, 75, 82, 90, 98] },
     { label: "Designers", color: "#3D4BCC", values: [48, 55, 60, 68, 75, 82] },
     { label: "Stylists", color: "#303448", values: [58, 64, 70, 78, 85, 92] },
+  ],
+  "12": [
+    { label: "Agencies", color: "#EF476F", values: [70, 75, 80, 85, 90, 95, 100, 105, 110, 120, 130, 140] },
+    { label: "Models", color: "#FFB229", values: [45, 50, 54, 58, 62, 66, 70, 74, 78, 82, 86, 90] },
+    { label: "Photographers", color: "#C21FCF", values: [40, 44, 48, 52, 56, 60, 64, 68, 72, 75, 78, 80] },
+    { label: "Designers", color: "#3D4BCC", values: [32, 36, 40, 44, 48, 52, 56, 60, 64, 66, 68, 70] },
+    { label: "Stylists", color: "#303448", values: [38, 42, 46, 50, 54, 58, 62, 66, 70, 72, 74, 75] },
   ],
 };
 
@@ -91,6 +113,14 @@ const activityData: Record<RangeKey, BarSeries[]> = {
     { label: "Bookings", color: "#3D4BCC", values: [300, 320, 340, 370, 400, 430] },
     { label: "Job Applicatio.", color: "#7181FF", values: [210, 235, 260, 290, 320, 350] },
     { label: "Agency applic.", color: "#303448", values: [90, 105, 120, 140, 160, 180] },
+  ],
+  "12": [
+    { label: "Likes", color: "#EF476F", values: [500, 540, 590, 640, 700, 760, 820, 880, 950, 1020, 1100, 1180] },
+    { label: "Saves", color: "#FFB229", values: [400, 430, 470, 520, 570, 620, 670, 720, 780, 840, 900, 960] },
+    { label: "Collab inquiries", color: "#C21FCF", values: [320, 340, 375, 410, 445, 480, 520, 560, 600, 650, 700, 750] },
+    { label: "Bookings", color: "#3D4BCC", values: [230, 250, 275, 300, 320, 340, 370, 400, 430, 460, 490, 520] },
+    { label: "Job Applicatio.", color: "#7181FF", values: [160, 175, 190, 210, 235, 260, 290, 320, 350, 380, 410, 440] },
+    { label: "Agency applic.", color: "#303448", values: [60, 70, 80, 90, 105, 120, 140, 160, 180, 200, 220, 240] },
   ],
 };
 
@@ -123,6 +153,9 @@ const tableRows = [
   ["Job Bookings", "180", "1,550"],
 ];
 
+// Above this many months the charts switch to a tighter "dense" layout.
+const DENSE_THRESHOLD = 6;
+
 const Card = ({
   title,
   children,
@@ -138,7 +171,7 @@ const Card = ({
   activeTab?: TabKey;
   onTabChange?: (value: TabKey) => void;
 }) => (
-  <section className="rounded-[12px] bg-[#111115] p-4 text-stone-100 sm:p-6">
+  <section className="min-w-0 rounded-[12px] bg-[#111115] p-4 text-stone-100 sm:p-6">
     <div className="flex flex-wrap items-center justify-between gap-3">
       {title && <h2 className="mb-3 text-sm font-semibold sm:mb-5 sm:text-base">{title}</h2>}
       {showTab && tabs && (
@@ -183,7 +216,7 @@ const StackBarChart = ({
   series,
   max,
   ticks,
-  barWidth = 28,
+  barWidth,
 }: {
   months: string[];
   series: BarSeries[];
@@ -191,24 +224,31 @@ const StackBarChart = ({
   ticks: string[];
   barWidth?: number;
 }) => {
+  const dense = months.length > DENSE_THRESHOLD;
+  const resolvedBarWidth = barWidth ?? (dense ? 18 : 28);
+
   const totals = months.map((_, index) =>
-    series.reduce((sum, item) => sum + item.values[index], 0),
+    series.reduce((sum, item) => sum + (item.values[index] ?? 0), 0),
   );
 
   return (
-    <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_1fr_auto] sm:gap-5">
+    <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_minmax(0,1fr)_auto] sm:gap-5">
       <div className="flex h-[150px] flex-col justify-between text-[10px] text-stone-500 sm:h-[190px]">
         {ticks.map((tick) => (
           <span key={tick}>{tick}</span>
         ))}
       </div>
-      <div className="-ml-2 flex h-[170px] items-end justify-around gap-3 overflow-x-auto sm:ml-0 sm:h-[220px] sm:gap-8 sm:overflow-visible">
+      <div
+        className={`-ml-2 flex h-[170px] min-w-0 items-end justify-around overflow-x-auto sm:ml-0 sm:h-[220px] ${
+          dense ? "gap-2 sm:gap-3" : "gap-3 sm:gap-8"
+        }`}
+      >
         {months.map((month, monthIndex) => (
           <div key={month} className="flex shrink-0 flex-col items-center gap-2 sm:gap-3">
             <div
               className="flex flex-col-reverse overflow-hidden rounded-t-[4px]"
               style={{
-                width: barWidth,
+                width: resolvedBarWidth,
                 height: Math.max((totals[monthIndex] / max) * 178, 14),
               }}
             >
@@ -217,7 +257,7 @@ const StackBarChart = ({
                   key={`${item.label}-${index}`}
                   style={{
                     backgroundColor: item.color,
-                    height: `${(item.values[monthIndex] / totals[monthIndex]) * 100 || 0}%`,
+                    height: `${((item.values[monthIndex] ?? 0) / totals[monthIndex]) * 100 || 0}%`,
                   }}
                 />
               ))}
@@ -243,42 +283,54 @@ const GroupedBarChart = ({
   series: BarSeries[];
   max: number;
   ticks: string[];
-}) => (
-  <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_1fr_auto] sm:gap-5">
-    <div className="flex h-[150px] flex-col justify-between text-[10px] text-stone-500 sm:h-[190px]">
-      {ticks.map((tick) => (
-        <span key={tick}>{tick}</span>
-      ))}
-    </div>
-    <div className="-ml-2 flex h-[170px] items-end justify-around gap-3 overflow-x-auto sm:ml-0 sm:h-[220px] sm:gap-2 sm:overflow-visible">
-      {months.map((month, monthIndex) => (
-        <div key={month} className="flex shrink-0 flex-col items-center gap-2 sm:gap-3">
-          <div className="flex h-[150px] items-end gap-[1px] sm:h-[178px]">
-            {series.map((item, index) => (
-              <span
-                key={`${item.label}-${index}`}
-                className="w-[6px] rounded-t-[3px] sm:w-[8px]"
-                style={{
-                  backgroundColor: item.color,
-                  height: Math.max((item.values[monthIndex] / max) * 178, 4),
-                }}
-              />
-            ))}
+}) => {
+  const dense = months.length > DENSE_THRESHOLD;
+
+  return (
+    <div className="flex flex-col gap-5 sm:grid sm:min-h-[230px] sm:grid-cols-[46px_minmax(0,1fr)_auto] sm:gap-5">
+      <div className="flex h-[150px] flex-col justify-between text-[10px] text-stone-500 sm:h-[190px]">
+        {ticks.map((tick) => (
+          <span key={tick}>{tick}</span>
+        ))}
+      </div>
+      <div
+        className={`-ml-2 flex h-[170px] min-w-0 items-end justify-around overflow-x-auto sm:ml-0 sm:h-[220px] ${
+          dense ? "gap-3 sm:gap-2" : "gap-3 sm:gap-2"
+        }`}
+      >
+        {months.map((month, monthIndex) => (
+          <div key={month} className="flex shrink-0 flex-col items-center gap-2 sm:gap-3">
+            <div className="flex h-[150px] items-end gap-[1px] sm:h-[178px]">
+              {series.map((item, index) => (
+                <span
+                  key={`${item.label}-${index}`}
+                  className={`rounded-t-[3px] ${
+                    dense ? "w-[5px] sm:w-[6px]" : "w-[6px] sm:w-[8px]"
+                  }`}
+                  style={{
+                    backgroundColor: item.color,
+                    height: Math.max(((item.values[monthIndex] ?? 0) / max) * 178, 4),
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-stone-500">{month}</span>
           </div>
-          <span className="text-[10px] text-stone-500">{month}</span>
-        </div>
-      ))}
+        ))}
+      </div>
+      <div className="flex items-end sm:mb-4">
+        <Legend series={series} />
+      </div>
     </div>
-    <div className="flex items-end sm:mb-4">
-      <Legend series={series} />
-    </div>
-  </div>
-);
+  );
+};
 
 export default function Dashboard() {
   const [selectedRange, setSelectedRange] = useState<RangeKey>("3");
   const [activeRevenueTab, setActiveRevenueTab] = useState<TabKey>("revenue");
   const months = useMemo(() => monthLabels[selectedRange], [selectedRange]);
+
+  // Only the 3-month view is compact enough to place charts side by side.
   const isThreeMonth = selectedRange === "3";
 
   const revenueChartSeries =

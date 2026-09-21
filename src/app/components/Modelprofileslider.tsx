@@ -146,7 +146,7 @@ export default function ModelProfileSlider({
         <div className="absolute inset-y-1 right-0.5 w-4 rounded-r-lg border-y-2 border-r-3 border-[#751f26]" />
         <div className="absolute inset-y-1 right-[-5px] w-4 rounded-r-lg border-y-2 border-r-4 border-[#f0444d]" />
 
-        <section className="relative z-10 min-h-[300px] rounded-lg border-5 border-[#37141C] bg-black px-5 py-3.5 shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
+        <section className="relative z-10 min-h-[700px] rounded-lg border-5 border-[#37141C] bg-black px-5 py-3.5 shadow-[0_16px_38px_rgba(0,0,0,0.45)]">
           <p className="font-ovo text-2xl font-normal leading-none text-[#EF476F]">
             {String(index + 1).padStart(2, "0")}
           </p>

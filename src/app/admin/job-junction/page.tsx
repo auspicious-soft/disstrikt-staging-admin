@@ -11,16 +11,29 @@ import Pagination from "@/app/components/Pagination";
 import { useCountry } from "@/app/components/CountryContext";
 import Loader from "../components/ui/Loader";
 
-const filterOptions = {
+type Option = { label: string; value: string };
+
+const filterOptions: Record<"postedBy" | "role" | "status", Option[]> = {
   postedBy: [
-    "Posted By",
-    "AGENCIES",
-    "DESIGNER",
-    "PHOTOGRAPHER",
-    "STYLIST",
+    { label: "Posted By", value: "" },
+    { label: "AGENCY", value: "AGENCIES" },
+    { label: "DESIGNER", value: "DESIGNER" },
+    { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
+    { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
+    { label: "DISTRIKT", value: "DISTRIKT" },
   ],
-  role: ["Role", "MODEL", "DESIGNER", "PHOTOGRAPHER", "STYLIST"],
-  status: ["Status", "Completed", "Pending"],
+  role: [
+    { label: "Role", value: "" },
+    { label: "MODEL", value: "MODEL" },
+    { label: "DESIGNER", value: "DESIGNER" },
+    { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
+    { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
+  ],
+  status: [
+    { label: "Status", value: "" },
+    { label: "Completed", value: "Completed" },
+    { label: "Pending", value: "Pending" },
+  ],
 };
 
 const FilterSelect = ({
@@ -28,7 +41,7 @@ const FilterSelect = ({
   value,
   onChange,
 }: {
-  options: string[];
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
 }) => (
@@ -39,8 +52,12 @@ const FilterSelect = ({
       className="h-10 w-full appearance-none rounded-[8px] border border-[#2A2A2E] bg-[#151518] px-4 pr-9 text-[13px] text-stone-300 outline-none focus:border-[#EF476F]"
     >
       {options.map((option) => (
-        <option key={option} value={option} className="bg-[#151518]">
-          {option}
+        <option
+          key={option.value}
+          value={option.value}
+          className="bg-[#151518]"
+        >
+          {option.label}
         </option>
       ))}
     </select>
@@ -50,29 +67,29 @@ const FilterSelect = ({
 
 const JobJunction: React.FC = () => {
   const router = useRouter();
-  const [postedBy, setPostedBy] = useState(filterOptions.postedBy[0]);
-  const [role, setRole] = useState(filterOptions.role[0]);
-  const [status, setStatus] = useState(filterOptions.status[0]);
+  const [postedBy, setPostedBy] = useState(filterOptions.postedBy[0].value);
+  const [role, setRole] = useState(filterOptions.role[0].value);
+  const [status, setStatus] = useState(filterOptions.status[0].value);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const debouncedSearch = useDebouncedValue(search, 500);
   const { country } = useCountry();
   const { data, isPending } = useGetJobJunction({
-    search: debouncedSearch,
-    page,
-    limit,
-    country,
-    status: status === "Status" ? "" : status,
-    role: role === "Role" ? "" : role,
-    postedBy: postedBy === "Posted By" ? "" : postedBy,
-  });
+  search: debouncedSearch,
+  page,
+  limit,
+  country,
+  status,
+  role,
+  postedBy,
+});
   const jobs = data?.data?.data ?? [];
   const pagination = data?.data?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, postedBy, role, status,country]);
+  }, [debouncedSearch, postedBy, role, status, country]);
   return (
     <main className="min-h-screen w-full text-stone-100">
       <div className="mb-6 flex justify-end flex-col gap-3 sm:flex-row sm:items-center">
@@ -112,7 +129,7 @@ const JobJunction: React.FC = () => {
       </div>
 
       {isPending ? (
-        <Loader/>
+        <Loader />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

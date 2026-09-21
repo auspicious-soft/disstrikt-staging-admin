@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Clock3, Plus } from "lucide-react";
-import { Attachment, Calendar, NavArrowDownSolid } from "iconoir-react";
+import { MapPin, Plus, X } from "lucide-react";
+import { Attachment, NavArrowDownSolid } from "iconoir-react";
 import { CreateEvent } from "@/hooks/useAdmin";
 import { generateSignedUrlToUploadOn } from "@/actions";
 import LocationPickerModal from "@/app/components/LocationPickerModal";
@@ -284,6 +284,13 @@ const CreateCelebrationCruiseEvent = () => {
     ]);
   };
 
+  // The first day can never be removed, so at least one slot always remains.
+  const removeDay = (index: number) => {
+    setSchedule((prev) =>
+      prev.length > 1 ? prev.filter((_, i) => i !== index) : prev,
+    );
+  };
+
   const handleLocationSelect = (
     address: string,
     position: { lat: number; lng: number },
@@ -450,6 +457,9 @@ const CreateCelebrationCruiseEvent = () => {
                       <option value="gbp" className="bg-stone-700">
                         GBP
                       </option>
+                      <option value="usd" className="bg-stone-700">
+                        USD
+                      </option>
                     </select>
                     <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
                   </div>
@@ -522,12 +532,12 @@ const CreateCelebrationCruiseEvent = () => {
               {schedule.map((item, index) => (
                 <div
                   key={index}
-                  className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr_0.65fr_auto] mb-4"
+                  className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr_0.65fr_12rem] mb-4"
                 >
                   {/* Date */}
                   <label className="space-y-1">
                     <span className="block text-xs font-normal text-stone-100">
-                      Date
+                      {index === 0 ? "Date" : `Date ${index + 1}`}
                     </span>
 
                     {/* Date */}
@@ -590,40 +600,63 @@ const CreateCelebrationCruiseEvent = () => {
                     />
                   </label>
 
-                  {/* Add Day Button */}
-                  {index === schedule.length - 1 && (
-                    <div className="flex items-end">
+                  {/* Row actions: remove (extra days only) + add another day (last row only) */}
+                  <div className="flex items-end gap-2">
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeDay(index)}
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-stone-700 text-stone-400 transition-colors hover:border-rose-400 hover:text-white"
+                        aria-label={`Remove day ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    {index === schedule.length - 1 && (
                       <button
                         type="button"
                         onClick={addDay}
-                        className="mb-3 inline-flex items-center gap-2 text-xs text-stone-300"
+                        className="mb-3 inline-flex items-center gap-2 whitespace-nowrap text-xs text-stone-300"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add another day
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
               <div className="mb-4">
-                <label className="space-y-1 w-full">
-                  <span className="block text-xs font-normal text-stone-100">
-                    Address
-                  </span>
+                <label
+                  htmlFor="event-address"
+                  className="mb-1 block text-xs font-normal text-stone-100"
+                >
+                  Address
+                </label>
 
+                <div className="flex gap-2">
                   <input
-                    className={`${fieldBase} cursor-pointer`}
+                    id="event-address"
+                    className={fieldBase}
                     name="address"
                     type="text"
                     value={form.address}
                     onChange={handleChange}
                     onBlur={handleAddressBlur}
-                    onClick={() => setIsLocationPickerOpen(true)}
                     onKeyDown={handleAddressKeyDown}
                     placeholder="Enter event address"
                     required
                   />
-                </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsLocationPickerOpen(true)}
+                    className="inline-flex h-12 shrink-0 items-center gap-2 rounded-md border border-stone-700 px-4 text-xs font-medium text-stone-300 transition-colors hover:border-rose-400 hover:text-white"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Use map
+                  </button>
+                </div>
+
                 {form.lat !== null && form.lng !== null && (
                   <p className="mt-2 text-[11px] text-stone-400">
                     Coordinates captured: {form.lat.toFixed(4)},{" "}

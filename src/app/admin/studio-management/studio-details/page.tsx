@@ -930,7 +930,8 @@ const StudioDetails = () => {
                               Select interval
                             </option>
                             {[
-                              ["30", "0.5 hour"], ["60", "1 hour"],
+                              ["15", "15 minutes"], ["30", "30 minutes"],
+                              ["45", "45 minutes"], ["60", "1 hour"],
                               ["90", "1.5 hours"], ["120", "2 hours"],
                               ["150", "2.5 hours"], ["180", "3 hours"],
                               ["210", "3.5 hours"], ["240", "4 hours"],

@@ -1,10 +1,5 @@
 "use client";
 import { ADMIN_URLS, BASE_IMG_URL } from "@/constants/apiUrls";
-import {
-  getAdminDataaa,
-  UpdateAdminData,
-  uploadAnything,
-} from "@/services/admin-services";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner"; // for toast notifications
 import Loader from "../components/ui/Loader";

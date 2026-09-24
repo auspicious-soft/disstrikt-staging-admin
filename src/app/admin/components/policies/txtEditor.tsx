@@ -281,9 +281,31 @@ interface MultiTextEditorsProps {
     privacyPolicy: { en: string; nl: string; es: string; fr: string };
     termAndCondition: { en: string; nl: string; es: string; fr: string };
     support: {
-      phone: { UK: string; BE: string; FR: string; ES: string; NL: string };
-      email: { UK: string; BE: string; FR: string; ES: string; NL: string };
-      address: { en: string; nl: string; es: string; fr: string };
+      phone: {
+        US: string;
+        UK: string;
+        BE: string;
+        FR: string;
+        ES: string;
+        NL: string;
+      };
+      email: {
+        US: string;
+        UK: string;
+        BE: string;
+        FR: string;
+        ES: string;
+        NL: string;
+      };
+      address: {
+        US: string;
+        UK: string;
+        BE: string;
+        en: string;
+        nl: string;
+        es: string;
+        fr: string;
+      };
     };
   };
   setDescriptions: {
@@ -308,6 +330,9 @@ interface MultiTextEditorsProps {
         country: keyof MultiTextEditorsProps["values"]["support"]["email"],
         content: string,
       ) => void;
+      setAddressUS: (content: string) => void;
+      setAddressUK: (content: string) => void;
+      setAddressBelgium: (content: string) => void;
       setAddressEnglish: (content: string) => void;
       setAddressDutch: (content: string) => void;
       setAddressSpanish: (content: string) => void;
@@ -376,7 +401,15 @@ const MultiTextEditors = ({
           <ContactGroup label="Phone">
             <ContactEditor
               type="tel"
-              label="USA"
+              label="US (United States)"
+              value={values.support.phone.US}
+              setDescription={(val) =>
+                setDescriptions.setSupport.setPhone("US", val)
+              }
+            />
+            <ContactEditor
+              type="tel"
+              label="UK (United Kingdom)"
               value={values.support.phone.UK}
               setDescription={(val) =>
                 setDescriptions.setSupport.setPhone("UK", val)
@@ -385,7 +418,7 @@ const MultiTextEditors = ({
 
             <ContactEditor
               type="tel"
-              label="BELGIUM"
+              label="Belgium"
               value={values.support.phone.BE}
               setDescription={(val) =>
                 setDescriptions.setSupport.setPhone("BE", val)
@@ -419,14 +452,21 @@ const MultiTextEditors = ({
 
           <ContactGroup label="Email">
             <ContactEditor
-              label="USA"
+              label="US (United States)"
+              value={values.support.email.US}
+              setDescription={(val) =>
+                setDescriptions.setSupport.setEmail("US", val)
+              }
+            />
+            <ContactEditor
+              label="UK (United Kingdom)"
               value={values.support.email.UK}
               setDescription={(val) =>
                 setDescriptions.setSupport.setEmail("UK", val)
               }
             />
             <ContactEditor
-              label="BELGIUM"
+              label="Belgium"
               value={values.support.email.BE}
               setDescription={(val) =>
                 setDescriptions.setSupport.setEmail("BE", val)
@@ -457,24 +497,34 @@ const MultiTextEditors = ({
 
           <ContactGroup label="Address">
             <ContactEditor
-              label="English"
-              value={values.support.address.en}
-              setDescription={setDescriptions.setSupport.setAddressEnglish}
+              label="US (United States)"
+              value={values.support.address.US}
+              setDescription={setDescriptions.setSupport.setAddressUS}
             />
             <ContactEditor
-              label="Dutch"
+              label="English -> UK"
+              value={values.support.address.UK || values.support.address.en}
+              setDescription={setDescriptions.setSupport.setAddressUK}
+            />
+            <ContactEditor
+              label="Dutch -> Netherlands"
               value={values.support.address.nl}
               setDescription={setDescriptions.setSupport.setAddressDutch}
             />
             <ContactEditor
-              label="Spanish"
+              label="Spanish -> Spain"
               value={values.support.address.es}
               setDescription={setDescriptions.setSupport.setAddressSpanish}
             />
             <ContactEditor
-              label="French"
+              label="French -> France"
               value={values.support.address.fr}
               setDescription={setDescriptions.setSupport.setAddressFrench}
+            />
+            <ContactEditor
+              label="Belgium"
+              value={values.support.address.BE}
+              setDescription={setDescriptions.setSupport.setAddressBelgium}
             />
           </ContactGroup>
         </>

@@ -42,7 +42,7 @@ const ticketHolders: TicketHolder[] = [
     email: "David.Anderson@example.com",
     mobile: "+331 234 45 078",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "2",
@@ -50,7 +50,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Alina.Johnson@example.com",
     mobile: "+331 234 65 990",
     tickets: 1,
-    activeMonths: "6 Months",
+    activeMonths: "$78",
   },
   {
     _id: "3",
@@ -58,7 +58,7 @@ const ticketHolders: TicketHolder[] = [
     email: "James.Brown@example.com",
     mobile: "+331 123 45 078",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "4",
@@ -66,7 +66,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Emily.Davis@example.com",
     mobile: "+331 234 67 912",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "5",
@@ -74,7 +74,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Maria.Smith@example.com",
     mobile: "+331 123 44 072",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "6",
@@ -82,7 +82,7 @@ const ticketHolders: TicketHolder[] = [
     email: "David.Anderson@example.com",
     mobile: "+331 234 65 704",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "7",
@@ -90,7 +90,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Sophia.Lee@example.com",
     mobile: "+331 123 45 975",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "8",
@@ -98,7 +98,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Noah.Smith@example.com",
     mobile: "+331 234 43 074",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "9",
@@ -106,7 +106,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Laura.Garcia@example.com",
     mobile: "+331 123 45 672",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "10",
@@ -114,7 +114,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Robert.Rodriguez@example.com",
     mobile: "+331 234 56 978",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "11",
@@ -122,7 +122,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Isabella.Martinez@example.com",
     mobile: "+331 123 45 676",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "12",
@@ -130,7 +130,7 @@ const ticketHolders: TicketHolder[] = [
     email: "William.Walker@example.com",
     mobile: "+331 234 65 440",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "13",
@@ -138,7 +138,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Olivia.Hall@example.com",
     mobile: "+331 234 56 440",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "14",
@@ -146,7 +146,7 @@ const ticketHolders: TicketHolder[] = [
     email: "James.Young@example.com",
     mobile: "+331 123 45 672",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
   {
     _id: "15",
@@ -154,7 +154,7 @@ const ticketHolders: TicketHolder[] = [
     email: "Michael.Wilson@example.com",
     mobile: "+331 123 45 634",
     tickets: 1,
-    activeMonths: "5 Months",
+    activeMonths: "$45",
   },
 ];
 
@@ -177,7 +177,7 @@ const ticketHeaders = [
     icon: <ChevronsUpDown className="w-4 h-4" />,
   },
   {
-    label: "Total Active Months",
+    label: "Amount Paid",
     key: "activeMonths",
     align: "center" as const,
     icon: <ChevronsUpDown className="w-4 h-4" />,

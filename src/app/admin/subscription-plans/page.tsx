@@ -12,6 +12,7 @@ type Plan = {
   price: {
     eur: string;
     gbp: string;
+    usd: string;
   };
   description: Record<LocaleKey, string>;
 };
@@ -44,25 +45,6 @@ const locales: Array<{ label: string; key: LocaleKey }> = [
 
 const staticPlans: Plan[] = [
   {
-    key: "Rising Star Plan",
-    name: {
-      en: "Rising Star Plan",
-      fr: "Rising Star Plan",
-      es: "Rising Star Plan",
-      nl: "Rising Star Plan",
-    },
-    price: {
-      eur: "299.99",
-      gbp: "259.99",
-    },
-    description: {
-      en: "Rising Star Plan",
-      fr: "Rising Star Plan",
-      es: "Rising Star Plan",
-      nl: "Rising Star Plan",
-    },
-  },
-  {
     key: "New Face Plan",
     name: {
       en: "New Face Plan",
@@ -73,6 +55,7 @@ const staticPlans: Plan[] = [
     price: {
       eur: "399.99",
       gbp: "349.99",
+      usd: "399.99",
     },
     description: {
       en: "New Face Plan",
@@ -92,12 +75,33 @@ const staticPlans: Plan[] = [
     price: {
       eur: "599.99",
       gbp: "529.99",
+      usd: "599.99",
     },
     description: {
       en: "Aspire Model Plan",
       fr: "Aspire Model Plan",
       es: "Aspire Model Plan",
       nl: "Aspire Model Plan",
+    },
+  },
+  {
+    key: "Rising Star Plan",
+    name: {
+      en: "Rising Star Plan",
+      fr: "Rising Star Plan",
+      es: "Rising Star Plan",
+      nl: "Rising Star Plan",
+    },
+    price: {
+      eur: "299.99",
+      gbp: "259.99",
+      usd: "399.99",
+    },
+    description: {
+      en: "Rising Star Plan",
+      fr: "Rising Star Plan",
+      es: "Rising Star Plan",
+      nl: "Rising Star Plan",
     },
   },
 ];
@@ -273,7 +277,7 @@ const ModuleSection = ({ title, enabled = true, rows }: ModuleSection) => (
 );
 
 const SubscriptionPlans = () => {
-  const [billingMode, setBillingMode] = useState<BillingMode>("flex");
+  const [billingMode, setBillingMode] = useState<BillingMode>("commitment");
   const [plans, setPlans] = useState(staticPlans);
   const [activeIndex, setActiveIndex] = useState(0);
   const activePlan = plans[activeIndex];
@@ -289,7 +293,7 @@ const SubscriptionPlans = () => {
   return (
     <main className="w-full text-stone-200">
       <div className="mb-7 flex h-[34px] w-[270px] overflow-hidden rounded-full bg-[#111111]">
-        {(["flex", "commitment"] as BillingMode[]).map((mode) => (
+        {(["commitment", "flex"] as BillingMode[]).map((mode) => (
           <button
             key={mode}
             type="button"
@@ -368,7 +372,7 @@ const SubscriptionPlans = () => {
         </SectionShell>
 
         <SectionShell title="Price">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
             <label className="block">
               <div className="mb-2 flex items-center justify-between">
                 <FieldLabel>In Euros</FieldLabel>
@@ -398,6 +402,23 @@ const SubscriptionPlans = () => {
                   updateActivePlan((plan) => ({
                     ...plan,
                     price: { ...plan.price, gbp: event.target.value },
+                  }))
+                }
+                placeholder="259.99"
+              />
+            </label>
+            <label className="block">
+              <div className="mb-2 flex items-center justify-between">
+                <FieldLabel>In USD</FieldLabel>
+                <InfoCircle className="h-4 w-4 text-stone-300" />
+              </div>
+              <input
+                className={inputClass}
+                value={activePlan.price.usd}
+                onChange={(event) =>
+                  updateActivePlan((plan) => ({
+                    ...plan,
+                    price: { ...plan.price, usd: event.target.value },
                   }))
                 }
                 placeholder="259.99"

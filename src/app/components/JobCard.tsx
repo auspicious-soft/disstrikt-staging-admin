@@ -11,7 +11,6 @@ import {
 import { CheckCircle2, Tag, User, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { UpdateJobById } from "@/services/admin-services";
 import { axiosInstance } from "@/lib/axios";
 import { useCompleteJobById, useRemoveJobById } from "@/hooks/useAdmin";
 import { toast } from "sonner";

@@ -104,7 +104,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         });
 
         if (!allowedCountries.includes(countryCode)) {
-          toast.error("Sorry, only UK, NL, BE, ES, FR countries are allowed.");
+          toast.error("Sorry, only UK,US, NL, BE, ES, FR countries are allowed.");
           setSelectedPosition(null);
           setAddress("");
           return;

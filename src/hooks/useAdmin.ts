@@ -327,6 +327,56 @@ export const useGetAllStudios = ({
     placeholderData: (previousData) => previousData,
   });
 };
+
+export const useGetPlatformInfo = () => {
+  return useQuery({
+    queryKey: ["platform-info"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/admin/get-platform-info");
+      return data?.data ?? data;
+    },
+  });
+};
+
+export const useSavePrivacyPolicy = () => {
+  return useMutation({
+    mutationFn: async (payload: unknown) => {
+      const { data } = await axiosInstance.post(
+        "/admin/privacy-policy",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
+export const useSaveTermsAndCondition = () => {
+  return useMutation({
+    mutationFn: async (payload: unknown) => {
+      const { data } = await axiosInstance.post(
+        "/admin/terms-and-conditions",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
+export const useSaveSupportInfo = () => {
+  return useMutation({
+    mutationFn: async (payload: unknown) => {
+      const { data } = await axiosInstance.post(
+        "/admin/contact-us",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
 export const useDeleteStudioById = () => {
   const queryClient = useQueryClient();
 

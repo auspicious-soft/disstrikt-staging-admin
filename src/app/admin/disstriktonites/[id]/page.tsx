@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { NavArrowDownSolid } from "iconoir-react";
+import { Country } from "country-state-city";
 import {
   useGetEmployeesById,
   useGetEmployeesRoles,
@@ -102,6 +103,14 @@ const languageOptions = [
   { label: "French", value: "fr" },
   { label: "Dutch", value: "nl" },
 ];
+
+const countryCodeOptions = Country.getAllCountries()
+  .filter((country) => country.phonecode)
+  .map((country) => ({
+    value: `+${country.phonecode}`,
+    label: `${country.name} (+${country.phonecode})`,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 
 const EditDisstriktonitePage = () => {
   const router = useRouter();
@@ -231,11 +240,15 @@ const EditDisstriktonitePage = () => {
                     value={form.countryCode}
                     onChange={handleChange}
                   >
-                    <option value="+91">+91</option>
-                    <option value="+1">+1</option>
-                    <option value="+31">+31</option>
-                    <option value="+33">+33</option>
-                    <option value="+34">+34</option>
+                    {countryCodeOptions.map((country) => (
+                      <option
+                        key={`${country.value}-${country.label}`}
+                        value={country.value}
+                        className="bg-stone-800"
+                      >
+                        {country.label}
+                      </option>
+                    ))}
                   </select>
 
                   <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />

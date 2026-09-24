@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from "react";
 import MultiTextEditors from "../components/policies/txtEditor";
 import {
-  getPlanInfo,
-  postContactUs,
-  postPrivacypolicy,
-  postTermsAndCondition,
-} from "@/services/admin-services";
-import { ADMIN_URLS } from "@/constants/apiUrls";
+  useGetPlatformInfo,
+  useSavePrivacyPolicy,
+  useSaveSupportInfo,
+  useSaveTermsAndCondition,
+} from "@/hooks/useAdmin";
 import { toast } from "sonner";
 
 interface PlatformInfo {
@@ -25,6 +24,7 @@ interface PlatformInfo {
   };
   support: {
     phone: {
+      US: string;
       UK: string;
       BE: string;
       FR: string;
@@ -32,6 +32,7 @@ interface PlatformInfo {
       NL: string;
     };
     email: {
+      US: string;
       UK: string;
       BE: string;
       FR: string;
@@ -39,6 +40,9 @@ interface PlatformInfo {
       NL: string;
     };
     address: {
+      US: string;
+      UK: string;
+      BE: string;
       en: string;
       nl: string;
       fr: string;
@@ -52,15 +56,10 @@ const PrivacyPolicyPage: React.FC = () => {
     privacyPolicy: { en: "", nl: "", es: "", fr: "" },
     termAndCondition: { en: "", nl: "", es: "", fr: "" },
     support: {
-      phone: { UK: "", BE: "", FR: "", ES: "", NL: "" },
-      email: { UK: "", BE: "", FR: "", ES: "", NL: "" },
-      address: { en: "", nl: "", es: "", fr: "" },
+      phone: { US: "", UK: "", BE: "", FR: "", ES: "", NL: "" },
+      email: { US: "", UK: "", BE: "", FR: "", ES: "", NL: "" },
+      address: { US: "", UK: "", BE: "", en: "", nl: "", es: "", fr: "" },
     },
-  });
-  const [isLoading, setIsLoading] = useState({
-    privacy: false,
-    terms: false,
-    contact: false,
   });
   const [error, setError] = useState({
     privacy: null as string | null,
@@ -69,40 +68,78 @@ const PrivacyPolicyPage: React.FC = () => {
   });
   const [activeTab, setActiveTab] = useState("privacy");
 
-  // Fetch platform info on mount
+  const {
+    data: platformInfo,
+    isLoading: isPlatformLoading,
+    error: platformError,
+  } = useGetPlatformInfo();
+  const { mutate: savePrivacyPolicy, isPending: isSavingPrivacy } =
+    useSavePrivacyPolicy();
+  const { mutate: saveTermsAndCondition, isPending: isSavingTerms } =
+    useSaveTermsAndCondition();
+  const { mutate: saveSupportInfo, isPending: isSavingSupport } =
+    useSaveSupportInfo();
+
   useEffect(() => {
-    const fetchPlatformInfo = async () => {
-      setIsLoading({ privacy: true, terms: true, contact: true });
-      setError({ privacy: null, terms: null, contact: null });
-      try {
-        const response = await getPlanInfo(`${ADMIN_URLS.GET_PLAN_INFO}`);
+    if (!platformInfo) return;
 
-        if (response.status === 200) {
-          setValues({
-            privacyPolicy: response.data.data.privacyPolicy,
-            termAndCondition: response.data.data.termAndCondition,
-            support: response.data.data.support,
-          });
-        } else {
-          throw new Error("Failed to fetch platform info");
-        }
-      } catch (err) {
-        setError({
-          privacy:
-            "An error occurred while fetching platform info. Please try again.",
-          terms:
-            "An error occurred while fetching platform info. Please try again.",
-          contact:
-            "An error occurred while fetching platform info. Please try again.",
-        });
-        console.error(err);
-      } finally {
-        setIsLoading({ privacy: false, terms: false, contact: false });
-      }
-    };
+    const platformSupport = platformInfo.support || {};
 
-    fetchPlatformInfo();
-  }, []);
+    setValues({
+      privacyPolicy: platformInfo.privacyPolicy || {
+        en: "",
+        nl: "",
+        es: "",
+        fr: "",
+      },
+      termAndCondition: platformInfo.termAndCondition || {
+        en: "",
+        nl: "",
+        es: "",
+        fr: "",
+      },
+      support: {
+        phone: {
+          US: platformSupport.phone?.US || "",
+          UK: platformSupport.phone?.UK || "",
+          BE: platformSupport.phone?.BE || "",
+          FR: platformSupport.phone?.FR || "",
+          ES: platformSupport.phone?.ES || "",
+          NL: platformSupport.phone?.NL || "",
+        },
+        email: {
+          US: platformSupport.email?.US || "",
+          UK: platformSupport.email?.UK || "",
+          BE: platformSupport.email?.BE || "",
+          FR: platformSupport.email?.FR || "",
+          ES: platformSupport.email?.ES || "",
+          NL: platformSupport.email?.NL || "",
+        },
+        address: {
+          US: platformSupport.address?.US || "",
+          UK: platformSupport.address?.UK || "",
+          BE: platformSupport.address?.BE || "",
+          en: platformSupport.address?.en || "",
+          nl: platformSupport.address?.nl || "",
+          fr: platformSupport.address?.fr || "",
+          es: platformSupport.address?.es || "",
+        },
+      },
+    });
+  }, [platformInfo]);
+
+  useEffect(() => {
+    if (!platformError) return;
+
+    setError({
+      privacy:
+        "An error occurred while fetching platform info. Please try again.",
+      terms:
+        "An error occurred while fetching platform info. Please try again.",
+      contact:
+        "An error occurred while fetching platform info. Please try again.",
+    });
+  }, [platformError]);
 
   const setDescriptions = {
     setPrivacyPolicy: {
@@ -173,6 +210,30 @@ const PrivacyPolicyPage: React.FC = () => {
             email: { ...values.support.email, [country]: content },
           },
         }),
+      setAddressUS: (content: string) =>
+        setValues({
+          ...values,
+          support: {
+            ...values.support,
+            address: { ...values.support.address, US: content },
+          },
+        }),
+      setAddressUK: (content: string) =>
+        setValues({
+          ...values,
+          support: {
+            ...values.support,
+            address: { ...values.support.address, UK: content },
+          },
+        }),
+      setAddressBelgium: (content: string) =>
+        setValues({
+          ...values,
+          support: {
+            ...values.support,
+            address: { ...values.support.address, BE: content },
+          },
+        }),
       setAddressEnglish: (content: string) =>
         setValues({
           ...values,
@@ -208,84 +269,63 @@ const PrivacyPolicyPage: React.FC = () => {
     },
   };
   const handleSavePrivacyPolicy = async () => {
-    setIsLoading({ ...isLoading, privacy: true });
     setError({ ...error, privacy: null });
-    const payload = JSON.stringify(values.privacyPolicy);
-    try {
-      const response = await postPrivacypolicy(
-        `${ADMIN_URLS.POST_PRIVACY_POLICY}`,
-        payload,
-      );
 
-      if (response.status === 200) {
+    savePrivacyPolicy(values.privacyPolicy, {
+      onSuccess: (response: any) => {
         toast.success(
-          response.data.message || "Privacy Policy saved successfully",
+          response?.data?.message || "Privacy Policy saved successfully",
         );
-      }
-    } catch (err) {
-      setError({
-        ...error,
-        privacy:
-          "An error occurred while saving privacy policy. Please try again.",
-      });
-      console.error(err);
-    } finally {
-      setIsLoading({ ...isLoading, privacy: false });
-    }
+      },
+      onError: (err) => {
+        setError({
+          ...error,
+          privacy:
+            "An error occurred while saving privacy policy. Please try again.",
+        });
+        console.error(err);
+      },
+    });
   };
 
   const handleSaveTerms = async () => {
-    setIsLoading({ ...isLoading, terms: true });
     setError({ ...error, terms: null });
-    const payload = JSON.stringify(values.termAndCondition);
-    try {
-      const response = await postTermsAndCondition(
-        `${ADMIN_URLS.POST_TERMS_CONDITION}`,
-        payload,
-      );
 
-      if (response.status === 200) {
+    saveTermsAndCondition(values.termAndCondition, {
+      onSuccess: (response: any) => {
         toast.success(
-          response.data.message || "Terms and conditions saved successfully",
+          response?.data?.message || "Terms and conditions saved successfully",
         );
-      }
-    } catch (err) {
-      setError({
-        ...error,
-        terms:
-          "An error occurred while saving terms and conditions. Please try again.",
-      });
-      console.error(err);
-    } finally {
-      setIsLoading({ ...isLoading, terms: false });
-    }
+      },
+      onError: (err) => {
+        setError({
+          ...error,
+          terms:
+            "An error occurred while saving terms and conditions. Please try again.",
+        });
+        console.error(err);
+      },
+    });
   };
 
   const handleSaveSupport = async () => {
-    setIsLoading({ ...isLoading, contact: true });
     setError({ ...error, contact: null });
-    const payload = JSON.stringify(values.support);
-    try {
-      const response = await postContactUs(
-        `${ADMIN_URLS.POST_CONTACT_US}`,
-        payload,
-      );
 
-      if (response.status === 200) {
+    saveSupportInfo(values.support, {
+      onSuccess: (response: any) => {
         toast.success(
-          response.data.message || "Contact Us details saved successfully",
+          response?.data?.message || "Contact Us details saved successfully",
         );
-      }
-    } catch (err) {
-      setError({
-        ...error,
-        contact:
-          "An error occurred while saving support info. Please try again.",
-      });
-      console.error(err);
-    } finally {
-      setIsLoading({ ...isLoading, contact: false });
-    }
+      },
+      onError: (err) => {
+        setError({
+          ...error,
+          contact:
+            "An error occurred while saving support info. Please try again.",
+        });
+        console.error(err);
+      },
+    });
   };
 
   return (
@@ -342,45 +382,51 @@ const PrivacyPolicyPage: React.FC = () => {
         />
 
         {/* Save Buttons */}
+        {isPlatformLoading && (
+          <div className="self-stretch text-sm text-stone-300">
+            Loading platform information...
+          </div>
+        )}
+
         {activeTab === "privacy" && (
           <div
             className={`self-stretch h-12 px-5 py-4 bg-rose-500 rounded-[10px] inline-flex justify-center items-center gap-2.5 ${
-              isLoading.privacy
+              isSavingPrivacy
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer"
             }`}
-            onClick={isLoading.privacy ? undefined : handleSavePrivacyPolicy}
+            onClick={isSavingPrivacy ? undefined : handleSavePrivacyPolicy}
           >
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
-              {isLoading.privacy ? "Saving..." : "Save Privacy Policy"}
+              {isSavingPrivacy ? "Saving..." : "Save Privacy Policy"}
             </div>
           </div>
         )}
         {activeTab === "terms" && (
           <div
             className={`self-stretch h-12 px-5 py-4 bg-rose-500 rounded-[10px] inline-flex justify-center items-center gap-2.5 ${
-              isLoading.terms
+              isSavingTerms
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer"
             }`}
-            onClick={isLoading.terms ? undefined : handleSaveTerms}
+            onClick={isSavingTerms ? undefined : handleSaveTerms}
           >
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
-              {isLoading.terms ? "Saving..." : "Save Terms & Conditions"}
+              {isSavingTerms ? "Saving..." : "Save Terms & Conditions"}
             </div>
           </div>
         )}
         {activeTab === "contact" && (
           <div
             className={`self-stretch h-12 px-5 py-4 bg-rose-500 rounded-[10px] inline-flex justify-center items-center gap-2.5 ${
-              isLoading.contact
+              isSavingSupport
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer"
             }`}
-            onClick={isLoading.contact ? undefined : handleSaveSupport}
+            onClick={isSavingSupport ? undefined : handleSaveSupport}
           >
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
-              {isLoading.contact ? "Saving..." : "Save Contact/Support"}
+              {isSavingSupport ? "Saving..." : "Save Contact/Support"}
             </div>
           </div>
         )}

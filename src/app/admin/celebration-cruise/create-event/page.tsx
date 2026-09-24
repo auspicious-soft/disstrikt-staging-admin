@@ -94,6 +94,14 @@ const CreateCelebrationCruiseEvent = () => {
     const normalizedName = countryName?.toLowerCase() || "";
 
     if (
+      ["US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"].includes(
+        normalizedCode,
+      ) ||
+      normalizedName.includes("united states")
+    ) {
+      return "US";
+    }
+    if (
       ["FR", "FRA", "FRANCE"].includes(normalizedCode) ||
       normalizedName.includes("france")
     ) {
@@ -196,18 +204,6 @@ const CreateCelebrationCruiseEvent = () => {
     >,
   ) => {
     const { name, value } = e.target;
-
-    if (name === "country") {
-      setCities(cityMap[value] || []);
-
-      setForm((prev) => ({
-        ...prev,
-        country: value,
-        city: "",
-      }));
-
-      return;
-    }
 
     setForm((prev) => ({
       ...prev,
@@ -665,71 +661,34 @@ const CreateCelebrationCruiseEvent = () => {
                 )}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-1 ">
+                <label className="space-y-1">
                   <span className="block text-xs font-normal text-stone-100">
                     Country
                   </span>
-                  <div className="relative">
-                    <select
-                      className={selectBase}
-                      defaultValue=""
-                      name="country"
-                      required
-                      value={form.country}
-                      onChange={handleChange}
-                    >
-                      <option value="" disabled className="bg-stone-700">
-                        Select
-                      </option>
-                      <option value="FR" className="bg-stone-700">
-                        France
-                      </option>
-                      <option value="UK" className="bg-stone-700">
-                        UK
-                      </option>
-                      <option value="ES" className="bg-stone-700">
-                        Spain
-                      </option>
-                      <option value="NL" className="bg-stone-700">
-                        Netherlands
-                      </option>
-                      <option value="BE" className="bg-stone-700">
-                        Belgium
-                      </option>
-                    </select>
-                    <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
-                  </div>
+                  <input
+                    className={fieldBase}
+                    name="country"
+                    type="text"
+                    value={form.country}
+                    onChange={handleChange}
+                    placeholder="Enter country"
+                    required
+                  />
                 </label>
 
-                <label className="space-y-1 ">
+                <label className="space-y-1">
                   <span className="block text-xs font-normal text-stone-100">
                     City
                   </span>
-                  <div className="relative">
-                    <select
-                      className={selectBase}
-                      name="city"
-                      value={form.city}
-                      onChange={handleChange}
-                      required
-                      disabled={!form.country}
-                    >
-                      <option value="" disabled className="bg-stone-700">
-                        Select City
-                      </option>
-
-                      {cities.map((city) => (
-                        <option
-                          key={city}
-                          value={city}
-                          className="bg-stone-700"
-                        >
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                    <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
-                  </div>
+                  <input
+                    className={fieldBase}
+                    name="city"
+                    type="text"
+                    value={form.city}
+                    onChange={handleChange}
+                    placeholder="Enter city"
+                    required
+                  />
                 </label>
               </div>
             </section>

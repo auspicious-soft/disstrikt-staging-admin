@@ -1,4 +1,5 @@
-import React from "react";
+"use client"
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { ArrowSeparateVertical, Copy, NavArrowDownSolid } from "iconoir-react";
 
@@ -15,6 +16,8 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 const NotificationsPage = () => {
+  const [sendToSpecificPeople, setSendToSpecificPeople] = useState(false);
+
   return (
     <main className="w-full text-stone-200">
       <section className="w-full rounded-md border border-stone-700 bg-black/10 p-4">
@@ -61,26 +64,30 @@ const NotificationsPage = () => {
           <label className="flex w-fit cursor-pointer items-center gap-2 text-xs font-normal text-stone-500">
             <input
               type="checkbox"
+              checked={sendToSpecificPeople}
+              onChange={(e) => setSendToSpecificPeople(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-stone-700 bg-stone-800 accent-rose-500"
             />
             <span>Send to specific people</span>
           </label>
 
-          <label className="block">
-            <FieldLabel>Select People</FieldLabel>
-            <div className="relative">
-              <select className={inputClass + " appearance-none pr-9"} >
-                <option value="" disabled className="bg-stone-900">
-                  Select
-                </option>
-                <option className="bg-stone-900">All Users</option>
-                <option className="bg-stone-900">Rising Star Users</option>
-                <option className="bg-stone-900">Hot Fame Users</option>
-                <option className="bg-stone-900">Aspire Model Users</option>
-              </select>
-              <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
-            </div>
-          </label>
+          {sendToSpecificPeople && (
+            <label className="block">
+              <FieldLabel>Select People</FieldLabel>
+              <div className="relative">
+                <select className={inputClass + " appearance-none pr-9"}>
+                  <option value="" disabled className="bg-stone-900">
+                    Select
+                  </option>
+                  <option className="bg-stone-900">All Users</option>
+                  <option className="bg-stone-900">Rising Star Users</option>
+                  <option className="bg-stone-900">New Face Users</option>
+                  <option className="bg-stone-900">Aspire Model Users</option>
+                </select>
+                <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
+              </div>
+            </label>
+          )}
 
           <div className="flex justify-end pt-1">
             <button

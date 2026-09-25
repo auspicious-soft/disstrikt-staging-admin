@@ -85,21 +85,26 @@ const CelebrationCruise: React.FC = () => {
 
   const tableData: TableRow[] = useMemo(() => {
     return (
-      data?.data?.map((event: any) => ({
-        _id: event._id,
-        eventName: event.title,
-        date: new Date(event.startDateTime).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
-        time: new Date(event.startDateTime).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        location: `${event.city}, ${event.country}`,
-        status: event.status,
-      })) ?? []
+      data?.data?.map((event: any) => {
+        // First day, in the venue's local time
+        const slot = event.slots?.[0];
+        return {
+          _id: event._id,
+          eventName: event.title,
+          date: slot
+            ? new Date(`${slot.date}T00:00:00`).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "-",
+          time: slot
+            ? `${slot.startTime} - ${slot.endTime}${slot.endsNextDay ? " (+1)" : ""}`
+            : "-",
+          location: `${event.city}, ${event.country}`,
+          status: event.status,
+        };
+      }) ?? []
     );
   }, [data]);
 

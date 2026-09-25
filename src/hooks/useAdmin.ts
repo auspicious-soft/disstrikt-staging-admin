@@ -251,6 +251,62 @@ export const useGetCelebrationCruiseById = (id: any) => {
     enabled: !!id,
   });
 };
+
+export const useUpdateCelebrationCruise = (id: any) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.put(
+        `/admin/celebration-cruise/${id}`,
+        payload,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["celebrationCruise"] });
+      queryClient.invalidateQueries({ queryKey: ["celebrationCruiseById", id] });
+    },
+  });
+};
+
+export const useDeleteCelebrationCruise = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await axiosInstance.delete(
+        `/admin/celebration-cruise/${id}`,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["celebrationCruise"] });
+    },
+  });
+};
+
+export const useGetCelebrationCruiseTickets = ({
+  id,
+  page,
+  limit,
+  search = "",
+}: {
+  id: any;
+  page: number;
+  limit: number;
+  search?: string;
+}) => {
+  return useQuery({
+    queryKey: ["celebrationCruiseTickets", id, page, limit, search],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(
+        `/admin/celebration-cruise/${id}/tickets`,
+        { params: { page, limit, search } },
+      );
+      return data.data;
+    },
+    enabled: !!id,
+  });
+};
 export const CreateJobAdmin = () => {
   return useMutation({
     mutationFn: async (payload: any) => {

@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { MapPin, Plus, X } from "lucide-react";
 import { Attachment, NavArrowDownSolid } from "iconoir-react";
-import { CreateEvent } from "@/hooks/useAdmin";
+import {
+  CreateEvent,
+  useGetCelebrationCruiseById,
+  useUpdateCelebrationCruise,
+} from "@/hooks/useAdmin";
 import { generateSignedUrlToUploadOn } from "@/actions";
 import LocationPickerModal from "@/app/components/LocationPickerModal";
 import { toast } from "sonner";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "../../components/ui/Loader";
 
 const fieldBase =
@@ -16,9 +20,17 @@ const fieldBase =
 
 const selectBase =
   "h-12 w-full appearance-none rounded-md border border-stone-700 bg-transparent px-4 pr-11 text-sm text-stone-400 outline-none transition-colors focus:border-rose-400";
+// Countries the backend accepts (same codes as the header's country filter)
+const countryOptions = [
+  { label: "Netherlands", value: "NL" },
+  { label: "Belgium", value: "BE" },
+  { label: "Spain", value: "ES" },
+  { label: "France", value: "FR" },
+  { label: "United Kingdom", value: "UK" },
+];
 const cityMap: Record<string, string[]> = {
   FR: ["Paris", "Lyon", "Marseille", "Nice", "Toulouse"],
-  GB: ["London", "Manchester", "Liverpool", "Birmingham", "Leeds"],
+  UK: ["London", "Manchester", "Liverpool", "Birmingham", "Leeds"],
   ES: ["Madrid", "Barcelona", "Valencia", "Seville", "Malaga"],
   NL: ["Amsterdam", "Rotterdam", "The Hague", "Utrecht", "Eindhoven"],
   BE: ["Brussels", "Antwerp", "Ghent", "Bruges", "Liège"],
@@ -29,6 +41,9 @@ interface EventFormState {
   totalTickets: string;
   currency: string;
   price: string;
+  serviceFee: string;
+  termsAndConditions: string;
+  includedItems: string[];
   address: string;
   country: string;
   city: string;
@@ -36,9 +51,30 @@ interface EventFormState {
   lng: number | null;
 }
 
+// Keys the backend and the app use for "What's Included"
+const includedOptions = [
+  { key: "WELCOME_DRINK", label: "Welcome Drink" },
+  { key: "PROFESSIONAL_PICTURES", label: "Professional Pictures" },
+  { key: "LIVE_ENTERTAINMENT", label: "Live Entertainment" },
+  { key: "EXCLUSIVE_GIVEAWAYS", label: "Exclusive Giveaways" },
+  { key: "NETWORKING", label: "Networking" },
+  { key: "GAMES_ACTIVITIES", label: "Games & Activities" },
+];
+
 const CreateCelebrationCruiseEvent = () => {
-  const { mutate, isPending } = CreateEvent();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+  const isEdit = Boolean(editId);
+  const { mutate: createEvent, isPending: isCreating } = CreateEvent();
+  const { mutate: updateEvent, isPending: isUpdating } =
+    useUpdateCelebrationCruise(editId);
+  const { data: existing, isPending: isLoadingExisting } =
+    useGetCelebrationCruiseById(editId);
+  const isPending = isCreating || isUpdating || (isEdit && isLoadingExisting);
   const router = useRouter();
+  const [existingImage, setExistingImage] = useState<string | null>(null);
+  const [existingBanner, setExistingBanner] = useState<string | null>(null);
+  const [banner, setBanner] = useState<File | null>(null);
   const [cities, setCities] = useState<string[]>([]);
   const [form, setForm] = useState<EventFormState>({
     title: "",
@@ -46,6 +82,9 @@ const CreateCelebrationCruiseEvent = () => {
     totalTickets: "",
     currency: "",
     price: "",
+    serviceFee: "",
+    termsAndConditions: "",
+    includedItems: includedOptions.map((option) => option.key),
     address: "",
     country: "",
     city: "",
@@ -63,6 +102,44 @@ const CreateCelebrationCruiseEvent = () => {
       endTime: "",
     },
   ]);
+
+  useEffect(() => {
+    if (!isEdit || !existing) return;
+    const country = normalizeCountryValue(existing.country, existing.country);
+    setForm({
+      title: existing.title ?? "",
+      description: existing.description ?? "",
+      totalTickets: String(existing.totalTickets ?? ""),
+      currency: existing.currency ?? "",
+      price: String(existing.price ?? ""),
+      serviceFee: String(existing.serviceFee ?? 0),
+      termsAndConditions: existing.termsAndConditions ?? "",
+      includedItems: existing.includedItems ?? [],
+      address: existing.address ?? "",
+      country,
+      city: existing.city ?? "",
+      lat: existing.lat ?? null,
+      lng: existing.lng ?? null,
+    });
+    const knownCities = cityMap[country] || [];
+    setCities(
+      existing.city && !knownCities.includes(existing.city)
+        ? [...knownCities, existing.city]
+        : knownCities,
+    );
+    setExistingImage(existing.image ?? null);
+    setExistingBanner(existing.bannerImage ?? null);
+    if (existing.slots?.length) {
+      setSchedule(
+        existing.slots.map((slot: any) => ({
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        })),
+      );
+    }
+  }, [isEdit, existing]);
+
   const getTodayDate = () => {
     const today = new Date();
 
@@ -94,14 +171,6 @@ const CreateCelebrationCruiseEvent = () => {
     const normalizedName = countryName?.toLowerCase() || "";
 
     if (
-      ["US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"].includes(
-        normalizedCode,
-      ) ||
-      normalizedName.includes("united states")
-    ) {
-      return "US";
-    }
-    if (
       ["FR", "FRA", "FRANCE"].includes(normalizedCode) ||
       normalizedName.includes("france")
     ) {
@@ -111,7 +180,7 @@ const CreateCelebrationCruiseEvent = () => {
       ["GB", "UK", "GBR", "UNITED KINGDOM"].includes(normalizedCode) ||
       normalizedName.includes("united kingdom")
     ) {
-      return "GB";
+      return "UK";
     }
     if (
       ["ES", "ESP", "SPAIN"].includes(normalizedCode) ||
@@ -242,28 +311,10 @@ const CreateCelebrationCruiseEvent = () => {
 
     if (field === "startTime") {
       temp[index].startTime = value;
-
-      // End time must be greater than start time
-      if (temp[index].endTime && temp[index].endTime <= value) {
-        temp[index].endTime = "";
-      }
     }
 
+    // An end time at or before the start time means the slot ends the next day
     if (field === "endTime") {
-      const selectedDate = temp[index].date;
-
-      // End time cannot be before/equal to start time
-      if (temp[index].startTime && value <= temp[index].startTime) {
-        toast.error("End time must be greater than start time.");
-        return;
-      }
-
-      // If today, end time must be greater than current time
-      if (isToday(selectedDate) && value <= getCurrentTime()) {
-        toast.error("End time must be greater than the current time.");
-        return;
-      }
-
       temp[index].endTime = value;
     }
 
@@ -321,11 +372,27 @@ const CreateCelebrationCruiseEvent = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Checked here, not with `required`: the file input is visually hidden, so
+    // the browser would block the submit without showing any message
+    if (!image && !existingImage) {
+      toast.error("Please upload an event image.");
+      return;
+    }
+
+    if (!form.includedItems.length) {
+      toast.error("Select at least one item under What's Included.");
+      return;
+    }
+
     let imageKey: string | null = null;
+    let bannerKey: string | null = null;
 
     try {
       if (image) {
         imageKey = await uploadImage(image);
+      }
+      if (banner) {
+        bannerKey = await uploadImage(banner);
       }
     } catch (error) {
       toast.error(
@@ -338,14 +405,16 @@ const CreateCelebrationCruiseEvent = () => {
       title: form.title,
       description: form.description,
       totalTickets: Number(form.totalTickets),
-      availableTickets: Number(form.totalTickets),
       currency: form.currency,
       price: Number(form.price),
-      image: image ? imageKey : null,
+      serviceFee: Number(form.serviceFee || 0),
+      includedItems: form.includedItems,
+      termsAndConditions: form.termsAndConditions,
+      image: image ? imageKey : existingImage,
+      bannerImage: banner ? bannerKey : existingBanner,
       address: form.address,
       country: form.country,
       city: form.city,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       lat: form.lat,
       lng: form.lng,
       schedule: schedule.map((item) => ({
@@ -355,7 +424,24 @@ const CreateCelebrationCruiseEvent = () => {
       })),
     };
 
-    mutate(payload, {
+    const onError = (error: unknown) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message);
+      }
+    };
+
+    if (isEdit) {
+      updateEvent(payload, {
+        onSuccess: () => {
+          toast.success("Event updated successfully");
+          router.push(`/admin/celebration-cruise/${editId}`);
+        },
+        onError,
+      });
+      return;
+    }
+
+    createEvent(payload, {
       onSuccess: () => {
         toast.success("Event created successfully");
         router.push("/admin/celebration-cruise");
@@ -365,6 +451,9 @@ const CreateCelebrationCruiseEvent = () => {
           totalTickets: "",
           currency: "",
           price: "",
+          serviceFee: "",
+          termsAndConditions: "",
+          includedItems: includedOptions.map((option) => option.key),
           address: "",
           country: "",
           city: "",
@@ -372,11 +461,7 @@ const CreateCelebrationCruiseEvent = () => {
           lng: null,
         });
       },
-      onError: (error) => {
-        if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.message);
-        }
-      },
+      onError,
     });
   };
   const openPicker = (e: React.MouseEvent<HTMLInputElement>) => {
@@ -438,7 +523,6 @@ const CreateCelebrationCruiseEvent = () => {
                   <div className="relative">
                     <select
                       className={selectBase}
-                      defaultValue=""
                       required
                       name="currency"
                       value={form.currency}
@@ -452,9 +536,6 @@ const CreateCelebrationCruiseEvent = () => {
                       </option>
                       <option value="gbp" className="bg-stone-700">
                         GBP
-                      </option>
-                      <option value="usd" className="bg-stone-700">
-                        USD
                       </option>
                     </select>
                     <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
@@ -479,13 +560,29 @@ const CreateCelebrationCruiseEvent = () => {
 
                 <label className="space-y-1">
                   <span className="block text-xs font-medium text-stone-100">
-                    Upload Image
+                    Service Fee (per ticket)
+                  </span>
+                  <input
+                    className={fieldBase}
+                    placeholder="0"
+                    name="serviceFee"
+                    min={0}
+                    step="0.01"
+                    type="number"
+                    value={form.serviceFee}
+                    onChange={handleChange}
+                  />
+                </label>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2 mb-3">
+                <label className="space-y-1">
+                  <span className="block text-xs font-medium text-stone-100">
+                    Event Image (list thumbnail)
                   </span>
                   <div className="relative">
                     <input
                       id="event-image"
                       type="file"
-                      required
                       className="sr-only"
                       accept="image/*"
                       onChange={(e) => {
@@ -499,7 +596,46 @@ const CreateCelebrationCruiseEvent = () => {
                       htmlFor="event-image"
                       className={`${fieldBase} flex cursor-pointer items-center justify-between`}
                     >
-                      <span>{image ? image.name : "Browse"}</span>
+                      <span>
+                        {image
+                          ? image.name
+                          : existingImage
+                            ? "Current image (browse to replace)"
+                            : "Browse"}
+                      </span>
+                      <Attachment className="h-4 w-4" />
+                    </label>
+                  </div>
+                </label>
+
+                <label className="space-y-1">
+                  <span className="block text-xs font-medium text-stone-100">
+                    Banner Image (carousel &amp; event page, optional)
+                  </span>
+                  <div className="relative">
+                    <input
+                      id="event-banner"
+                      type="file"
+                      className="sr-only"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          setBanner(e.target.files[0]);
+                        }
+                      }}
+                    />
+
+                    <label
+                      htmlFor="event-banner"
+                      className={`${fieldBase} flex cursor-pointer items-center justify-between`}
+                    >
+                      <span>
+                        {banner
+                          ? banner.name
+                          : existingBanner
+                            ? "Current banner (browse to replace)"
+                            : "Browse (uses event image if empty)"}
+                      </span>
                       <Attachment className="h-4 w-4" />
                     </label>
                   </div>
@@ -518,12 +654,66 @@ const CreateCelebrationCruiseEvent = () => {
                   placeholder="Model"
                 />
               </label>
+
+              <div className="mt-3 space-y-1">
+                <span className="block text-xs font-normal text-stone-100">
+                  What&apos;s Included
+                </span>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {includedOptions.map((option) => {
+                    const checked = form.includedItems.includes(option.key);
+                    return (
+                      <label
+                        key={option.key}
+                        className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${
+                          checked
+                            ? "border-rose-400 text-stone-100"
+                            : "border-stone-700 text-stone-400"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-rose-500"
+                          checked={checked}
+                          onChange={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              includedItems: checked
+                                ? prev.includedItems.filter((key) => key !== option.key)
+                                : [...prev.includedItems, option.key],
+                            }))
+                          }
+                        />
+                        {option.label}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <label className="mt-3 block space-y-1">
+                <span className="block text-xs font-normal text-stone-100">
+                  Terms &amp; Conditions (shown to users before payment)
+                </span>
+                <textarea
+                  name="termsAndConditions"
+                  value={form.termsAndConditions}
+                  required
+                  onChange={handleChange}
+                  className="min-h-28 w-full resize-y rounded-md border border-stone-700 bg-transparent px-4 py-4 text-sm text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-400"
+                  placeholder="Tickets are non-refundable. Please ensure you can attend the event before confirming your booking."
+                />
+              </label>
             </section>
 
             <section className="rounded-xl border border-stone-700 p-2 sm:p-2 mb-5">
               <h2 className="mb-2 text-sm font-medium text-stone-100">
                 Schedule &amp; Location
               </h2>
+              <p className="mb-3 text-[11px] text-stone-400">
+                Times are the venue&apos;s local time. An end time before the
+                start time ends the next day (e.g. 20:00 - 01:00).
+              </p>
 
               {schedule.map((item, index) => (
                 <div
@@ -540,7 +730,7 @@ const CreateCelebrationCruiseEvent = () => {
                     <input
                       type="date"
                       value={item.date}
-                      min={getTodayDate()}
+                      min={isEdit ? undefined : getTodayDate()}
                       required
                       onClick={openPicker}
                       onChange={(e) =>
@@ -574,19 +764,17 @@ const CreateCelebrationCruiseEvent = () => {
                   <label className="space-y-1">
                     <span className="block text-xs font-normal text-stone-100">
                       End Time
+                      {item.startTime &&
+                        item.endTime &&
+                        item.endTime <= item.startTime && (
+                          <span className="ml-1 text-rose-400">(next day)</span>
+                        )}
                     </span>
 
                     {/* End Time */}
                     <input
                       type="time"
                       value={item.endTime}
-                      min={
-                        item.startTime
-                          ? item.startTime
-                          : isToday(item.date)
-                            ? getCurrentTime()
-                            : undefined
-                      }
                       required
                       onClick={openPicker}
                       onChange={(e) =>
@@ -665,15 +853,29 @@ const CreateCelebrationCruiseEvent = () => {
                   <span className="block text-xs font-normal text-stone-100">
                     Country
                   </span>
-                  <input
-                    className={fieldBase}
-                    name="country"
-                    type="text"
-                    value={form.country}
-                    onChange={handleChange}
-                    placeholder="Enter country"
-                    required
-                  />
+                  <div className="relative">
+                    <select
+                      className={selectBase}
+                      name="country"
+                      value={form.country}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="" className="bg-stone-700" disabled>
+                        Select
+                      </option>
+                      {countryOptions.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                          className="bg-stone-700"
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                  </div>
                 </label>
 
                 <label className="space-y-1">
@@ -696,6 +898,7 @@ const CreateCelebrationCruiseEvent = () => {
             <div className="grid gap-6 sm:grid-cols-[minmax(180px,310px)_1fr]">
               <button
                 type="button"
+                onClick={() => router.back()}
                 className="h-12 rounded-md border border-stone-200/70 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10"
               >
                 Cancel
@@ -704,7 +907,7 @@ const CreateCelebrationCruiseEvent = () => {
                 type="submit"
                 className="h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400"
               >
-                Add Event
+                {isEdit ? "Save Changes" : "Add Event"}
               </button>
             </div>
           </form>
@@ -725,4 +928,11 @@ const CreateCelebrationCruiseEvent = () => {
   );
 };
 
-export default CreateCelebrationCruiseEvent;
+// useSearchParams needs a Suspense boundary on this static route
+const CreateCelebrationCruiseEventPage = () => (
+  <Suspense fallback={<Loader />}>
+    <CreateCelebrationCruiseEvent />
+  </Suspense>
+);
+
+export default CreateCelebrationCruiseEventPage;

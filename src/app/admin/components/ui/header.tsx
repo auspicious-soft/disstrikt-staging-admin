@@ -133,6 +133,8 @@ export function AppHeader() {
     pageName = "STUDIO DETAILS";
   } else if (pathname.startsWith("/admin/disstriktonites/add")) {
     pageName = "Add Disstriktonites";
+  } else if (pathname.startsWith("/admin/celebration-cruise/create-event")) {
+    pageName = searchParams.get("id") ? "Edit Event" : "Create Event";
   } else if (
     pathname.startsWith("/admin/celebration-cruise") &&
     pathSegments.length > 2 &&

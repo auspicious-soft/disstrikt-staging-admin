@@ -110,6 +110,30 @@ export const useGetEmployeesById = (id: any) => {
     },
   });
 };
+
+export const useGetSubscriptions = () => {
+  return useQuery({
+    queryKey: ["subscriptions"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/admin/price-plan");
+      return data?.data ?? data;
+    },
+  });
+};
+
+export const useUpdateSubscriptions = () => {
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const { data } = await axiosInstance.put(
+        "/admin/price-plan",
+        payload,
+      );
+
+      return data;
+    },
+  });
+};
+
 export const useUpdateEmployeeById = (id: any) => {
   return useMutation({
     mutationFn: async (paylaod: any) => {

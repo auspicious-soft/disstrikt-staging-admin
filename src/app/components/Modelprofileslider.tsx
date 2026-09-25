@@ -11,6 +11,8 @@ import maleBackImg from "../../assets/images/Component 4.svg";
 import femaleFrontImg from "../../assets/images/Component 1.svg";
 import femaleBackImg from "../../assets/images/Component 2.svg";
 import { User } from "iconoir-react";
+import SafeImage from "./SafeImage";
+import { resolveMediaUrl } from "@/lib/media";
 
 // Default gender used until this is wired up dynamically
 const DEFAULT_GENDER: "male" | "female" = "male";
@@ -107,20 +109,132 @@ const sections = [
 
 type ModelProfileSliderProps = {
   profileImage?: string | StaticImageData;
+  // Real portfolio (admin Model Mansion). undefined keeps the placeholder layout,
+  // null means the model hasn't created a portfolio yet.
+  portfolio?: any;
+  gender?: string | null;
 };
+
+// Portfolio field for each label shown in the slider
+const HEADSHOT_KEYS: Record<string, string> = {
+  Height: "height",
+  Bust: "bust",
+  Waist: "waist",
+  Hips: "hips",
+  "Shoe Size": "shoeSize",
+  "Hair Color": "hairColor",
+  "Eye Color": "eyeColor",
+};
+const BASIC_PORTFOLIO_KEYS: Record<string, string> = {
+  "Full Body": "fullBody",
+  "Front View": "frontView",
+  "Side Profile": "sideProfile",
+  "Left or Right": "leftOrRight",
+  "Close Up": "closeUp",
+  "Face Details": "faceDetails",
+  "Own Choice": "ownChoice",
+  "Your Choice": "yourChoice",
+};
+const DETAILED_KEYS: Record<string, string> = {
+  Height: "height",
+  Bust: "bust",
+  Waist: "waist",
+  Hips: "hips",
+  Underbust: "underBust",
+  "Arm Length": "armLength",
+  Bicep: "bicep",
+  Wrist: "wrist",
+  Thigh: "thigh",
+  Calf: "calf",
+  Inseam: "inseam",
+  "Leg Length": "legLength",
+  Shoulders: "shoulders",
+  Neck: "neck",
+  "Torso Length": "torsoLength",
+  "Back Width": "backWidth",
+  Chest: "chest",
+  "Waist to Hips": "waistToHips",
+  "Hip to Knee": "hipToKnee",
+  Ankle: "ankle",
+  "Shoe Size": "shoeSize",
+  "Dress Size": "dressSize",
+  "Hat Size": "hatSize",
+};
+const CM_FIELDS = new Set(["height", "bust", "waist", "hips"]);
+
+const displayValue = (value: any, unit = "") =>
+  value === null || value === undefined || value === ""
+    ? "-"
+    : `${value}${unit && typeof value === "number" ? ` ${unit}` : ""}`;
 
 export default function ModelProfileSlider({
   profileImage,
+  portfolio,
+  gender,
 }: ModelProfileSliderProps) {
   const [index, setIndex] = useState(0);
   const total = sections.length;
   const section = sections[index];
+  const hasData = portfolio !== undefined;
 
   const goPrev = () => setIndex((i) => (i - 1 + total) % total);
   const goNext = () => setIndex((i) => (i + 1) % total);
 
-  const frontImg = DEFAULT_GENDER === "male" ? maleFrontImg : femaleFrontImg;
-  const backImg = DEFAULT_GENDER === "male" ? maleBackImg : femaleBackImg;
+  const isFemale = hasData
+    ? String(gender || "").toUpperCase() === "FEMALE"
+    : DEFAULT_GENDER === "female";
+  const frontImg = isFemale ? femaleFrontImg : maleFrontImg;
+  const backImg = isFemale ? femaleBackImg : maleBackImg;
+
+  if (hasData && !portfolio) {
+    return (
+      <div className="rounded-lg border border-stone-800 bg-black/10 px-4 py-10 text-center text-sm text-stone-400">
+        This model hasn&apos;t created a portfolio yet.
+      </div>
+    );
+  }
+
+  const headshotValue = (label: string, fallback: string) =>
+    hasData
+      ? displayValue(
+          portfolio?.[HEADSHOT_KEYS[label]],
+          CM_FIELDS.has(HEADSHOT_KEYS[label]) ? "cm" : "",
+        )
+      : fallback;
+
+  const detailedValue = (field: string, type: string) => {
+    const key = DETAILED_KEYS[field];
+    const source =
+      type === "detailed-front"
+        ? portfolio?.detailedMeasurementsFront
+        : portfolio?.detailedMeasurementsBack;
+    return displayValue(source?.[key], "cm");
+  };
+
+  // Each card shows the uploaded photos of its two labels (first that loads)
+  const basicImages = (labels: string[]) =>
+    labels
+      .map((label) => portfolio?.basicPortfolio?.[BASIC_PORTFOLIO_KEYS[label]])
+      .filter(Boolean);
+
+  const versatility: string[] = portfolio?.versatility ?? [];
+
+  // Videos are stored as { url, thumbnail } (older data: a plain string)
+  const videoFor = (title: string) => {
+    const video =
+      title === "Portfolio Video"
+        ? portfolio?.videos?.portfolioVideo
+        : portfolio?.videos?.catwalkVideo;
+    const url = resolveMediaUrl(typeof video === "string" ? video : video?.url);
+    const poster = typeof video === "object" ? resolveMediaUrl(video?.thumbnail) : "";
+    return url ? { url, poster } : null;
+  };
+
+  const unavailable = (
+    <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-neutral-800 text-xs text-neutral-600">
+      Image unavailable
+    </div>
+  );
 
   return (
     <div className="relative mx-auto w-full max-w-full py-2">
@@ -159,7 +273,13 @@ export default function ModelProfileSlider({
           {section.type === "headshot-measurements" ? (
             <div className="mt-4 grid gap-3 md:grid-cols-[300px_1fr] md:items-start">
               <div className="relative h-[400px] w-full overflow-hidden rounded border border-[#273126] bg-neutral-900">
-                {profileImage ? (
+                {typeof profileImage === "string" && profileImage ? (
+                  <SafeImage
+                    src={profileImage}
+                    alt="Model headshot"
+                    className="h-full w-full object-cover"
+                  />
+                ) : profileImage ? (
                   <Image
                     src={profileImage}
                     alt="Model headshot"
@@ -190,7 +310,8 @@ export default function ModelProfileSlider({
                     <div className="flex h-12 items-center rounded-sm border border-[#242424] bg-black px-3">
                       <input
                         type="text"
-                        defaultValue={item.value}
+                        value={headshotValue(item.label, item.value)}
+                        readOnly
                         className="h-full w-full bg-transparent text-sm font-normal leading-tight text-neutral-400 outline-none placeholder:text-neutral-500"
                       />
                     </div>
@@ -203,7 +324,20 @@ export default function ModelProfileSlider({
               {section.cards.map((card, index) => (
                 <div key={index} className="overflow-hidden">
                   <div className="relative h-[220px] overflow-hidden">
-                    {profileImage ? (
+                    {hasData ? (
+                      basicImages(card.labels).length ? (
+                        <SafeImage
+                          src={basicImages(card.labels)}
+                          alt={card.labels.join(" ")}
+                          className="h-full w-full object-cover"
+                          placeholder={unavailable}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-neutral-800 text-xs text-neutral-600">
+                          Not uploaded
+                        </div>
+                      )
+                    ) : profileImage ? (
                       <Image
                         src={dummyUserImg}
                         alt={card.labels.join(" ")}
@@ -230,12 +364,23 @@ export default function ModelProfileSlider({
             </div>
           ) : section.type === "versatility" ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {section.cards.map((card) => (
+              {section.cards.map((card, i) => (
                 <div
                   key={card}
-                  className="flex h-43 items-center justify-center rounded-xl border border-[#2c2c2c] bg-[#0b0b0b] text-center text-sm text-neutral-300 shadow-sm"
+                  className="flex h-43 items-center justify-center overflow-hidden rounded-xl border border-[#2c2c2c] bg-[#0b0b0b] text-center text-sm text-neutral-300 shadow-sm"
                 >
-                  {card}
+                  {hasData && versatility[i] ? (
+                    <SafeImage
+                      src={versatility[i]}
+                      alt={card}
+                      className="h-full w-full object-cover"
+                      placeholder={unavailable}
+                    />
+                  ) : hasData ? (
+                    <span className="text-xs text-neutral-600">Not uploaded</span>
+                  ) : (
+                    card
+                  )}
                 </div>
               ))}
             </div>
@@ -268,6 +413,8 @@ export default function ModelProfileSlider({
                       <input
                         type="text"
                         placeholder="cm"
+                        value={hasData ? detailedValue(field, section.type) : undefined}
+                        readOnly={hasData}
                         className="h-full w-full bg-transparent text-sm font-normal leading-tight text-neutral-400 outline-none placeholder:text-neutral-500"
                       />
                     </div>
@@ -295,8 +442,27 @@ export default function ModelProfileSlider({
                     </div>
                   </div>
 
-                  <div className="mt-5 flex h-82 items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-[#0b0b0b] text-center text-sm text-neutral-500">
-                    {card.locked ? (
+                  <div className="mt-5 flex h-82 items-center justify-center overflow-hidden rounded-3xl border border-dashed border-neutral-800 bg-[#0b0b0b] text-center text-sm text-neutral-500">
+                    {hasData ? (
+                      videoFor(card.title) ? (
+                        <video
+                          src={videoFor(card.title)!.url}
+                          poster={videoFor(card.title)!.poster || undefined}
+                          controls
+                          className="h-full w-full object-contain"
+                        />
+                      ) : card.locked && !portfolio?.catWalkEnabled ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <UnlockIcon className="h-8 w-8 text-[#A93E58]" />
+                          <p className="text-[#A93E58]">Locked</p>
+                          <p className="text-xs text-neutral-500">
+                            Catwalk video unlocks after the Catwalk Training task
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-neutral-500">Not uploaded</p>
+                      )
+                    ) : card.locked ? (
                       <div className="flex flex-col items-center gap-2">
                         {/* <div className="rounded-full w-fit bg-[#2a1118] p-2 text-[#ef4b59]"> */}
                         <UnlockIcon className="h-8 w-8 text-[#A93E58]" />

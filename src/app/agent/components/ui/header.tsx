@@ -48,23 +48,19 @@ export function AppHeader() {
   ) {
     pageName = "Model Mansion";
   } else if(
-    pathname.startsWith("/agent/job-junction") ||
-    pathSegments.length > 2
+    pathname.startsWith("/agent/job-junction")
   ){
     pageName = "Job Junction";
   } else if(
-    pathname.startsWith("/agent/model-market") ||
-    pathSegments.length > 2
+    pathname.startsWith("/agent/model-market")
   ){
     pageName = "Model Market";
   } else if(
-    pathname.startsWith("/agent/messages") ||
-    pathSegments.length > 2
+    pathname.startsWith("/agent/messages")
   ){
     pageName = "Messages";
   } else if(
-    pathname.startsWith("/agent/dashboard") ||
-    pathSegments.length > 2
+    pathname.startsWith("/agent/dashboard")
   ){
     pageName = "DashBoard";
   } else if(

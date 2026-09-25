@@ -12,6 +12,7 @@ import Loader from "./admin/components/ui/Loader";
 import { Email, Lock } from "@/lib/icons";
 import { Eye } from "iconoir-react";
 import { useLogin } from "@/hooks/useLogin";
+import { clearSession, getSession, homeForRole, NO_PANEL_MESSAGE } from "@/lib/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -30,12 +31,15 @@ export default function LoginPage() {
       },
       {
         onSuccess: (response) => {
-          toast.success(response.message);
-          if(response.data.role === "FOUNDER"){
-            router.replace("/admin/dashboard");
-          }else{
-            router.replace("/agent/dashboard")
+          // Only founders and agents have a panel
+          const home = homeForRole(response.data.role);
+          if (!home) {
+            clearSession();
+            toast.error(NO_PANEL_MESSAGE);
+            return;
           }
+          toast.success(response.message);
+          router.replace(home);
         },
 
         onError: (error: any) => {
@@ -45,15 +49,16 @@ export default function LoginPage() {
     );
   };
 
-  useEffect(()=>{
-    const token = localStorage.getItem("token")
-    const role = localStorage.getItem("role")
-    if(token && role === "FOUNDER"){
-      router.replace("/admin/dashboard")
-    }else if(token && role === "AGENT"){
-      router.replace("/agent/dashboard")
+  // Already logged in: go straight to this account's panel
+  useEffect(() => {
+    const { token, role } = getSession();
+    const home = token ? homeForRole(role) : null;
+    if (home) {
+      router.replace(home);
+    } else if (token) {
+      clearSession();
     }
-  },[])
+  }, [router]);
 
   return (
     <>

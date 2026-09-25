@@ -16,6 +16,7 @@ import { useCompleteJobById, useRemoveJobById } from "@/hooks/useAdmin";
 import { toast } from "sonner";
 import axios from "axios";
 import { ConfirmModal } from "./ConfirmModal";
+import SafeImage from "./SafeImage";
 
 type Job = {
   id: string;
@@ -154,16 +155,17 @@ export const JobCard = ({ job, href, isjob }: JobCardProps) => {
           </>
         )}
         <div className="mb-3 aspect-[4/5] max-h-60 w-full overflow-hidden rounded-[10px] bg-stone-800">
-          <img
-            src={
-              job?.image
-                ? job.image.startsWith("http")
-                  ? job.image
-                  : `${process.env.NEXT_AWS_S3_BASE_URL}${job.image}`
-                : ""
+          <SafeImage
+            src={job?.image}
+            alt={job?.title || job?.name || "Image"}
+            className="h-full max-h-60 w-full object-cover"
+            placeholder={
+              isjob ? (
+                <div className="flex h-full min-h-40 w-full items-center justify-center text-xs text-stone-500">
+                  No image
+                </div>
+              ) : undefined
             }
-            alt={job?.title || "Job image"}
-            className="max-h-60 w-full object-cover"
           />
         </div>
         {!isjob && (

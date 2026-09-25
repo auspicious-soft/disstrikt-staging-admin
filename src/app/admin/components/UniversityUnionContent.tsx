@@ -1,63 +1,124 @@
 "use client";
+import { useEffect, useState } from "react";
 import { NavArrowDownSolid } from "iconoir-react";
+import { useGetModelMansionUniversityUnion } from "@/hooks/useModelMansion";
+import { formatDate, titleCase } from "../model-mansion/[id]/format";
+import Loader from "./ui/Loader";
+import { resolveMediaUrl } from "@/lib/media";
 
-const progress = [
-  {
-    label: "Current Chapter",
-    value: "Model",
-  },
-  {
-    label: "Module",
-    value: "2",
-  },
-  {
-    label: "Task",
-    value: "10",
-  },
-  {
-    label: "Progress",
-    value: "68%",
-  },
-];
+type QuizAnswer = {
+  questionNumber: number;
+  question: string;
+  answer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+};
 
-const tasks = [
-  "Task 1",
-  "Task 2",
-  "Task 3",
-  "Task 4",
-  "Task 5",
-  "Task 6",
-  "Task 7",
-  "Task 8",
-  "Task 9",
-  "Task 10",
-];
+type SubmittedTask = {
+  _id: string;
+  title: string;
+  answerType: string | null;
+  taskNumber: number;
+  milestone: number;
+  rating: number;
+  reviewed: boolean;
+  submittedAt: string;
+  quiz: QuizAnswer[];
+  checkBox: string[];
+  text: string;
+  uploadLinks: string[];
+};
 
-const answers = [
-  {
-    no: "1.1",
-    question:
-      "Select the 6 most important things to look at when choose a profile picture.",
-    answer: "Clear Face, Good Lighting",
-  },
-  {
-    no: "1.1",
-    question: "Do you have a good profile picture already?",
-    answer: "No, I don't",
-  },
-  {
-    no: "1.2",
-    question: "Which niche are you most interested in?",
-    answer: "Fitness, Influencer, Commercial",
-  },
-  {
-    no: "1.2",
-    question: "How long have you been active in this niche?",
-    answer: "Less than a Year",
-  },
-];
+const mediaUrl = (key: string) => resolveMediaUrl(key);
 
-export default function UniversityUnionContent() {
+// Question / answer rows for one submitted task, whatever its answer type
+const answerRows = (task: SubmittedTask) => {
+  const rows: { no: string; question: string; answer: React.ReactNode }[] = [];
+  const prefix = `${task.milestone}.${task.taskNumber}`;
+
+  task.quiz.forEach((item) => {
+    rows.push({
+      no: `${prefix}.${item.questionNumber}`,
+      question: item.question || "Question",
+      answer: (
+        <>
+          {item.answer || "-"}{" "}
+          <span className={item.isCorrect ? "text-emerald-400" : "text-rose-400"}>
+            {item.isCorrect ? "(Correct)" : `(Correct: ${item.correctAnswer || "-"})`}
+          </span>
+        </>
+      ),
+    });
+  });
+
+  if (task.checkBox.length) {
+    rows.push({ no: prefix, question: "Selected", answer: task.checkBox.join(", ") });
+  }
+
+  if (task.text) {
+    rows.push({ no: prefix, question: "Written answer", answer: task.text });
+  }
+
+  if (task.uploadLinks.length) {
+    rows.push({
+      no: prefix,
+      question: "Uploads",
+      answer: (
+        <span className="flex flex-wrap gap-2">
+          {task.uploadLinks.map((link, index) => (
+            <a
+              key={link}
+              href={mediaUrl(link)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-pink-400 underline"
+            >
+              File {index + 1}
+            </a>
+          ))}
+        </span>
+      ),
+    });
+  }
+
+  return rows;
+};
+
+export default function UniversityUnionContent({ modelId }: { modelId: string }) {
+  const { data, isPending, isError } = useGetModelMansionUniversityUnion(modelId);
+  const tasks: SubmittedTask[] = data?.tasks ?? [];
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tasks.length && !tasks.some((task) => task._id === selectedTaskId)) {
+      setSelectedTaskId(tasks[0]._id);
+    }
+  }, [tasks, selectedTaskId]);
+
+  if (isPending) return <Loader />;
+
+  if (isError) {
+    return (
+      <p className="py-8 text-center text-xs text-stone-500">
+        Couldn&apos;t load University Union progress.
+      </p>
+    );
+  }
+
+  const progress = data?.progress;
+  const progressItems = [
+    { label: "Current Chapter", value: titleCase(progress?.chapter) || "-" },
+    { label: "Module", value: progress?.currentMilestone ?? "-" },
+    { label: "Task", value: progress?.latestTaskNumber || "-" },
+    {
+      label: "Progress",
+      value: `${progress?.percentage ?? 0}% (${progress?.completedTasks ?? 0}/${progress?.totalTasks ?? 0})`,
+    },
+  ];
+
+  const selectedTask = tasks.find((task) => task._id === selectedTaskId);
+  const rows = selectedTask ? answerRows(selectedTask) : [];
+
   return (
     <div className="space-y-3">
       {/* Progress */}
@@ -71,7 +132,7 @@ export default function UniversityUnionContent() {
         </summary>
 
         <div className="grid grid-cols-2 gap-y-6 gap-x-8 p-5 md:grid-cols-4">
-          {progress.map((item) => (
+          {progressItems.map((item) => (
             <div key={item.label}>
               <p className="text-[11px] text-stone-400 text-xs font-normal">
                 {item.label}
@@ -97,43 +158,70 @@ export default function UniversityUnionContent() {
         </summary>
 
         <div className="p-4">
-          <div className="mb-5 flex flex-wrap gap-2">
-            {tasks.map((task, index) => (
-              <button
-                key={task}
-                className={`rounded-md px-4 py-2 text-sm font-medium ${
-                  index === 0
-                    ? "bg-pink-500 text-white"
-                    : "bg-stone-700 text-stone-200"
-                }`}
-              >
-                {task}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {answers.map((item, index) => (
-              <div
-                key={index}
-                className="flex gap-4 border-b border-stone-800 pb-4 last:border-none"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded bg-stone-700 text-sm font-medium  text-white">
-                  {item.no}
-                </div>
-
-                <div className="flex-1">
-                  <p className="text-xs font-normal text-stone-400">
-                    {item.question}
-                  </p>
-
-                  <p className="mt-1 text-sm font-medium text-white">
-                    {item.answer}
-                  </p>
-                </div>
+          {!tasks.length ? (
+            <p className="py-4 text-center text-xs text-stone-500">
+              No tasks submitted yet.
+            </p>
+          ) : (
+            <>
+              <div className="mb-5 flex flex-wrap gap-2">
+                {tasks.map((task) => (
+                  <button
+                    key={task._id}
+                    type="button"
+                    title={task.title}
+                    onClick={() => setSelectedTaskId(task._id)}
+                    className={`rounded-md px-4 py-2 text-sm font-medium ${
+                      task._id === selectedTaskId
+                        ? "bg-pink-500 text-white"
+                        : "bg-stone-700 text-stone-200"
+                    }`}
+                  >
+                    Task {task.taskNumber}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+
+              {selectedTask && (
+                <p className="mb-4 text-xs text-stone-400">
+                  <span className="text-white">{selectedTask.title}</span>
+                  {" · "}Submitted {formatDate(selectedTask.submittedAt)}
+                  {" · "}Rating {selectedTask.rating}
+                  {" · "}
+                  {selectedTask.reviewed ? "Reviewed" : "Awaiting review"}
+                </p>
+              )}
+
+              <div className="space-y-4">
+                {rows.length ? (
+                  rows.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex gap-4 border-b border-stone-800 pb-4 last:border-none"
+                    >
+                      <div className="flex h-10 min-w-10 items-center justify-center rounded bg-stone-700 px-1 text-sm font-medium text-white">
+                        {item.no}
+                      </div>
+
+                      <div className="flex-1">
+                        <p className="text-xs font-normal text-stone-400">
+                          {item.question}
+                        </p>
+
+                        <p className="mt-1 text-sm font-medium text-white break-words">
+                          {item.answer}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-stone-500">
+                    This task was completed without a written answer.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </details>
     </div>

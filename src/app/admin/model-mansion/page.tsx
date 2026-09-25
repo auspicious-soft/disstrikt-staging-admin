@@ -1,87 +1,32 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Plus,
-  Tag,
-  User,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { ArrowSeparateVertical } from "iconoir-react";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { JobCard } from "@/app/components/JobCard";
+import Pagination from "@/app/components/Pagination";
+import { useCountry } from "@/app/components/CountryContext";
+import Loader from "../components/ui/Loader";
+import {
+  useGetModelMansionAgents,
+  useGetModelMansionModels,
+} from "@/hooks/useModelMansion";
+import { formatName } from "@/lib/media";
+import { usePanel } from "@/app/components/PanelContext";
 
-type Job = {
-  id: string;
-  tag: string;
-  name: string;
-  image: string;
-  likes: number;
-  saves: number;
-  booking: number;
-};
+type Option = { label: string; value: string };
 
-const jobs: Job[] = [
-  {
-    id: "1",
-    tag: "Agent",
-    name: "Summer Campaign Shoot",
-    image: "https://picsum.photos/seed/summer-campaign/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 50,
-  },
-  {
-    id: "2",
-    tag: "Agent",
-    name: "Urban Streetwear Lookbook",
-    image: "https://picsum.photos/seed/streetwear-look/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 40,
-  },
-  {
-    id: "3",
-    tag: "Agent",
-    name: "Fitness Brand Collaboration",
-    image: "https://picsum.photos/seed/fitness-brand/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 40,
-  },
-  {
-    id: "4",
-    tag: "Agent",
-    name: "Fitness Brand Collaboration",
-    image: "https://picsum.photos/seed/fitness-brand-2/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 40,
-  },
-  {
-    id: "5",
-    tag: "Designer",
-    name: "Jewellery Product Shoot",
-    image: "https://picsum.photos/seed/jewellery-shoot/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 40,
-  },
-  {
-    id: "6",
-    tag: "Agent",
-    name: "Urban Streetwear Lookbook",
-    image: "https://picsum.photos/seed/streetwear-look-2/600/700",
-    likes: 40,
-    saves: 40,
-    booking: 40,
-  },
-];
+type Agent = { _id: string; fullName: string; modelCount: number };
 
-const filterOptions = {
-  postedBy: ["Agent", "Agencies", "Brands", "Agents"],
+type MansionModel = {
+  _id: string;
+  fullName: string;
+  image?: string;
+  headshot?: string;
+  likedCount: number;
+  savedCount: number;
+  bookingCount: number;
 };
 
 const FilterSelect = ({
@@ -89,19 +34,19 @@ const FilterSelect = ({
   value,
   onChange,
 }: {
-  options: string[];
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
 }) => (
-  <label className="relative block w-full sm:w-[150px]">
+  <label className="relative block w-full sm:w-[180px]">
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
       className="h-10 w-full appearance-none rounded-[8px] border border-[#2A2A2E] bg-[#151518] px-4 pr-9 text-[13px] text-stone-300 outline-none focus:border-[#EF476F]"
     >
       {options.map((option) => (
-        <option key={option} value={option} className="bg-[#151518]">
-          {option}
+        <option key={option.value} value={option.value} className="bg-[#151518]">
+          {option.label}
         </option>
       ))}
     </select>
@@ -109,55 +54,103 @@ const FilterSelect = ({
   </label>
 );
 
-const JobJunction: React.FC = () => {
-  const [postedBy, setPostedBy] = useState(filterOptions.postedBy[0]);
+const ModelMansion: React.FC = () => {
+  const { kind, mansionPath } = usePanel();
+  const [agent, setAgent] = useState("");
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 300);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(12);
+  const debouncedSearch = useDebouncedValue(search, 500);
+  const { country } = useCountry();
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchesSearch = job.name
-        .toLowerCase()
-        .includes(debouncedSearch.toLowerCase());
-      return matchesSearch;
-    });
-  }, [ debouncedSearch]);
+  const { data: agents = [] } = useGetModelMansionAgents();
+  const { data, isPending, isError } = useGetModelMansionModels({
+    page,
+    limit,
+    search: debouncedSearch.trim(),
+    agent,
+    country,
+  });
+
+  const models: MansionModel[] = data?.data ?? [];
+  const totalPages = data?.pagination?.totalPages ?? 1;
+
+  const agentOptions: Option[] = [
+    { label: "All Agents", value: "" },
+    ...(agents as Agent[]).map((item) => ({
+      label: `${formatName(item.fullName)} (${item.modelCount})`,
+      value: item._id,
+    })),
+    { label: "Unassigned", value: "unassigned" },
+  ];
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, agent, country]);
 
   return (
     <main className="min-h-screen w-full text-stone-100">
       <div className="mb-6 flex justify-end flex-col gap-3 sm:flex-row sm:items-center">
-        {/* <div className="flex flex-1 flex-col gap-3 sm:flex-row"> */}
-          <FilterSelect
-            options={filterOptions.postedBy}
-            value={postedBy}
-            onChange={setPostedBy}
+        {/* Agents only see their own models, so no agent filter for them */}
+        {kind === "admin" && (
+          <FilterSelect options={agentOptions} value={agent} onChange={setAgent} />
+        )}
+
+        <label className="relative block w-full sm:w-[220px]">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search name or email"
+            className="h-10 w-full rounded-[8px] border border-[#2A2A2E] bg-[#151518] pl-4 pr-9 text-[13px] text-stone-300 outline-none placeholder:text-stone-500 focus:border-[#EF476F]"
           />
-
-          <label className="relative block w-full sm:w-[220px]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search"
-              className="h-10 w-full rounded-[8px] border border-[#2A2A2E] bg-[#151518] pl-4 pr-4 text-[13px] text-stone-300 outline-none placeholder:text-stone-500 focus:border-[#EF476F]"
-            />
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
-          </label>
-      
+          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+        </label>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {filteredJobs.map((job) => (
-          <JobCard key={job.id} job={job} href={`/admin/model-mansion/${job.id}`} isjob={false} />
-        ))}
-      </div>
-
-      {filteredJobs.length === 0 && (
+      {isPending ? (
+        <Loader />
+      ) : isError ? (
         <p className="mt-10 text-center text-[13px] text-stone-500">
-          No jobs match your filters.
+          Couldn&apos;t load models. Please try again.
         </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {models.map((model) => (
+              <JobCard
+                key={model._id}
+                job={{
+                  _id: model._id,
+                  name: formatName(model.fullName),
+                  // Headshot first, then the profile photo
+                  image: [model.headshot, model.image].filter(Boolean),
+                  likes: model.likedCount,
+                  saves: model.savedCount,
+                  booking: model.bookingCount,
+                }}
+                href={`${mansionPath}/${model._id}`}
+                isjob={false}
+              />
+            ))}
+          </div>
+
+          {models.length === 0 && (
+            <p className="mt-10 text-center text-[13px] text-stone-500">
+              No models match your filters.
+            </p>
+          )}
+
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </main>
   );
 };
 
-export default JobJunction;
+export default ModelMansion;

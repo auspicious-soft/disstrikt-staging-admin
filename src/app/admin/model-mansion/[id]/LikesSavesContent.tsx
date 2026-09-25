@@ -1,110 +1,106 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
-import dummyUserImg from "@/assets/images/dummyUserImg.png";
+import { useState } from "react";
+import SafeImage from "@/app/components/SafeImage";
+import { useGetModelMansionLikesSaves } from "@/hooks/useModelMansion";
+import { formatName } from "@/lib/media";
+import { timeAgo, titleCase } from "./format";
 
-type ActivityCategory = "brands" | "photographer" | "content creator";
-type ActivityFilter = "all" | ActivityCategory;
-
-type ActivityItem = {
-  id: number;
-  name: string;
-  action: string;
-  time: string;
-  category?: ActivityCategory;
+type ActivityEntry = {
+  user: { _id: string; fullName: string; image?: string; userMode?: string };
+  action: "liked" | "saved";
+  at: string | null;
 };
 
-const peopleWhoLiked: ActivityItem[] = [
-  { id: 1, name: "Emma", action: "Photographer", time: "2 Hr", category: "photographer" },
-  { id: 2, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr", category: "brands" },
-  { id: 3, name: "Jack", action: "appreciated your profile", time: "1 Hr", category: "content creator" },
-  { id: 4, name: "Ella Jacobs", action: "saved your profile", time: "4 Yr", category: "brands" },
-  { id: 5, name: "Jack", action: "appreciated your profile", time: "5 Hr", category: "photographer" },
-  { id: 6, name: "Ella Jacobs", action: "appreciated your profile", time: "1 Yr", category: "content creator" },
-  { id: 7, name: "Jack", action: "appreciated your profile", time: "3 Hr", category: "photographer" },
-  { id: 8, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr", category: "brands" },
-  { id: 9, name: "Jack", action: "appreciated your profile", time: "2 Hr", category: "content creator" },
-];
-
-const profileStats: ActivityItem[] = [
-  { id: 1, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr" },
-  { id: 2, name: "Jack", action: "appreciated your profile", time: "1 Hr" },
-  { id: 3, name: "Ella Jacobs", action: "saved your profile", time: "4 Yr" },
-  { id: 4, name: "Jack", action: "appreciated your profile", time: "5 Hr" },
-  { id: 5, name: "Ella Jacobs", action: "appreciated your profile", time: "1 Yr" },
-  { id: 6, name: "Jack", action: "appreciated your profile", time: "3 Hr" },
-  { id: 7, name: "Ella Jacobs", action: "appreciated your profile", time: "2 Yr" },
-  { id: 8, name: "Jack", action: "appreciated your profile", time: "3 Hr" },
-  { id: 9, name: "Jack", action: "appreciated your profile", time: "2 Yr" },
-];
-
-const filterTabs: { label: string; value: ActivityFilter }[] = [
-  { label: "All", value: "all" },
-  { label: "Brands", value: "brands" },
-  { label: "Photographer", value: "photographer" },
-  { label: "Content Creator", value: "content creator" },
+// Filter value = the liker's userMode
+const filterTabs: { label: string; value: string }[] = [
+  { label: "All", value: "" },
+  { label: "Brands", value: "BRAND" },
+  { label: "Photographer", value: "PHOTOGRAPHER" },
+  { label: "Content Creator", value: "CREATOR" },
 ];
 
 const ActivityList = ({
   title,
   items,
+  emptyText,
+  describe,
   children,
 }: {
   title: string;
-  items: ActivityItem[];
+  items: ActivityEntry[];
+  emptyText: string;
+  describe: (item: ActivityEntry) => string;
   children?: React.ReactNode;
 }) => (
   <div className="overflow-hidden rounded-md border border-stone-800 ">
     <div className="bg-white/10 px-3 py-2">
       <h2 className="text-sm font-medium text-stone-100">{title}</h2>
     </div>
-    <div className="px-3 text-xs font-light mb-2">
-
-      {children}
-    </div>
+    <div className="px-3 text-xs font-light mb-2">{children}</div>
 
     <div className="flex flex-col px-2">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className="flex items-center gap-3 border-b border-[#313131] px-3 py-2 last:border-b-0"
-        >
-          <Image
-            src={dummyUserImg}
-            alt={item.name}
-            width={26}
-            height={26}
-            className="h-8 w-8 shrink-0 rounded-full object-cover"
-          />
+      {items.length ? (
+        items.map((item, index) => (
+          <div
+            key={`${item.user._id}-${item.action}-${index}`}
+            className="flex items-center gap-3 border-b border-[#313131] px-3 py-2 last:border-b-0"
+          >
+            <SafeImage
+              src={item.user.image}
+              alt={formatName(item.user.fullName)}
+              className="h-8 w-8 shrink-0 rounded-full object-cover bg-stone-700"
+            />
 
-          <p className="min-w-0 flex-1 truncate text-xs font-normal text-stone-300">
-            <span className="text-stone-100">{item.name}</span>{" "}
-            {item.action}
-          </p>
+            <p className="min-w-0 flex-1 truncate text-xs font-normal text-stone-300">
+              <span className="text-stone-100">{formatName(item.user.fullName)}</span>{" "}
+              {describe(item)}
+              {item.user.userMode ? (
+                <span className="text-stone-500"> · {titleCase(item.user.userMode)}</span>
+              ) : null}
+            </p>
 
-          <span className="shrink-0 text-xs font-light text-stone-500">
-            {item.time}
-          </span>
-        </div>
-      ))}
+            <span className="shrink-0 text-xs font-light text-stone-500">
+              {timeAgo(item.at)}
+            </span>
+          </div>
+        ))
+      ) : (
+        <p className="px-3 py-6 text-center text-xs text-stone-500">{emptyText}</p>
+      )}
     </div>
   </div>
 );
 
-const LikesSavesContent = () => {
-  const [activeFilter, setActiveFilter] = useState<ActivityFilter>("all");
+const LikesSavesContent = ({ modelId }: { modelId: string }) => {
+  const [activeFilter, setActiveFilter] = useState("");
+  const { data, isPending, isError } = useGetModelMansionLikesSaves(
+    modelId,
+    activeFilter,
+  );
 
-  const filteredPeopleWhoLiked = useMemo(() => {
-    if (activeFilter === "all") return peopleWhoLiked;
-    return peopleWhoLiked.filter((item) => item.category === activeFilter);
-  }, [activeFilter]);
+  if (isPending) {
+    return <p className="py-8 text-center text-xs text-stone-500">Loading...</p>;
+  }
+
+  if (isError) {
+    return (
+      <p className="py-8 text-center text-xs text-stone-500">
+        Couldn&apos;t load likes and saves.
+      </p>
+    );
+  }
+
+  const received: ActivityEntry[] = data?.received ?? [];
+  const given: ActivityEntry[] = data?.given ?? [];
 
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <ActivityList
-        title="People Who Liked & Saved This Profile"
-        items={filteredPeopleWhoLiked}
+        title={`People Who Liked & Saved This Profile (${data?.counts?.likes ?? 0} Likes, ${data?.counts?.saves ?? 0} Saves)`}
+        items={received}
+        emptyText="Nobody has liked or saved this profile yet."
+        describe={(item) => `${item.action} this profile`}
       >
         <div className="mt-2 flex flex-wrap items-center gap-1">
           {filterTabs.map((tab) => (
@@ -123,7 +119,12 @@ const LikesSavesContent = () => {
           ))}
         </div>
       </ActivityList>
-      <ActivityList title="Profile Liked And Saved By User" items={profileStats} />
+      <ActivityList
+        title="Profile Liked And Saved By User"
+        items={given}
+        emptyText="This model hasn't liked or saved any profiles."
+        describe={(item) => `was ${item.action} by this model`}
+      />
     </div>
   );
 };

@@ -4,6 +4,8 @@ export interface ChatMessageType {
   sender: "me" | "other";
   time: string;
   status?: "sent" | "delivered" | "read";
+  senderName?: string;
+  imageUrl?: string;
 }
 
 export interface ChatUser {

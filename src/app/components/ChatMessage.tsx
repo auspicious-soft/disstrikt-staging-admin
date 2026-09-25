@@ -1,4 +1,4 @@
-import { CheckCheck } from "lucide-react";
+import { Check, CheckCheck } from "lucide-react";
 import { ChatMessageType } from "./ChatHeader";
 
 interface Props {
@@ -21,14 +21,37 @@ const ChatMessage = ({ message }: Props) => {
             : "bg-[#332D2F] text-white"
         }`}
       >
-        <p>{message.message}</p>
+        {message.senderName && (
+          <p className="mb-0.5 text-[10px] font-semibold opacity-70">
+            {message.senderName}
+          </p>
+        )}
+
+        {message.imageUrl && (
+          <a href={message.imageUrl} target="_blank" rel="noreferrer">
+            <img
+              src={message.imageUrl}
+              alt="Shared photo"
+              className="mb-1 max-h-60 rounded-lg object-cover"
+            />
+          </a>
+        )}
+
+        {message.message && (
+          <p className="whitespace-pre-wrap break-words">{message.message}</p>
+        )}
 
         <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
           {message.time}
 
-          {isMe && (
-            <CheckCheck className="h-3 w-3" />
-          )}
+          {isMe &&
+            (message.status === "sent" ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <CheckCheck
+                className={`h-3 w-3 ${message.status === "read" ? "text-sky-700" : ""}`}
+              />
+            ))}
         </div>
       </div>
     </div>

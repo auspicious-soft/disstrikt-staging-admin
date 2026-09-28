@@ -1,4 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
+import { prependToChatCache } from "@/lib/chatCache";
 import { resolveMediaUrl } from "@/lib/media";
 import {
   useInfiniteQuery,
@@ -203,8 +204,12 @@ export const useSendModelChatMessage = (id: string) => {
       );
       return data?.data as ModelChatMessage;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [BASE, "modelChatMessages", id] }),
+    // Show the saved message right away instead of refetching the history
+    onSuccess: (message) => {
+      if (message?._id) {
+        prependToChatCache(queryClient, [BASE, "modelChatMessages", id], message);
+      }
+    },
   });
 };
 

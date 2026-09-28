@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/lib/axios";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePanel } from "@/app/components/PanelContext";
+import { prependToChatCache } from "@/lib/chatCache";
 
 
 export type ProjectStatus =
@@ -123,8 +124,12 @@ export const useSendModelMarketChatMessage = (id: string) => {
       const { data } = await axiosInstance.post(`${BASE}/${id}/chat/messages`, payload);
       return data?.data as ProjectChatMessage;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [BASE, "modelMarketProjectChat", id] }),
+    // Show the saved message right away instead of refetching the history
+    onSuccess: (message) => {
+      if (message?._id) {
+        prependToChatCache(queryClient, [BASE, "modelMarketProjectChat", id], message);
+      }
+    },
   });
 };
 

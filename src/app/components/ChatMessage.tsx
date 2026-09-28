@@ -1,4 +1,4 @@
-import { Check, CheckCheck } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Clock } from "lucide-react";
 import { ChatMessageType } from "./ChatHeader";
 
 interface Props {
@@ -19,7 +19,7 @@ const ChatMessage = ({ message }: Props) => {
           isMe
             ? "bg-[#72F169] text-black"
             : "bg-[#332D2F] text-white"
-        }`}
+        } ${message.status === "sending" ? "opacity-80" : ""}`}
       >
         {message.senderName && (
           <p className="mb-0.5 text-[10px] font-semibold opacity-70">
@@ -45,7 +45,11 @@ const ChatMessage = ({ message }: Props) => {
           {message.time}
 
           {isMe &&
-            (message.status === "sent" ? (
+            (message.status === "sending" ? (
+              <Clock className="h-3 w-3" aria-label="Sending" />
+            ) : message.status === "failed" ? (
+              <AlertCircle className="h-3 w-3 text-red-700" aria-label="Not sent" />
+            ) : message.status === "sent" ? (
               <Check className="h-3 w-3" />
             ) : (
               <CheckCheck
@@ -53,6 +57,17 @@ const ChatMessage = ({ message }: Props) => {
               />
             ))}
         </div>
+
+        {isMe && message.status === "failed" && (
+          <p className="mt-1 text-right text-[11px] font-medium text-red-700">
+            Not sent.{" "}
+            {message.onRetry && (
+              <button type="button" onClick={message.onRetry} className="underline">
+                Retry
+              </button>
+            )}
+          </p>
+        )}
       </div>
     </div>
   );

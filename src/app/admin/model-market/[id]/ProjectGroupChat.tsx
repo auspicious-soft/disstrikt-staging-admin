@@ -1,12 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import ChatHeader from "@/app/components/ChatHeader";
 import ChatMessage from "@/app/components/ChatMessage";
 import ChatInput from "@/app/components/ChatInput";
-import { generateSignedUrlToUploadOn } from "@/actions";
 import { toImageUrl } from "@/hooks/useModelMansion";
 import {
   useGetModelMarketProjectChat,
@@ -16,6 +15,8 @@ import {
 import { formatDate, formatTime } from "../../model-mansion/[id]/format";
 import { formatName } from "@/lib/media";
 import { usePanel } from "@/app/components/PanelContext";
+import { useOptimisticChat } from "@/hooks/useOptimisticChat";
+import { uploadChatImage } from "@/lib/chatUpload";
 
 const MAX_IMAGE_MB = 10;
 
@@ -40,13 +41,26 @@ const errorMessage = (error: unknown, fallback: string) =>
 const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
   const { kind } = usePanel();
   const [text, setText] = useState("");
-  const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageId = useRef<string | null>(null);
   const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetModelMarketProjectChat(projectId);
-  const { mutate: send, isPending: isSending } = useSendModelMarketChatMessage(projectId);
+  const { mutateAsync: sendRequest } = useSendModelMarketChatMessage(projectId);
   const { mutate: markRead } = useMarkModelMarketChatRead(projectId);
+
+  const send = useCallback(
+    (payload: Parameters<typeof sendRequest>[0]) =>
+      sendRequest(payload).catch((error) => {
+        toast.error(errorMessage(error, "Couldn't send the message"));
+        throw error;
+      }),
+    [sendRequest],
+  );
+  // Messages show instantly with a clock, then a tick once saved
+  const { pending, sendText, sendImage, retry } = useOptimisticChat({
+    send,
+    uploadImage: uploadChatImage,
+  });
 
   const latest = data?.pages?.[0];
   const members = latest?.members ?? [];
@@ -66,7 +80,8 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
     if (kind === "agent" && me?.isMember && unreadCount > 0) markRead();
   }, [kind, me?.isMember, unreadCount, markRead]);
 
-  const newestId = messages[messages.length - 1]?._id ?? null;
+  const newestId =
+    pending[pending.length - 1]?.tempId ?? messages[messages.length - 1]?._id ?? null;
   useEffect(() => {
     if (newestId && newestId !== lastMessageId.current) {
       lastMessageId.current = newestId;
@@ -81,21 +96,14 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
       ].join(", ")
     : "Group Chat";
 
-  const busy = isSending || uploading;
-
   const handleSend = () => {
     const content = text.trim();
-    if (!content || busy) return;
-    send(
-      { content },
-      {
-        onSuccess: () => setText(""),
-        onError: (error) => toast.error(errorMessage(error, "Couldn't send the message")),
-      },
-    );
+    if (!content) return;
+    setText("");
+    sendText(content);
   };
 
-  const handleAttach = async (file: File) => {
+  const handleAttach = (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Only images can be sent");
       return;
@@ -104,33 +112,9 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
       toast.error(`Image must be smaller than ${MAX_IMAGE_MB}MB`);
       return;
     }
-
-    setUploading(true);
-    try {
-      const { signedUrl, key } = await generateSignedUrlToUploadOn(
-        `chat-${Date.now()}-${file.name.replace(/\s+/g, "-")}`,
-        file.type,
-      );
-      const upload = await fetch(signedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!upload.ok) throw new Error("upload failed");
-
-      const caption = text.trim();
-      send(
-        { type: "image", mediaUrl: key, ...(caption ? { content: caption } : {}) },
-        {
-          onSuccess: () => setText(""),
-          onError: (error) => toast.error(errorMessage(error, "Couldn't send the photo")),
-          onSettled: () => setUploading(false),
-        },
-      );
-    } catch {
-      toast.error("Couldn't upload the photo");
-      setUploading(false);
-    }
+    const caption = text.trim();
+    setText("");
+    sendImage(file, caption);
   };
 
   const footerNote =
@@ -157,7 +141,7 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
           <p className="m-auto text-center text-xs text-stone-400">
             The group chat starts when the first model accepts the booking.
           </p>
-        ) : !messages.length ? (
+        ) : !messages.length && !pending.length ? (
           <p className="m-auto text-xs text-stone-400">No messages yet.</p>
         ) : (
           <div className="mt-auto space-y-4">
@@ -221,6 +205,21 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
                 </Fragment>
               );
             })}
+
+            {pending.map((item) => (
+              <ChatMessage
+                key={item.tempId}
+                message={{
+                  id: item.tempId,
+                  sender: "me",
+                  message: item.content,
+                  imageUrl: item.imageUrl,
+                  time: formatTime(item.createdAt),
+                  status: item.status,
+                  onRetry: () => retry(item.tempId),
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -232,11 +231,8 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
             onChange={setText}
             onSend={handleSend}
             onAttach={handleAttach}
-            disabled={busy || isPending || isError}
+            disabled={isPending || isError}
           />
-          {uploading && (
-            <p className="mt-2 text-right text-[10px] text-stone-400">Uploading photo...</p>
-          )}
         </div>
       ) : (
         footerNote && (

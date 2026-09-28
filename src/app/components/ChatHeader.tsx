@@ -3,9 +3,11 @@ export interface ChatMessageType {
   message: string;
   sender: "me" | "other";
   time: string;
-  status?: "sent" | "delivered" | "read";
+  // "sending": shown before the server confirms; "failed": can be retried
+  status?: "sending" | "failed" | "sent" | "delivered" | "read";
   senderName?: string;
   imageUrl?: string;
+  onRetry?: () => void;
 }
 
 export interface ChatUser {

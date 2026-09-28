@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePanel } from "@/app/components/PanelContext";
 
 
@@ -75,21 +75,27 @@ export type ProjectChatMessage = {
   type: "text" | "image" | "system";
   content: string;
   mediaUrl: string | null;
+  // For agent messages this is the agent
   senderId: { _id: string; fullName: string; image?: string } | null;
+  senderType: "user" | "agent" | "system";
   createdAt: string;
 };
 
 type ProjectChatPage = {
   chatId: string | null;
   members: { userId: string; fullName: string; image: string | null; role: "owner" | "model" }[];
+  agents: { agentId: string; fullName: string; image: string | null; joinedAt: string }[];
+  // Agent panel only
+  me?: { agentId?: string; isMember: boolean; canSend: boolean; unreadCount: number };
   data: ProjectChatMessage[];
   hasMore: boolean;
   nextBefore: string | null;
 };
 
-// Read-only view of the project's group chat, polled for new messages
+// The project's group chat, polled for new messages. Admins read it; the
+// agents of the accepted models also post in it.
 export const useGetModelMarketProjectChat = (id: string) => {
-  const { marketApi: BASE } = usePanel();
+  const { marketApi: BASE, kind } = usePanel();
   return useInfiniteQuery({
     queryKey: [BASE, "modelMarketProjectChat", id],
     queryFn: async ({ pageParam }) => {
@@ -102,6 +108,32 @@ export const useGetModelMarketProjectChat = (id: string) => {
     getNextPageParam: (lastPage) =>
       lastPage?.hasMore && lastPage.nextBefore ? lastPage.nextBefore : undefined,
     enabled: !!id,
-    refetchInterval: 10000,
+    refetchInterval: kind === "agent" ? 5000 : 10000,
+  });
+};
+
+// Agent panel only (/agent/model-market/:id/chat/messages)
+export const useSendModelMarketChatMessage = (id: string) => {
+  const { marketApi: BASE } = usePanel();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      payload: { content: string } | { type: "image"; mediaUrl: string; content?: string },
+    ) => {
+      const { data } = await axiosInstance.post(`${BASE}/${id}/chat/messages`, payload);
+      return data?.data as ProjectChatMessage;
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [BASE, "modelMarketProjectChat", id] }),
+  });
+};
+
+export const useMarkModelMarketChatRead = (id: string) => {
+  const { marketApi: BASE } = usePanel();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.post(`${BASE}/${id}/chat/read`);
+      return data?.data;
+    },
   });
 };

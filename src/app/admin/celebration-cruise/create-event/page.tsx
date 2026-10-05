@@ -27,6 +27,7 @@ const countryOptions = [
   { label: "Spain", value: "ES" },
   { label: "France", value: "FR" },
   { label: "United Kingdom", value: "UK" },
+  { label: "United States", value: "USA" },
 ];
 const cityMap: Record<string, string[]> = {
   FR: ["Paris", "Lyon", "Marseille", "Nice", "Toulouse"],
@@ -201,6 +202,14 @@ const CreateCelebrationCruiseEvent = () => {
       normalizedName.includes("belgium")
     ) {
       return "BE";
+    }
+    if (
+      ["US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"].includes(
+        normalizedCode,
+      ) ||
+      normalizedName.includes("united states")
+    ) {
+      return "USA";
     }
 
     return "";

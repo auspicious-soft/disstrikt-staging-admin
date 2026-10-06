@@ -250,7 +250,7 @@ const ModelChatContent = ({
             notification and can reply from the app.
           </p>
         ) : (
-          <div className="mt-auto space-y-4">
+          <div className="mt-auto pb-1">
             {hasNextPage && (
               <div className="flex justify-center">
                 <button
@@ -268,18 +268,25 @@ const ModelChatContent = ({
               const day = dayLabel(item.createdAt);
               const showDay =
                 index === 0 || dayLabel(messages[index - 1].createdAt) !== day;
-              // Right side = sent by the viewer. Other team members and the
-              // model are on the left, with their name.
-              const isMine =
-                item.senderType === "admin" &&
-                !!myId &&
-                String(item.senderAdminId?._id) === myId;
+              // Only my own messages on the right. The model and other team
+              // members are on the left; the model gets no name (it's their
+              // chat), a teammate is labelled so you can tell who replied.
+              const fromTeam = item.senderType === "admin";
+              const senderId = fromTeam ? String(item.senderAdminId?._id ?? "") : "model";
+              const isMine = fromTeam && !!myId && senderId === myId;
+              const previous = messages[index - 1];
+              const previousSender = previous
+                ? previous.senderType === "admin"
+                  ? String(previous.senderAdminId?._id ?? "")
+                  : "model"
+                : null;
+              const firstInRun = showDay || previousSender !== senderId;
 
               return (
                 <Fragment key={item._id}>
                   {showDay && (
-                    <div className="flex justify-center">
-                      <span className="rounded-full bg-[#36496A] px-3 py-1 text-xs text-white">
+                    <div className="my-3 flex justify-center">
+                      <span className="rounded-full bg-[#36496A]/90 px-3 py-1 text-[11px] font-medium text-white shadow">
                         {day}
                       </span>
                     </div>
@@ -290,15 +297,12 @@ const ModelChatContent = ({
                       sender: isMine ? "me" : "other",
                       message: item.content,
                       time: formatTime(item.createdAt),
-                      senderName: isMine
-                        ? undefined
-                        : item.senderType === "admin"
+                      senderName:
+                        fromTeam && !isMine && firstInRun
                           ? formatName(item.senderAdminId?.fullName) || "Disstrikt"
-                          : modelName,
-                      senderKey:
-                        item.senderType === "admin"
-                          ? String(item.senderAdminId?._id ?? "team")
-                          : modelUserId || modelName,
+                          : undefined,
+                      senderKey: fromTeam ? senderId : undefined,
+                      firstInRun,
                       imageUrl:
                         item.type === "image" ? toImageUrl(item.mediaUrl) : undefined,
                       status: isMine ? statusFor(item.createdAt) : undefined,
@@ -308,12 +312,15 @@ const ModelChatContent = ({
               );
             })}
 
-            {pending.map((item) => (
+            {pending.map((item, index) => (
               <ChatMessage
                 key={item.tempId}
                 message={{
                   id: item.tempId,
                   sender: "me",
+                  firstInRun:
+                    index === 0 &&
+                    String(messages[messages.length - 1]?.senderAdminId?._id ?? "") !== myId,
                   message: item.content,
                   imageUrl: item.imageUrl,
                   time: formatTime(item.createdAt),

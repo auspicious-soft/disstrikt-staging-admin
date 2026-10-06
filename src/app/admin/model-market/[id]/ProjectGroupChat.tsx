@@ -264,7 +264,7 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
         ) : !messages.length && !pending.length ? (
           <p className="m-auto text-xs text-stone-400">No messages yet.</p>
         ) : (
-          <div className="mt-auto space-y-4">
+          <div className="mt-auto pb-1">
             {hasNextPage && (
               <div className="flex justify-center">
                 <button
@@ -290,31 +290,43 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
               const name =
                 formatName(item.senderId?.fullName) ||
                 (item.senderType === "agent" ? "Agent" : "Deleted user");
+              // Consecutive messages from one sender: name once, tighter spacing
+              const senderId = String(item.senderId?._id ?? name);
+              const previous = messages[index - 1];
+              const firstInRun =
+                showDay ||
+                !previous ||
+                previous.type === "system" ||
+                String(previous.senderId?._id ?? "") !== senderId;
 
               return (
                 <Fragment key={item._id}>
                   {showDay && (
-                    <div className="flex justify-center">
-                      <span className="rounded-full bg-[#36496A] px-3 py-1 text-xs text-white">
+                    <div className="my-3 flex justify-center">
+                      <span className="rounded-full bg-[#36496A]/90 px-3 py-1 text-[11px] font-medium text-white shadow">
                         {day}
                       </span>
                     </div>
                   )}
                   {item.type === "system" ? (
-                    <p className="text-center text-[11px] text-stone-300">
-                      {item.content}
-                    </p>
+                    <div className="my-2 flex justify-center">
+                      <p className="max-w-[85%] rounded-lg bg-black/40 px-3 py-1 text-center text-[11.5px] text-stone-200">
+                        {item.content}
+                      </p>
+                    </div>
                   ) : (
                     <ChatMessage
                       message={{
                         id: item._id,
                         sender: isMine ? "me" : "other",
-                        senderName: isMine
-                          ? undefined
-                          : item.senderType === "agent"
-                            ? `${name} (Agent)`
-                            : name,
-                        senderKey: String(item.senderId?._id ?? name),
+                        senderName:
+                          isMine || !firstInRun
+                            ? undefined
+                            : item.senderType === "agent"
+                              ? `${name} (Agent)`
+                              : name,
+                        senderKey: senderId,
+                        firstInRun,
                         message: item.content,
                         imageUrl:
                           item.type === "image" ? toImageUrl(item.mediaUrl) : undefined,
@@ -327,12 +339,15 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
               );
             })}
 
-            {pending.map((item) => (
+            {pending.map((item, index) => (
               <ChatMessage
                 key={item.tempId}
                 message={{
                   id: item.tempId,
                   sender: "me",
+                  firstInRun:
+                    index === 0 &&
+                    String(messages[messages.length - 1]?.senderId?._id ?? "") !== myAgentId,
                   message: item.content,
                   imageUrl: item.imageUrl,
                   time: formatTime(item.createdAt),

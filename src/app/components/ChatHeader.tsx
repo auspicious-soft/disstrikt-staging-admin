@@ -8,6 +8,9 @@ export interface ChatMessageType {
   senderName?: string;
   // Picks the sender-name colour (their id); falls back to senderName
   senderKey?: string;
+  // First of consecutive messages from the same sender: more space above and
+  // a bubble tail. Defaults to true.
+  firstInRun?: boolean;
   imageUrl?: string;
   onRetry?: () => void;
 }

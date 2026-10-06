@@ -1,5 +1,6 @@
 import { AlertCircle, Check, CheckCheck, Clock } from "lucide-react";
 import { ChatMessageType } from "./ChatHeader";
+import { nameColor } from "@/lib/chatColors";
 
 interface Props {
   message: ChatMessageType;
@@ -22,7 +23,10 @@ const ChatMessage = ({ message }: Props) => {
         } ${message.status === "sending" ? "opacity-80" : ""}`}
       >
         {message.senderName && (
-          <p className="mb-0.5 text-[10px] font-semibold opacity-70">
+          <p
+            className="mb-0.5 text-xs font-semibold"
+            style={{ color: nameColor(message.senderKey || message.senderName) }}
+          >
             {message.senderName}
           </p>
         )}
@@ -41,8 +45,8 @@ const ChatMessage = ({ message }: Props) => {
           <p className="whitespace-pre-wrap break-words">{message.message}</p>
         )}
 
-        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
-          {message.time}
+        <div className="mt-1 flex items-center justify-end gap-1 text-[10px]">
+          <span className="opacity-70">{message.time}</span>
 
           {isMe &&
             (message.status === "sending" ? (
@@ -50,11 +54,16 @@ const ChatMessage = ({ message }: Props) => {
             ) : message.status === "failed" ? (
               <AlertCircle className="h-3 w-3 text-red-700" aria-label="Not sent" />
             ) : message.status === "sent" ? (
-              <Check className="h-3 w-3" />
-            ) : (
+              <Check className="h-3.5 w-3.5 opacity-70" aria-label="Sent" />
+            ) : message.status === "read" ? (
+              // Blue double tick: read (in a group: read by everyone)
               <CheckCheck
-                className={`h-3 w-3 ${message.status === "read" ? "text-sky-700" : ""}`}
+                className="h-3.5 w-3.5 text-[#0B84FF]"
+                strokeWidth={2.5}
+                aria-label="Read"
               />
+            ) : (
+              <CheckCheck className="h-3.5 w-3.5 opacity-70" aria-label="Delivered" />
             ))}
         </div>
 

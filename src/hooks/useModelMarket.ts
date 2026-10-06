@@ -84,10 +84,19 @@ export type ProjectChatMessage = {
   createdAt: string;
 };
 
-type ProjectChatPage = {
+// Read time and presence of each participant drive the read ticks
+type ChatParticipantState = {
+  lastReadAt?: string | null;
+  lastSeenAt?: string | null;
+  isOnline?: boolean;
+};
+
+export type ProjectChatPage = {
   chatId: string | null;
-  members: { userId: string; fullName: string; image: string | null; role: "owner" | "model" }[];
-  agents: { agentId: string; fullName: string; image: string | null; joinedAt: string }[];
+  members: ({ userId: string; fullName: string; image: string | null; role: "owner" | "model" } &
+    ChatParticipantState)[];
+  agents: ({ agentId: string; fullName: string; image: string | null; joinedAt: string } &
+    ChatParticipantState)[];
   // Agent panel only
   me?: { agentId?: string; isMember: boolean; canSend: boolean; unreadCount: number };
   data: ProjectChatMessage[];

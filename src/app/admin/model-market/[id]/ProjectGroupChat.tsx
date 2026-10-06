@@ -8,6 +8,7 @@ import ChatMessage from "@/app/components/ChatMessage";
 import ChatInput from "@/app/components/ChatInput";
 import { toImageUrl } from "@/hooks/useModelMansion";
 import {
+  type ProjectChatPage,
   useGetModelMarketProjectChat,
   useMarkModelMarketChatRead,
   useSendModelMarketChatMessage,
@@ -20,7 +21,9 @@ import { uploadChatImage } from "@/lib/chatUpload";
 import { useQueryClient } from "@tanstack/react-query";
 import { prependToChatCache } from "@/lib/chatCache";
 import {
+  tickStatus,
   typingLabel,
+  usePresenceLookup,
   useSocket,
   useSocketEvent,
   useTypingEmitter,
@@ -91,6 +94,57 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
   const typingUsers = useTypingUsers();
   const pendingCount = pending.length;
 
+  // ---- Read ticks: blue only once everyone else in the group has read ----
+  const chatQueryKey = [marketApi, "modelMarketProjectChat", projectId];
+  const lookupPresence = usePresenceLookup();
+
+  // Moves a member's or agent's read time forward in the cached chat
+  const setReadAt = (id: string, at: string) =>
+    queryClient.setQueryData<{ pages: ProjectChatPage[]; pageParams: unknown[] }>(
+      chatQueryKey,
+      (old) => {
+        const first = old?.pages?.[0];
+        if (!old || !first) return old;
+        const later = (current?: string | null) =>
+          !current || new Date(at).getTime() > new Date(current).getTime() ? at : current;
+        return {
+          ...old,
+          pages: [
+            {
+              ...first,
+              members: first.members.map((m) =>
+                String(m.userId) === id ? { ...m, lastReadAt: later(m.lastReadAt) } : m,
+              ),
+              agents: first.agents.map((a) =>
+                String(a.agentId) === id ? { ...a, lastReadAt: later(a.lastReadAt) } : a,
+              ),
+            },
+            ...old.pages.slice(1),
+          ],
+        };
+      },
+    );
+
+  // Everyone but me: the client, the models and the other agents
+  const others = [
+    ...members.map((m) => ({
+      lastReadAt: m.lastReadAt,
+      presence: lookupPresence("user", String(m.userId), { online: m.isOnline, lastSeenAt: m.lastSeenAt }),
+    })),
+    ...agents
+      .filter((a) => String(a.agentId) !== myAgentId)
+      .map((a) => ({
+        lastReadAt: a.lastReadAt,
+        presence: lookupPresence("admin", String(a.agentId), { online: a.isOnline, lastSeenAt: a.lastSeenAt }),
+      })),
+  ];
+  const statusFor = (createdAt: string) => tickStatus(createdAt, others);
+
+  useSocketEvent<{ chatId: string; userId: string; lastReadAt: string }>("chat:read", (event) => {
+    if (!chatId || String(event?.chatId) !== chatId) return;
+    setReadAt(String(event.userId), event.lastReadAt);
+  });
+
   useSocketEvent<{ chatId: string; message: (typeof messages)[number] }>("chat:message", (event) => {
     if (!chatId || String(event?.chatId) !== chatId || !event.message?._id) return;
     const message = event.message;
@@ -98,8 +152,12 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
     const isMine = message.senderType === "agent" && !!myAgentId && senderKey === myAgentId;
     // My own message: the send itself adds it (unless it came from another tab)
     if (isMine && pendingCount > 0) return;
-    prependToChatCache(queryClient, [marketApi, "modelMarketProjectChat", projectId], message);
-    if (senderKey) typingUsers.update(chatId, senderKey, "", false);
+    prependToChatCache(queryClient, chatQueryKey, message);
+    if (senderKey) {
+      typingUsers.update(chatId, senderKey, "", false);
+      // Sending means the sender has read everything before it
+      setReadAt(senderKey, message.createdAt);
+    }
     if (!isMine && kind === "agent" && me?.isMember) markRead();
   });
 
@@ -190,7 +248,7 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
 
       <div
         ref={scrollRef}
-        className={`flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
+        className={`chat-scroll flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
           fill ? "min-h-0 flex-1" : "h-[500px]"
         }`}
         style={{ backgroundImage: "url('/assets/image.png')" }}
@@ -256,11 +314,12 @@ const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill
                           : item.senderType === "agent"
                             ? `${name} (Agent)`
                             : name,
+                        senderKey: String(item.senderId?._id ?? name),
                         message: item.content,
                         imageUrl:
                           item.type === "image" ? toImageUrl(item.mediaUrl) : undefined,
                         time: formatTime(item.createdAt),
-                        status: isMine ? "sent" : "delivered",
+                        status: isMine ? statusFor(item.createdAt) : undefined,
                       }}
                     />
                   )}

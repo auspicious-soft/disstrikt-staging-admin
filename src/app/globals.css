@@ -228,6 +228,27 @@ input[type="date"] {
   scrollbar-width: none;
 }
 
+/* Chat lists and message areas: a thin rounded bar that brightens on hover */
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239, 71, 111, 0.45) transparent;
+  scrollbar-gutter: stable;
+}
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(239, 71, 111, 0.35);
+  border-radius: 9999px;
+}
+.chat-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(239, 71, 111, 0.7);
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;

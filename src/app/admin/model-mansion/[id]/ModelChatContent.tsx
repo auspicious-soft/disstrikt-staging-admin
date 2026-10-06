@@ -22,7 +22,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { prependToChatCache } from "@/lib/chatCache";
 import { usePanel } from "@/app/components/PanelContext";
 import {
+  presenceLabel,
+  tickStatus,
   typingLabel,
+  usePresenceLookup,
   useSocket,
   useSocketEvent,
   useTypingEmitter,
@@ -90,9 +93,6 @@ const ModelChatContent = ({
   });
 
   const latestPage = data?.pages?.[0];
-  const otherLastReadAt = latestPage?.otherLastReadAt
-    ? new Date(latestPage.otherLastReadAt).getTime()
-    : 0;
 
   // The logged-in admin/agent: only their own messages go on the right
   const myId = useMemo(() => String(getSession().admin?._id || ""), []);
@@ -104,6 +104,26 @@ const ModelChatContent = ({
   const chatQueryKey = useMemo(() => [mansionApi, "modelChatMessages", modelId], [mansionApi, modelId]);
   const modelUserId = latestPage?.userId ? String(latestPage.userId) : "";
   const typingUsers = useTypingUsers();
+
+  // Model online / last seen: live from presence events, else from the API
+  const lookupPresence = usePresenceLookup();
+  const modelPresence = lookupPresence("user", modelUserId, {
+    online: latestPage?.otherOnline,
+    lastSeenAt: latestPage?.otherLastSeenAt,
+  });
+  const setOtherLastReadAt = (at: string) =>
+    queryClient.setQueryData<{ pages: ModelChatPageLike[]; pageParams: unknown[] }>(
+      chatQueryKey,
+      (old) =>
+        old?.pages?.length
+          ? { ...old, pages: [{ ...old.pages[0], otherLastReadAt: at }, ...old.pages.slice(1)] }
+          : old,
+    );
+  // One tick: sent. Two grey: the model has been online since. Two blue: read.
+  const statusFor = (createdAt: string) =>
+    tickStatus(createdAt, [
+      { lastReadAt: latestPage?.otherLastReadAt, presence: modelPresence },
+    ]);
   const pendingCount = pending.length;
 
   useSocketEvent<{ userId: string; message: ModelChatMessage }>("admin-chat:message", (event) => {
@@ -114,22 +134,17 @@ const ModelChatContent = ({
     if (senderAdminId && senderAdminId === myId && pendingCount > 0) return;
     prependToChatCache(queryClient, chatQueryKey, message);
     typingUsers.update(modelUserId, message.senderType === "user" ? "user" : senderAdminId, "", false);
-    if (message.senderType === "user") markRead();
+    if (message.senderType === "user") {
+      // Replying means the model has read everything before it
+      setOtherLastReadAt(message.createdAt);
+      markRead();
+    }
   });
 
   // The model read the chat: update the read ticks
   useSocketEvent<{ userId: string; readBy: string; lastReadAt: string }>("admin-chat:read", (event) => {
     if (String(event?.userId) !== modelUserId || event.readBy !== "user") return;
-    queryClient.setQueryData<{ pages: ModelChatPageLike[]; pageParams: unknown[] }>(
-      chatQueryKey,
-      (old) =>
-        old?.pages?.length
-          ? {
-              ...old,
-              pages: [{ ...old.pages[0], otherLastReadAt: event.lastReadAt }, ...old.pages.slice(1)],
-            }
-          : old,
-    );
+    setOtherLastReadAt(event.lastReadAt);
   });
 
   useSocketEvent<{ userId: string; isTyping: boolean; senderType: string; adminId?: string; name?: string }>(
@@ -210,11 +225,17 @@ const ModelChatContent = ({
       className={`overflow-hidden bg-[#201C1D] ${fill ? "flex h-full flex-col" : "rounded-lg"}`}
     >
       {/* The Messages page shows its own header */}
-      {!fill && <ChatHeader name={modelName} />}
+      {!fill && (
+        <ChatHeader
+          name={modelName}
+          subtitle={modelUserId ? presenceLabel(modelPresence) : undefined}
+          online={modelPresence.online}
+        />
+      )}
 
       <div
         ref={scrollRef}
-        className={`flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
+        className={`chat-scroll flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
           fill ? "min-h-0 flex-1" : "h-[500px]"
         }`}
         style={{ backgroundImage: "url('/assets/image.png')" }}
@@ -274,12 +295,13 @@ const ModelChatContent = ({
                         : item.senderType === "admin"
                           ? formatName(item.senderAdminId?.fullName) || "Disstrikt"
                           : modelName,
+                      senderKey:
+                        item.senderType === "admin"
+                          ? String(item.senderAdminId?._id ?? "team")
+                          : modelUserId || modelName,
                       imageUrl:
                         item.type === "image" ? toImageUrl(item.mediaUrl) : undefined,
-                      status:
-                        isMine && new Date(item.createdAt).getTime() <= otherLastReadAt
-                          ? "read"
-                          : "sent",
+                      status: isMine ? statusFor(item.createdAt) : undefined,
                     }}
                   />
                 </Fragment>

@@ -22,6 +22,9 @@ export type AgentChat = {
   } | null;
   lastMessageAt: string | null;
   unreadCount: number;
+  // model only
+  isOnline?: boolean;
+  lastSeenAt?: string | null;
 };
 
 // Agent's Messages inbox (GET /agent/chats), polled for new messages

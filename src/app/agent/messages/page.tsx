@@ -9,7 +9,14 @@ import ProjectGroupChat from "@/app/admin/model-market/[id]/ProjectGroupChat";
 import { AGENT_CHATS_KEY, useAgentChats, type AgentChat } from "@/hooks/useAgentChats";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSession } from "@/lib/auth";
-import { typingLabel, useSocketEvent, useTypingUsers } from "@/app/components/SocketContext";
+import {
+  presenceLabel,
+  typingLabel,
+  usePresenceLookup,
+  useSocketEvent,
+  useTypingUsers,
+  type Presence,
+} from "@/app/components/SocketContext";
 import { formatName } from "@/lib/media";
 
 const chatKey = (chat: AgentChat) => `${chat.type}:${chat.id}`;
@@ -48,7 +55,29 @@ const previewOf = (chat: AgentChat) => {
     : body;
 };
 
-function ChatAvatar({ chat, size = "h-11 w-11" }: { chat: AgentChat; size?: string }) {
+function ChatAvatar({
+  chat,
+  size = "h-11 w-11",
+  online = false,
+}: {
+  chat: AgentChat;
+  size?: string;
+  online?: boolean;
+}) {
+  return (
+    <span className="relative shrink-0">
+      <AvatarImage chat={chat} size={size} />
+      {online && (
+        <span
+          aria-label="Online"
+          className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#2d2729] bg-green-400"
+        />
+      )}
+    </span>
+  );
+}
+
+function AvatarImage({ chat, size }: { chat: AgentChat; size: string }) {
   const fallback = (
     <div
       className={`${size} grid shrink-0 place-items-center rounded-full text-sm font-semibold text-white ${
@@ -118,6 +147,13 @@ export default function MessagesPage() {
       );
     },
   );
+  // Model online / last seen (one-to-one chats only)
+  const lookupPresence = usePresenceLookup();
+  const presenceOf = (chat: AgentChat): Presence | null =>
+    chat.type === "model"
+      ? lookupPresence("user", chat.id, { online: chat.isOnline, lastSeenAt: chat.lastSeenAt })
+      : null;
+
   const typingFor = (chat: AgentChat) => {
     const names = typingUsers.namesFor(chatKey(chat));
     if (!names.length) return "";
@@ -135,6 +171,7 @@ export default function MessagesPage() {
   }, [chats, selectedKey]);
 
   const selectedChat = chats.find((chat) => chatKey(chat) === selectedKey) ?? null;
+  const selectedPresence = selectedChat ? presenceOf(selectedChat) : null;
 
   const filteredChats = chats.filter((chat) => {
     const query = searchQuery.trim().toLowerCase();
@@ -165,7 +202,7 @@ export default function MessagesPage() {
             </label>
           </div>
 
-          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+          <div className="chat-scroll min-h-0 flex-1 overflow-y-auto">
             {filteredChats.map((chat) => {
               const isActive = selectedChat ? chatKey(chat) === chatKey(selectedChat) : false;
               const typing = typingFor(chat);
@@ -179,7 +216,7 @@ export default function MessagesPage() {
                     isActive ? "bg-rose-500 text-white" : "text-stone-200 hover:bg-stone-800/70"
                   }`}
                 >
-                  <ChatAvatar chat={chat} />
+                  <ChatAvatar chat={chat} online={Boolean(presenceOf(chat)?.online)} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-3">
                       <span className="truncate text-sm font-semibold">
@@ -258,18 +295,34 @@ export default function MessagesPage() {
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
-                <ChatAvatar chat={selectedChat} size="h-10 w-10" />
+                <ChatAvatar
+                  chat={selectedChat}
+                  size="h-10 w-10"
+                  online={Boolean(selectedPresence?.online)}
+                />
                 <div className="min-w-0">
                   <h2 className="truncate text-sm font-semibold text-white">
                     {selectedChat.type === "group"
                       ? selectedChat.name
                       : formatName(selectedChat.name)}
                   </h2>
-                  <p className="truncate text-xs text-stone-300">
-                    {selectedChat.type === "group"
-                      ? selectedChat.participants.join(", ") || "Project group chat"
-                      : "Your model · Disstrikt team chat"}
-                  </p>
+                  {typingFor(selectedChat) ? (
+                    <p className="truncate text-xs italic text-green-400">
+                      {typingFor(selectedChat)}
+                    </p>
+                  ) : selectedPresence ? (
+                    <p
+                      className={`truncate text-xs ${
+                        selectedPresence.online ? "text-green-400" : "text-stone-300"
+                      }`}
+                    >
+                      {presenceLabel(selectedPresence)}
+                    </p>
+                  ) : (
+                    <p className="truncate text-xs text-stone-300">
+                      {selectedChat.participants.join(", ") || "Project group chat"}
+                    </p>
+                  )}
                 </div>
               </div>
 

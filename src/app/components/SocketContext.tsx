@@ -21,6 +21,12 @@ type SocketState = { socket: Socket | null; connected: boolean };
 
 const SocketContext = createContext<SocketState>({ socket: null, connected: false });
 
+// Online / last seen of app users ("user") and staff ("admin"), from
+// presence:update events. Keyed "user:<id>" / "admin:<id>".
+export type Presence = { online: boolean; lastSeenAt: string | null };
+type PresenceMap = Record<string, Presence>;
+const PresenceContext = createContext<PresenceMap>({});
+
 // NEXT_PUBLIC_BACKEND_URL ends in /api; the socket server is at the origin
 const socketUrl = () => {
   const base = process.env.NEXT_PUBLIC_BACKEND_URL || "";
@@ -37,6 +43,7 @@ const CHAT_QUERY_PARTS = ["modelChatMessages", "modelMarketProjectChat", "agentC
 export function SocketProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [state, setState] = useState<SocketState>({ socket: null, connected: false });
+  const [presence, setPresence] = useState<PresenceMap>({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -56,7 +63,19 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       }
       wasConnected = true;
     });
-    socket.on("disconnect", () => setState({ socket, connected: false }));
+    socket.on("disconnect", () => {
+      setState({ socket, connected: false });
+      // Stale while offline; the API's values are used until events resume
+      setPresence({});
+    });
+    socket.on(
+      "presence:update",
+      (event: { kind: string; id: string; online: boolean; lastSeenAt: string | null }) =>
+        setPresence((current) => ({
+          ...current,
+          [`${event.kind}:${event.id}`]: { online: event.online, lastSeenAt: event.lastSeenAt },
+        })),
+    );
     setState({ socket, connected: false });
 
     return () => {
@@ -65,8 +84,65 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, [queryClient]);
 
-  return <SocketContext.Provider value={state}>{children}</SocketContext.Provider>;
+  return (
+    <SocketContext.Provider value={state}>
+      <PresenceContext.Provider value={presence}>{children}</PresenceContext.Provider>
+    </SocketContext.Provider>
+  );
 }
+
+/**
+ * Presence lookup: the latest socket event wins, otherwise the value the API
+ * returned with the chat (`initial`).
+ */
+export const usePresenceLookup = () => {
+  const presence = useContext(PresenceContext);
+  return useCallback(
+    (kind: "user" | "admin", id: string, initial?: Partial<Presence> | null): Presence =>
+      presence[`${kind}:${id}`] ?? {
+        online: Boolean(initial?.online),
+        lastSeenAt: initial?.lastSeenAt ?? null,
+      },
+    [presence],
+  );
+};
+
+/** "Online", "Last seen today at 14:05", "Last seen 3 Oct at 14:05" or "Offline". */
+export const presenceLabel = (presence: Presence) => {
+  if (presence.online) return "Online";
+  if (!presence.lastSeenAt) return "Offline";
+  const date = new Date(presence.lastSeenAt);
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return `Last seen today at ${time}`;
+  if (date.toDateString() === yesterday.toDateString()) return `Last seen yesterday at ${time}`;
+  return `Last seen ${date.toLocaleDateString([], { day: "numeric", month: "short" })} at ${time}`;
+};
+
+const toTime = (value?: string | null) => (value ? new Date(value).getTime() : 0);
+
+/**
+ * Tick for one of my messages: "read" (blue) once every other participant has
+ * read it, "delivered" (double grey) once every one of them has been online
+ * since it was sent, otherwise "sent" (single).
+ */
+export const tickStatus = (
+  createdAt: string,
+  others: { lastReadAt?: string | null; presence: Presence }[],
+): "sent" | "delivered" | "read" => {
+  if (!others.length) return "sent";
+  const sentAt = toTime(createdAt);
+  if (others.every((o) => toTime(o.lastReadAt) >= sentAt)) return "read";
+  const delivered = others.every(
+    (o) =>
+      o.presence.online ||
+      toTime(o.presence.lastSeenAt) >= sentAt ||
+      toTime(o.lastReadAt) >= sentAt,
+  );
+  return delivered ? "delivered" : "sent";
+};
 
 export const useSocket = () => useContext(SocketContext);
 

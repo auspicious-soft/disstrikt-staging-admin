@@ -174,6 +174,9 @@ type ModelChatPage = {
   otherLastReadAt: string | null;
   // The model's user id (socket events carry it)
   userId?: string;
+  // Panel only: the model's presence
+  otherOnline?: boolean;
+  otherLastSeenAt?: string | null;
 };
 
 // Newest-first pages; polled so replies from the model show up without a refresh

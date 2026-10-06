@@ -118,12 +118,14 @@ export function AppHeader() {
     pathSegments.length > 2
   ) {
     pageName = "Progress Overview";
+  } else if (pathname.startsWith("/admin/disstriktonites/manage-roles")) {
+    pageName = "ADD NEW ROLE";
   } else if (
     pathname.startsWith("/admin/disstriktonites") &&
     pathSegments.length > 2 &&
     pathSegments[2] !== "add"
   ) {
-    pageName = "ADD NEW ROLE";
+    pageName = "Edit Disstriktonites";
   } else if (
     pathname.startsWith("/admin/studio-management") &&
     pathSegments.length > 2 &&

@@ -29,6 +29,9 @@ import SettingsModal from "./SettingModal";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "../../../assets/images/Logo.png";
+import { useMyPermissions } from "@/hooks/usePermissions";
+import { canAccessPath } from "@/lib/permissions";
+import { agentHome } from "./ModuleGuard";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -37,6 +40,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [loading, setLoading] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
   const userRole = "ADMIN";
+  const { data: myAccess } = useMyPermissions();
+  const permissions = myAccess?.permissions;
   // Use useMemo to recalculate dataa whenever userRole changes
   const dataa = React.useMemo(() => {
     return {
@@ -76,7 +81,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/agent/calls",
           icon: () => <Phone />,
         },
-      ],
+        // Hide sections whose module is switched off for the role (Manage Roles)
+      ].filter((item) => canAccessPath(item.url, permissions)),
       projects: [
         {
           title: "Settings",
@@ -85,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
       ],
     };
-  }, [userRole]);
+  }, [userRole, permissions]);
 
   // 🔹 Prevent scrolling when modal is open
   React.useEffect(() => {
@@ -129,7 +135,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 {state === "expanded" && (
                   <div className="inline-block group-data-[collapsible=icon]:opacity-0">
-                    <Link href="/agent/dashboard" className="w-max block">
+                    <Link href={agentHome(permissions)} className="w-max block">
                       <Image
                         src={Logo}
                         alt="Logo"

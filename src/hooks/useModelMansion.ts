@@ -8,6 +8,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { usePanel } from "@/app/components/PanelContext";
+import { useSocket } from "@/app/components/SocketContext";
+import { AGENT_CHATS_KEY } from "@/hooks/useAgentChats";
 
 
 // Best URL for a stored media value (key, full URL or { url, thumbnail }).
@@ -170,11 +172,15 @@ type ModelChatPage = {
   nextBefore: string | null;
   unreadCount: number;
   otherLastReadAt: string | null;
+  // The model's user id (socket events carry it)
+  userId?: string;
 };
 
 // Newest-first pages; polled so replies from the model show up without a refresh
 export const useGetModelChatMessages = (id: string) => {
   const { mansionApi: BASE } = usePanel();
+  // Live updates come over the socket; polling is the fallback
+  const { connected } = useSocket();
   return useInfiniteQuery({
     queryKey: [BASE, "modelChatMessages", id],
     queryFn: async ({ pageParam }) => {
@@ -187,7 +193,7 @@ export const useGetModelChatMessages = (id: string) => {
     getNextPageParam: (lastPage) =>
       lastPage?.hasMore && lastPage.nextBefore ? lastPage.nextBefore : undefined,
     enabled: !!id,
-    refetchInterval: CHAT_POLL_MS,
+    refetchInterval: connected ? 30000 : CHAT_POLL_MS,
   });
 };
 
@@ -209,16 +215,21 @@ export const useSendModelChatMessage = (id: string) => {
       if (message?._id) {
         prependToChatCache(queryClient, [BASE, "modelChatMessages", id], message);
       }
+      // The agent's Messages inbox shows the new last message
+      queryClient.invalidateQueries({ queryKey: AGENT_CHATS_KEY });
     },
   });
 };
 
 export const useMarkModelChatRead = (id: string) => {
   const { mansionApi: BASE } = usePanel();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { data } = await axiosInstance.post(`${BASE}/${id}/chat/read`);
       return data?.data;
     },
+    // Clears the unread badge in the agent's Messages inbox
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENT_CHATS_KEY }),
   });
 };

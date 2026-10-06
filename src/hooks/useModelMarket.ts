@@ -1,6 +1,8 @@
 import { axiosInstance } from "@/lib/axios";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePanel } from "@/app/components/PanelContext";
+import { useSocket } from "@/app/components/SocketContext";
+import { AGENT_CHATS_KEY } from "@/hooks/useAgentChats";
 import { prependToChatCache } from "@/lib/chatCache";
 
 
@@ -97,6 +99,8 @@ type ProjectChatPage = {
 // agents of the accepted models also post in it.
 export const useGetModelMarketProjectChat = (id: string) => {
   const { marketApi: BASE, kind } = usePanel();
+  // Live updates come over the socket; polling is the fallback
+  const { connected } = useSocket();
   return useInfiniteQuery({
     queryKey: [BASE, "modelMarketProjectChat", id],
     queryFn: async ({ pageParam }) => {
@@ -109,7 +113,7 @@ export const useGetModelMarketProjectChat = (id: string) => {
     getNextPageParam: (lastPage) =>
       lastPage?.hasMore && lastPage.nextBefore ? lastPage.nextBefore : undefined,
     enabled: !!id,
-    refetchInterval: kind === "agent" ? 5000 : 10000,
+    refetchInterval: connected ? 30000 : kind === "agent" ? 5000 : 10000,
   });
 };
 
@@ -129,16 +133,21 @@ export const useSendModelMarketChatMessage = (id: string) => {
       if (message?._id) {
         prependToChatCache(queryClient, [BASE, "modelMarketProjectChat", id], message);
       }
+      // The agent's Messages inbox shows the new last message
+      queryClient.invalidateQueries({ queryKey: AGENT_CHATS_KEY });
     },
   });
 };
 
 export const useMarkModelMarketChatRead = (id: string) => {
   const { marketApi: BASE } = usePanel();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { data } = await axiosInstance.post(`${BASE}/${id}/chat/read`);
       return data?.data;
     },
+    // Clears the unread badge in the agent's Messages inbox
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENT_CHATS_KEY }),
   });
 };

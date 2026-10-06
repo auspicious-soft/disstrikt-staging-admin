@@ -1,361 +1,302 @@
 "use client";
 
-import {
-  Check,
-  Paperclip,
-  Search,
-  SendIcon,
-  Smile,
-} from "lucide-react";
 import React from "react";
+import { ArrowLeft, Camera, Search, Users } from "lucide-react";
+import SafeImage from "@/app/components/SafeImage";
+import { AGENT_PANEL, PanelProvider } from "@/app/components/PanelContext";
+import ModelChatContent from "@/app/admin/model-mansion/[id]/ModelChatContent";
+import ProjectGroupChat from "@/app/admin/model-market/[id]/ProjectGroupChat";
+import { AGENT_CHATS_KEY, useAgentChats, type AgentChat } from "@/hooks/useAgentChats";
+import { useQueryClient } from "@tanstack/react-query";
+import { getSession } from "@/lib/auth";
+import { typingLabel, useSocketEvent, useTypingUsers } from "@/app/components/SocketContext";
+import { formatName } from "@/lib/media";
 
-const chats = [
-  {
-    id: "chatgram",
-    name: "Chatgram",
-    avatar: "",
-    initials: "",
-    preview: "Chatgram Web was updated.",
-    time: "19:48",
-    unread: 1,
-    tone: "bg-blue-300",
-  },
-  {
-    id: "jessica-drew",
-    name: "Jessica Drew",
-    avatar: "https://i.pravatar.cc/96?img=47",
-    preview: "Ok, see you later",
-    time: "18:30",
-    unread: 2,
-  },
-  {
-    id: "david-moore",
-    name: "David Moore",
-    avatar: "https://i.pravatar.cc/96?img=12",
-    preview: "You: I don't remember anything",
-    time: "18:16",
-  },
-  {
-    id: "greg-james",
-    name: "Greg James",
-    avatar: "https://i.pravatar.cc/96?img=33",
-    preview: "I got a job at SpaceX",
-    time: "18:02",
-  },
-  {
-    id: "emily-dorson",
-    name: "Emily Dorson",
-    avatar: "https://i.pravatar.cc/96?img=5",
-    preview: "Table for four, 5PM. Be there.",
-    time: "17:42",
-  },
-  {
-    id: "office-chat-early",
-    name: "Office Chat",
-    avatar: "",
-    initials: "",
-    preview: "Lewis: All done mate",
-    time: "17:06",
-    tone: "bg-gradient-to-br from-slate-500 to-orange-300",
-  },
-  {
-    id: "announcements",
-    name: "Announcements",
-    avatar: "",
-    initials: "A",
-    preview: "Channel created",
-    time: "16:15",
-    tone: "bg-green-400",
-  },
-  {
-    id: "little-sister",
-    name: "Little Sister",
-    avatar: "https://i.pravatar.cc/96?img=44",
-    preview: "Tell mom i will be home for tea",
-    time: "Wed",
-  },
-  {
-    id: "art-class",
-    name: "Art Class",
-    avatar: "https://i.pravatar.cc/96?img=60",
-    preview: "Emily: Editorial",
-    time: "Tue",
-  },
-  {
-    id: "office-chat-late",
-    name: "Office Chat",
-    avatar: "",
-    initials: "",
-    preview: "Lewis: All done mate",
-    time: "17:08",
-    tone: "bg-gradient-to-br from-slate-500 to-orange-300",
-  },
-];
+const chatKey = (chat: AgentChat) => `${chat.type}:${chat.id}`;
 
-const threads: Record<
-  string,
-  {
-    from: "them" | "me";
-    text: string;
-    time: string;
-  }[]
-> = {
-  chatgram: [
-    { from: "them", text: "Chatgram Web was updated.", time: "19:48" },
-    { from: "me", text: "Thanks, I will check it now.", time: "19:49" },
-  ],
-  "jessica-drew": [
-    { from: "them", text: "Ok, see you later.", time: "18:30" },
-    {
-      from: "me",
-      text: "Perfect, I will send the notes before then.",
-      time: "18:31",
-    },
-  ],
-  "david-moore": [
-    {
-      from: "them",
-      text: "Hi, I got a message about auditions.",
-      time: "18:12",
-    },
-    { from: "me", text: "Hi! Thanks for replying.", time: "18:16" },
-    {
-      from: "me",
-      text: "Are you available for a short Zoom audition this week?",
-      time: "18:16",
-    },
-  ],
-  "greg-james": [
-    { from: "them", text: "I got a job at SpaceX.", time: "18:02" },
-    { from: "me", text: "That is huge. Congratulations!", time: "18:04" },
-  ],
-  "emily-dorson": [
-    { from: "them", text: "Table for four, 5PM. Be there.", time: "17:42" },
-    { from: "me", text: "Got it. I will be there on time.", time: "17:45" },
-  ],
-  "office-chat-early": [
-    { from: "them", text: "Lewis: All done mate.", time: "17:06" },
-    { from: "me", text: "Great, thanks for moving fast.", time: "17:07" },
-  ],
-  announcements: [
-    { from: "them", text: "Channel created.", time: "16:15" },
-    { from: "me", text: "Noted.", time: "16:16" },
-  ],
-  "little-sister": [
-    { from: "them", text: "Tell mom i will be home for tea.", time: "Wed" },
-    { from: "me", text: "I will let her know.", time: "Wed" },
-  ],
-  "art-class": [
-    { from: "them", text: "Emily: Editorial", time: "Tue" },
-    { from: "me", text: "Looks good. Send the final board.", time: "Tue" },
-  ],
-  "office-chat-late": [
-    { from: "them", text: "Lewis: All done mate.", time: "17:08" },
-    { from: "me", text: "Nice. Please share the final file.", time: "17:09" },
-  ],
-};
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 
-const doodleBackground = {
-  backgroundColor: "#181817",
-  backgroundImage:
-    "radial-gradient(circle at 20% 18%, rgba(255,255,255,0.035) 0 1px, transparent 1px), radial-gradient(circle at 75% 35%, rgba(255,255,255,0.03) 0 1px, transparent 1px), linear-gradient(135deg, rgba(255,255,255,0.025) 25%, transparent 25%), linear-gradient(45deg, rgba(255,255,255,0.018) 25%, transparent 25%)",
-  backgroundPosition: "0 0, 12px 18px, 0 0, 22px 22px",
-  backgroundSize: "54px 54px, 72px 72px, 44px 44px, 44px 44px",
-};
-
-function Avatar({
-  avatar,
-  initials,
-  tone = "bg-stone-600",
-  size = "h-11 w-11",
-}: {
-  avatar?: string;
-  initials?: string;
-  tone?: string;
-  size?: string;
-}) {
-  if (avatar) {
-    return (
-      <img
-        src={avatar}
-        alt=""
-        className={`${size} shrink-0 rounded-full object-cover`}
-      />
-    );
+// 14:05 today, a weekday this week, otherwise the date
+const listTime = (value?: string | null) => {
+  if (!value) return "";
+  const date = new Date(value);
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
+  const days = (now.getTime() - date.getTime()) / 86400000;
+  if (days < 7) return date.toLocaleDateString([], { weekday: "short" });
+  return date.toLocaleDateString([], { day: "2-digit", month: "short" });
+};
 
-  return (
+const previewOf = (chat: AgentChat) => {
+  const last = chat.lastMessage;
+  if (!last) return chat.type === "model" ? "No messages yet" : "";
+  const body =
+    last.type === "image" ? last.content || "Photo" : last.content || "";
+  if (last.type === "system" || !last.senderName) return body;
+  if (last.isMine) return `You: ${body}`;
+  // Group chats and team replies name the sender; the model's own messages don't
+  return chat.type === "group" || last.senderName !== chat.name
+    ? `${formatName(last.senderName)}: ${body}`
+    : body;
+};
+
+function ChatAvatar({ chat, size = "h-11 w-11" }: { chat: AgentChat; size?: string }) {
+  const fallback = (
     <div
-      className={`${size} ${tone} grid shrink-0 place-items-center rounded-full text-sm font-semibold text-white`}
+      className={`${size} grid shrink-0 place-items-center rounded-full text-sm font-semibold text-white ${
+        chat.type === "group" ? "bg-gradient-to-br from-slate-500 to-rose-400" : "bg-stone-600"
+      }`}
     >
-      {initials}
+      {chat.type === "group" ? <Users className="h-5 w-5" /> : initialsOf(formatName(chat.name))}
     </div>
+  );
+  if (chat.type === "group" || !chat.image) return fallback;
+  return (
+    <SafeImage
+      src={chat.image}
+      alt=""
+      className={`${size} shrink-0 rounded-full object-cover`}
+      placeholder={fallback}
+    />
   );
 }
 
 export default function MessagesPage() {
-  const [selectedChatId, setSelectedChatId] = React.useState("david-moore");
+  const { data, isPending, isError } = useAgentChats();
+  const chats = React.useMemo(() => data?.data ?? [], [data]);
+
+  const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const selectedChat =
-    chats.find((chat) => chat.id === selectedChatId) ?? chats[0];
+  // Live: new messages and reads refresh the list; typing shows in the preview.
+  // Model threads are keyed by the model's user id, groups by chat id.
+  const queryClient = useQueryClient();
+  const myId = React.useMemo(() => String(getSession().admin?._id || ""), []);
+  const typingUsers = useTypingUsers();
+  const refreshList = () => queryClient.invalidateQueries({ queryKey: AGENT_CHATS_KEY });
+
+  useSocketEvent<{ userId: string; message: any }>("admin-chat:message", (event) => {
+    typingUsers.update(`model:${event?.userId}`, event?.message?.senderType === "user" ? "user" : String(event?.message?.senderAdminId?._id), "", false);
+    refreshList();
+  });
+  useSocketEvent("admin-chat:read", refreshList);
+  useSocketEvent<{ chatId: string; message: any }>("chat:message", (event) => {
+    typingUsers.update(`group:${event?.chatId}`, String(event?.message?.senderId?._id), "", false);
+    refreshList();
+  });
+  useSocketEvent<{ userId: string; isTyping: boolean; senderType: string; adminId?: string; name?: string }>(
+    "admin-chat:typing",
+    (event) => {
+      if (event?.senderType === "admin" && String(event.adminId) === myId) return;
+      const isModel = event?.senderType === "user";
+      typingUsers.update(
+        `model:${event?.userId}`,
+        isModel ? "user" : String(event?.adminId),
+        formatName(event?.name) || (isModel ? "Model" : "Team member"),
+        Boolean(event?.isTyping),
+      );
+    },
+  );
+  useSocketEvent<{ chatId: string; userId: string; isTyping: boolean; senderType?: string; name?: string }>(
+    "chat:typing",
+    (event) => {
+      if (event?.senderType === "agent" && String(event.userId) === myId) return;
+      typingUsers.update(
+        `group:${event?.chatId}`,
+        String(event?.userId),
+        // Users' typing events carry no name; the list just says "typing..."
+        formatName(event?.name) || "Someone",
+        Boolean(event?.isTyping),
+      );
+    },
+  );
+  const typingFor = (chat: AgentChat) => {
+    const names = typingUsers.namesFor(chatKey(chat));
+    if (!names.length) return "";
+    return chat.type === "model" && names.length === 1 && names[0] !== "Team member"
+      ? "typing..."
+      : typingLabel(names);
+  };
+
+  // Open the most recent conversation on desktop; phones start on the list
+  React.useEffect(() => {
+    if (selectedKey || !chats.length) return;
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setSelectedKey(chatKey(chats[0]));
+    }
+  }, [chats, selectedKey]);
+
+  const selectedChat = chats.find((chat) => chatKey(chat) === selectedKey) ?? null;
 
   const filteredChats = chats.filter((chat) => {
     const query = searchQuery.trim().toLowerCase();
-
-    if (!query) {
-      return true;
-    }
-
-    return `${chat.name} ${chat.preview}`.toLowerCase().includes(query);
+    if (!query) return true;
+    return `${chat.name} ${chat.participants.join(" ")} ${previewOf(chat)}`
+      .toLowerCase()
+      .includes(query);
   });
 
-  const selectedThread = threads[selectedChat.id] ?? [];
-
   return (
-    <main className="mx-auto flex h-[calc(100vh-150px)] min-h-[620px] w-full overflow-hidden rounded-lg border border-stone-800 bg-[#211c1e] shadow-2xl shadow-black/30">
-      <aside className="flex w-full min-w-0 flex-col border-r border-[#404040] bg-[#2d2729] md:max-w-[360px] lg:max-w-[430px]">
-        <div className="px-4 py-3">
-          <label className="flex h-9 items-center gap-2 rounded-md border border-stone-700/70 bg-[#252123] px-3 text-stone-500">
-            <span className="sr-only">Search</span>
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm text-stone-200 outline-none placeholder:text-stone-500"
-              placeholder="Search"
-            />
-            <Search className="h-4 w-4" />
-          </label>
-        </div>
-
-        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
-          {filteredChats.map((chat) => {
-            const isActive = chat.id === selectedChat.id;
-
-            return (
-              <button
-                key={chat.id}
-                type="button"
-                onClick={() => setSelectedChatId(chat.id)}
-                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
-                  isActive
-                    ? "bg-rose-500 text-white"
-                    : "text-stone-200 hover:bg-stone-800/70"
-                }`}
-              >
-                <Avatar
-                  avatar={chat.avatar}
-                  initials={chat.initials}
-                  tone={chat.tone}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="truncate text-sm font-semibold">
-                      {chat.name}
-                    </span>
-                    <span
-                      className={`text-[10px] ${
-                        isActive ? "text-rose-100" : "text-stone-400"
-                      }`}
-                    >
-                      {chat.time}
-                    </span>
-                  </span>
-                  <span
-                    className={`mt-1 flex items-center justify-between gap-2 text-xs ${
-                      isActive ? "text-white" : "text-stone-400"
-                    }`}
-                  >
-                    <span className="truncate">{chat.preview}</span>
-                    {chat.unread ? (
-                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-green-400 text-[11px] font-bold text-white">
-                        {chat.unread}
-                      </span>
-                    ) : null}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-
-          {filteredChats.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-stone-500">
-              No conversations found.
-            </div>
-          ) : null}
-        </div>
-      </aside>
-
-      <section className="hidden min-w-0 flex-1 flex-col md:flex">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-black/20 bg-[#30292c] px-5">
-          <Avatar
-            avatar={selectedChat.avatar}
-            initials={selectedChat.initials}
-            tone={selectedChat.tone}
-            size="h-10 w-10"
-          />
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-white">
-              {selectedChat.name}
-            </h2>
-            <p className="text-xs text-stone-300">Active</p>
-          </div>
-        </header>
-
-        <div
-          className="relative flex min-h-0 flex-1 flex-col justify-end overflow-hidden px-6 py-5"
-          style={doodleBackground}
+    <PanelProvider value={AGENT_PANEL}>
+      <main className="mx-auto flex h-[calc(100vh-150px)] min-h-[620px] w-full overflow-hidden rounded-lg border border-stone-800 bg-[#211c1e] shadow-2xl shadow-black/30">
+        <aside
+          className={`min-w-0 flex-col border-r border-[#404040] bg-[#2d2729] md:flex md:max-w-[360px] lg:max-w-[430px] ${
+            selectedChat ? "hidden w-full" : "flex w-full"
+          }`}
         >
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="relative mx-auto flex w-full flex-col gap-3">
-            <div className="self-center rounded-full bg-sky-900/80 px-3 py-1 text-xs font-semibold text-sky-100">
-              Today
-            </div>
+          <div className="px-4 py-3">
+            <label className="flex h-9 items-center gap-2 rounded-md border border-stone-700/70 bg-[#252123] px-3 text-stone-500">
+              <span className="sr-only">Search</span>
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="min-w-0 flex-1 bg-transparent text-sm text-stone-200 outline-none placeholder:text-stone-500"
+                placeholder="Search"
+              />
+              <Search className="h-4 w-4" />
+            </label>
+          </div>
 
-            {selectedThread.map((message) => {
-              const isMine = message.from === "me";
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+            {filteredChats.map((chat) => {
+              const isActive = selectedChat ? chatKey(chat) === chatKey(selectedChat) : false;
+              const typing = typingFor(chat);
 
               return (
-                <div
-                  key={`${message.time}-${message.text}`}
-                  className={`max-w-[72%] rounded-lg px-3 py-2 text-sm shadow-lg shadow-black/20 ${
-                    isMine
-                      ? "self-end bg-[#6be66e] text-black"
-                      : "self-start bg-[#30292c] text-white"
+                <button
+                  key={chatKey(chat)}
+                  type="button"
+                  onClick={() => setSelectedKey(chatKey(chat))}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
+                    isActive ? "bg-rose-500 text-white" : "text-stone-200 hover:bg-stone-800/70"
                   }`}
                 >
-                  <p>{message.text}</p>
-                  <span
-                    className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${
-                      isMine ? "text-emerald-950/70" : "text-stone-300"
-                    }`}
-                  >
-                    {message.time} <Check className="h-3 w-3" />
+                  <ChatAvatar chat={chat} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="truncate text-sm font-semibold">
+                        {chat.type === "group" ? chat.name : formatName(chat.name)}
+                      </span>
+                      <span
+                        className={`shrink-0 text-[10px] ${
+                          isActive ? "text-rose-100" : "text-stone-400"
+                        }`}
+                      >
+                        {listTime(chat.lastMessage?.createdAt ?? chat.lastMessageAt)}
+                      </span>
+                    </span>
+                    <span
+                      className={`mt-1 flex items-center justify-between gap-2 text-xs ${
+                        isActive ? "text-white" : "text-stone-400"
+                      }`}
+                    >
+                      {typing ? (
+                        <span
+                          className={`truncate italic ${isActive ? "text-white" : "text-green-400"}`}
+                        >
+                          {typing}
+                        </span>
+                      ) : (
+                        <span className="flex min-w-0 items-center gap-1">
+                          {chat.lastMessage?.type === "image" && (
+                            <Camera className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span className="truncate">
+                            {chat.type === "group" ? "Group · " : ""}
+                            {previewOf(chat)}
+                          </span>
+                        </span>
+                      )}
+                      {chat.unreadCount > 0 ? (
+                        <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-green-400 px-1 text-[11px] font-bold text-white">
+                          {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+                        </span>
+                      ) : null}
+                    </span>
                   </span>
-                </div>
+                </button>
               );
             })}
-          </div>
-        </div>
 
-        <footer className="flex shrink-0 items-center gap-3 bg-[#181817] px-6 py-4">
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg bg-[#30292c] px-4 py-3 text-stone-400">
-            <button type="button" aria-label="Add emoji" className="text-stone-300">
-              <Smile className="h-5 w-5" />
-            </button>
-            <button type="button" aria-label="Attach file" className="text-stone-300">
-              <Paperclip className="h-5 w-5" />
-            </button>
-            <input
-              className="min-w-0 flex-1 bg-transparent text-sm text-stone-100 outline-none placeholder:text-stone-400"
-              placeholder="Message"
-            />
-            <button type="button" aria-label="Send message" className="text-rose-500 rotate-45">
-              <SendIcon className="h-6 w-6 fill-current" />
-            </button>
+            {isPending ? (
+              <div className="px-4 py-10 text-center text-sm text-stone-500">
+                Loading conversations...
+              </div>
+            ) : isError ? (
+              <div className="px-4 py-10 text-center text-sm text-stone-500">
+                Couldn&apos;t load your conversations.
+              </div>
+            ) : filteredChats.length === 0 ? (
+              <div className="px-4 py-10 text-center text-sm text-stone-500">
+                {chats.length
+                  ? "No conversations found."
+                  : "No conversations yet. Chats with your assigned models and their project groups appear here."}
+              </div>
+            ) : null}
           </div>
-        </footer>
-      </section>
-    </main>
+        </aside>
+
+        <section
+          className={`min-w-0 flex-1 flex-col ${selectedChat ? "flex" : "hidden md:flex"}`}
+        >
+          {selectedChat ? (
+            <>
+              <div className="flex shrink-0 items-center gap-3 border-b border-black/20 bg-[#30292c] px-4 py-3 md:px-5">
+                <button
+                  type="button"
+                  aria-label="Back to conversations"
+                  onClick={() => setSelectedKey(null)}
+                  className="text-stone-300 hover:text-white md:hidden"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                <ChatAvatar chat={selectedChat} size="h-10 w-10" />
+                <div className="min-w-0">
+                  <h2 className="truncate text-sm font-semibold text-white">
+                    {selectedChat.type === "group"
+                      ? selectedChat.name
+                      : formatName(selectedChat.name)}
+                  </h2>
+                  <p className="truncate text-xs text-stone-300">
+                    {selectedChat.type === "group"
+                      ? selectedChat.participants.join(", ") || "Project group chat"
+                      : "Your model · Disstrikt team chat"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1">
+                {selectedChat.type === "model" ? (
+                  <ModelChatContent
+                    key={chatKey(selectedChat)}
+                    modelId={selectedChat.id}
+                    modelName={formatName(selectedChat.name)}
+                    fill
+                  />
+                ) : (
+                  <ProjectGroupChat
+                    key={chatKey(selectedChat)}
+                    projectId={selectedChat.projectId as string}
+                    fill
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="m-auto px-6 text-center text-sm text-stone-500">
+              Select a conversation to start chatting.
+            </div>
+          )}
+        </section>
+      </main>
+    </PanelProvider>
   );
 }

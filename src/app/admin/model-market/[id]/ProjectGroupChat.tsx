@@ -17,6 +17,15 @@ import { formatName } from "@/lib/media";
 import { usePanel } from "@/app/components/PanelContext";
 import { useOptimisticChat } from "@/hooks/useOptimisticChat";
 import { uploadChatImage } from "@/lib/chatUpload";
+import { useQueryClient } from "@tanstack/react-query";
+import { prependToChatCache } from "@/lib/chatCache";
+import {
+  typingLabel,
+  useSocket,
+  useSocketEvent,
+  useTypingEmitter,
+  useTypingUsers,
+} from "@/app/components/SocketContext";
 
 const MAX_IMAGE_MB = 10;
 
@@ -38,8 +47,9 @@ const errorMessage = (error: unknown, fallback: string) =>
  * models' agents. Admins can read it. An agent whose model accepted can post;
  * users see the message in the app with the agent's name.
  */
-const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
-  const { kind } = usePanel();
+// `fill`: take the parent's height (agent Messages page) instead of 500px
+const ProjectGroupChat = ({ projectId, fill = false }: { projectId: string; fill?: boolean }) => {
+  const { kind, marketApi } = usePanel();
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageId = useRef<string | null>(null);
@@ -74,6 +84,46 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
     [data],
   );
 
+  // ---- Live updates over the socket (see backend src/config/socket.ts) ----
+  const queryClient = useQueryClient();
+  const { socket } = useSocket();
+  const chatId = latest?.chatId ? String(latest.chatId) : "";
+  const typingUsers = useTypingUsers();
+  const pendingCount = pending.length;
+
+  useSocketEvent<{ chatId: string; message: (typeof messages)[number] }>("chat:message", (event) => {
+    if (!chatId || String(event?.chatId) !== chatId || !event.message?._id) return;
+    const message = event.message;
+    const senderKey = String(message.senderId?._id ?? "");
+    const isMine = message.senderType === "agent" && !!myAgentId && senderKey === myAgentId;
+    // My own message: the send itself adds it (unless it came from another tab)
+    if (isMine && pendingCount > 0) return;
+    prependToChatCache(queryClient, [marketApi, "modelMarketProjectChat", projectId], message);
+    if (senderKey) typingUsers.update(chatId, senderKey, "", false);
+    if (!isMine && kind === "agent" && me?.isMember) markRead();
+  });
+
+  useSocketEvent<{ chatId: string; userId: string; isTyping: boolean; senderType?: string; name?: string }>(
+    "chat:typing",
+    (event) => {
+      if (!chatId || String(event?.chatId) !== chatId) return;
+      const who = String(event.userId);
+      if (event.senderType === "agent" && who === myAgentId) return;
+      const name =
+        event.senderType === "agent"
+          ? `${formatName(event.name || agents.find((a) => String(a.agentId) === who)?.fullName) || "Agent"} (Agent)`
+          : formatName(members.find((m) => String(m.userId) === who)?.fullName) || "Someone";
+      typingUsers.update(chatId, who, name, Boolean(event.isTyping));
+    },
+  );
+
+  const { onType, stop: stopTyping } = useTypingEmitter(
+    socket && chatId && canSend
+      ? (isTyping) => socket.emit("chat:typing", { chatId, isTyping })
+      : null,
+  );
+  const typingText = typingLabel(typingUsers.namesFor(chatId));
+
   // An agent reading the chat has read what's new
   const unreadCount = me?.unreadCount ?? 0;
   useEffect(() => {
@@ -100,7 +150,13 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
     const content = text.trim();
     if (!content) return;
     setText("");
+    stopTyping();
     sendText(content);
+  };
+
+  const handleTextChange = (value: string) => {
+    setText(value);
+    onType(value);
   };
 
   const handleAttach = (file: File) => {
@@ -114,6 +170,7 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
     }
     const caption = text.trim();
     setText("");
+    stopTyping();
     sendImage(file, caption);
   };
 
@@ -125,12 +182,17 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
       : "Read-only: admins can view this group chat but not post in it.";
 
   return (
-    <div className="overflow-hidden rounded-lg bg-[#201C1D]">
-      <ChatHeader name={title} />
+    <div
+      className={`overflow-hidden bg-[#201C1D] ${fill ? "flex h-full flex-col" : "rounded-lg"}`}
+    >
+      {/* The Messages page shows its own header */}
+      {!fill && <ChatHeader name={title} />}
 
       <div
         ref={scrollRef}
-        className="flex h-[500px] flex-col overflow-y-auto bg-cover bg-center p-5"
+        className={`flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
+          fill ? "min-h-0 flex-1" : "h-[500px]"
+        }`}
         style={{ backgroundImage: "url('/assets/image.png')" }}
       >
         {isPending ? (
@@ -224,11 +286,17 @@ const ProjectGroupChat = ({ projectId }: { projectId: string }) => {
         )}
       </div>
 
+      {typingText && (
+        <p className="px-5 pt-2 text-xs italic text-stone-400" aria-live="polite">
+          {typingText}
+        </p>
+      )}
+
       {canSend ? (
         <div className="p-4">
           <ChatInput
             value={text}
-            onChange={setText}
+            onChange={handleTextChange}
             onSend={handleSend}
             onAttach={handleAttach}
             disabled={isPending || isError}

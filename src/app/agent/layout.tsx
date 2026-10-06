@@ -6,6 +6,8 @@ import { SidebarInset, SidebarProvider } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { AppHeader } from "./components/ui/header";
 import AuthGuard from "./components/AuthGuard";
+import { SocketProvider } from "@/app/components/SocketContext";
+import ModuleGuard from "./components/ModuleGuard";
 
 const mulish = Mulish({
   variable: "--font-mulish",
@@ -24,6 +26,7 @@ export default async function RootLayout({
 }>) {
   return (
     <AuthGuard>
+      <SocketProvider>
       <div
         className={`${mulish.variable} dark min-h-screen overflow-auto overflow-custom bg-neutral-900 antialiased`}
       >
@@ -49,13 +52,14 @@ export default async function RootLayout({
                 />
 
                 <div className="relative z-10 min-w-0 max-w-full">
-                  {children}
+                  <ModuleGuard>{children}</ModuleGuard>
                 </div>
               </div>
             </div>
           </SidebarInset>
         </SidebarProvider>
       </div>
+      </SocketProvider>
     </AuthGuard>
   );
 }

@@ -18,8 +18,20 @@ import { formatName } from "@/lib/media";
 import { getSession } from "@/lib/auth";
 import { useOptimisticChat } from "@/hooks/useOptimisticChat";
 import { uploadChatImage } from "@/lib/chatUpload";
+import { useQueryClient } from "@tanstack/react-query";
+import { prependToChatCache } from "@/lib/chatCache";
+import { usePanel } from "@/app/components/PanelContext";
+import {
+  typingLabel,
+  useSocket,
+  useSocketEvent,
+  useTypingEmitter,
+  useTypingUsers,
+} from "@/app/components/SocketContext";
 
 const MAX_IMAGE_MB = 10;
+
+type ModelChatPageLike = { otherLastReadAt?: string | null };
 
 const dayLabel = (value: string) => {
   const date = new Date(value);
@@ -38,7 +50,16 @@ const errorMessage = (error: unknown, fallback: string) =>
  * Chat tab: the Disstrikt team's one-to-one thread with this model. The model
  * sees the same thread in the app (/api/user/admin-chat).
  */
-const ModelChatContent = ({ modelId, modelName }: { modelId: string; modelName: string }) => {
+// `fill`: take the parent's height (agent Messages page) instead of 500px
+const ModelChatContent = ({
+  modelId,
+  modelName,
+  fill = false,
+}: {
+  modelId: string;
+  modelName: string;
+  fill?: boolean;
+}) => {
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageId = useRef<string | null>(null);
@@ -76,6 +97,64 @@ const ModelChatContent = ({ modelId, modelName }: { modelId: string; modelName: 
   // The logged-in admin/agent: only their own messages go on the right
   const myId = useMemo(() => String(getSession().admin?._id || ""), []);
 
+  // ---- Live updates over the socket (see backend src/config/socket.ts) ----
+  const queryClient = useQueryClient();
+  const { mansionApi } = usePanel();
+  const { socket } = useSocket();
+  const chatQueryKey = useMemo(() => [mansionApi, "modelChatMessages", modelId], [mansionApi, modelId]);
+  const modelUserId = latestPage?.userId ? String(latestPage.userId) : "";
+  const typingUsers = useTypingUsers();
+  const pendingCount = pending.length;
+
+  useSocketEvent<{ userId: string; message: ModelChatMessage }>("admin-chat:message", (event) => {
+    if (!modelUserId || String(event?.userId) !== modelUserId || !event.message?._id) return;
+    const message = event.message;
+    const senderAdminId = String(message.senderAdminId?._id ?? "");
+    // My own message: the send itself adds it (unless it came from another tab)
+    if (senderAdminId && senderAdminId === myId && pendingCount > 0) return;
+    prependToChatCache(queryClient, chatQueryKey, message);
+    typingUsers.update(modelUserId, message.senderType === "user" ? "user" : senderAdminId, "", false);
+    if (message.senderType === "user") markRead();
+  });
+
+  // The model read the chat: update the read ticks
+  useSocketEvent<{ userId: string; readBy: string; lastReadAt: string }>("admin-chat:read", (event) => {
+    if (String(event?.userId) !== modelUserId || event.readBy !== "user") return;
+    queryClient.setQueryData<{ pages: ModelChatPageLike[]; pageParams: unknown[] }>(
+      chatQueryKey,
+      (old) =>
+        old?.pages?.length
+          ? {
+              ...old,
+              pages: [{ ...old.pages[0], otherLastReadAt: event.lastReadAt }, ...old.pages.slice(1)],
+            }
+          : old,
+    );
+  });
+
+  useSocketEvent<{ userId: string; isTyping: boolean; senderType: string; adminId?: string; name?: string }>(
+    "admin-chat:typing",
+    (event) => {
+      if (!modelUserId || String(event?.userId) !== modelUserId) return;
+      if (event.senderType === "admin" && String(event.adminId) === myId) return;
+      const isModel = event.senderType === "user";
+      typingUsers.update(
+        modelUserId,
+        isModel ? "user" : String(event.adminId),
+        isModel ? modelName : formatName(event.name) || "Team member",
+        Boolean(event.isTyping),
+      );
+    },
+  );
+
+  // Tell the model (and the rest of the team) while this user types
+  const { onType, stop: stopTyping } = useTypingEmitter(
+    socket && modelUserId
+      ? (isTyping) => socket.emit("admin-chat:typing", { userId: modelUserId, isTyping })
+      : null,
+  );
+  const typingText = typingLabel(typingUsers.namesFor(modelUserId));
+
   // Pages and messages come newest first; show oldest at the top
   const messages: ModelChatMessage[] = useMemo(
     () => (data?.pages ?? []).flatMap((page) => page?.data ?? []).reverse(),
@@ -102,7 +181,13 @@ const ModelChatContent = ({ modelId, modelName }: { modelId: string; modelName: 
     const content = text.trim();
     if (!content) return;
     setText("");
+    stopTyping();
     sendText(content);
+  };
+
+  const handleTextChange = (value: string) => {
+    setText(value);
+    onType(value);
   };
 
   const handleAttach = (file: File) => {
@@ -116,16 +201,22 @@ const ModelChatContent = ({ modelId, modelName }: { modelId: string; modelName: 
     }
     const caption = text.trim();
     setText("");
+    stopTyping();
     sendImage(file, caption);
   };
 
   return (
-    <div className="overflow-hidden rounded-lg bg-[#201C1D]">
-      <ChatHeader name={modelName} />
+    <div
+      className={`overflow-hidden bg-[#201C1D] ${fill ? "flex h-full flex-col" : "rounded-lg"}`}
+    >
+      {/* The Messages page shows its own header */}
+      {!fill && <ChatHeader name={modelName} />}
 
       <div
         ref={scrollRef}
-        className="flex h-[500px] flex-col overflow-y-auto bg-cover bg-center p-5"
+        className={`flex flex-col overflow-y-auto bg-cover bg-center p-5 ${
+          fill ? "min-h-0 flex-1" : "h-[500px]"
+        }`}
         style={{ backgroundImage: "url('/assets/image.png')" }}
       >
         {isPending ? (
@@ -213,10 +304,16 @@ const ModelChatContent = ({ modelId, modelName }: { modelId: string; modelName: 
         )}
       </div>
 
+      {typingText && (
+        <p className="px-5 pt-2 text-xs italic text-stone-400" aria-live="polite">
+          {typingText}
+        </p>
+      )}
+
       <div className="p-4">
         <ChatInput
           value={text}
-          onChange={setText}
+          onChange={handleTextChange}
           onSend={handleSend}
           onAttach={handleAttach}
           disabled={isPending || isError}

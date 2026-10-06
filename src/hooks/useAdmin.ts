@@ -72,6 +72,30 @@ export const useGetEmployeesRoles = () => {
   });
 };
 
+// Save a role's module access (Manage Roles)
+export const useUpdateEmployeeRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      roleId,
+      permissions,
+    }: {
+      roleId: string;
+      permissions: Record<string, boolean>;
+    }) => {
+      const { data } = await axiosInstance.put(
+        `/admin/employee/roles/${roleId}`,
+        permissions,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employeesRoles"] });
+      queryClient.invalidateQueries({ queryKey: ["myPermissions"] });
+    },
+  });
+};
+
 export const useCreateEmployee = () => {
   return useMutation({
     mutationFn: async (paylaod: any) => {

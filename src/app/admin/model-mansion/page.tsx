@@ -122,8 +122,8 @@ const ModelMansion: React.FC = () => {
                 job={{
                   _id: model._id,
                   name: formatName(model.fullName),
-                  // Headshot first, then the profile photo
-                  image: [model.headshot, model.image].filter(Boolean),
+                  // The user's profile photo, not the portfolio headshot
+                  image: model.image,
                   likes: model.likedCount,
                   saves: model.savedCount,
                   booking: model.bookingCount,

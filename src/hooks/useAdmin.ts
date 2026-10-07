@@ -127,11 +127,12 @@ export const useGetEmployees = ({
 };
 export const useGetEmployeesById = (id: any) => {
   return useQuery({
-    queryKey: ["employeById"],
+    queryKey: ["employeById", id],
     queryFn: async () => {
       const { data } = await axiosInstance.get(`/admin/employee/${id}`);
       return data?.data ?? data;
     },
+    enabled: Boolean(id),
   });
 };
 

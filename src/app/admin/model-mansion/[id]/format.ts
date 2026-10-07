@@ -62,16 +62,37 @@ export const timeAgo = (value?: string | Date | null) => {
   return "Now";
 };
 
-// Billing period length, e.g. "1 Month", "6 Months", "3 Days"
-export const planDuration = (start?: string | null, end?: string | null) => {
+const plural = (count: number, unit: string) =>
+  `${count} ${unit}${count === 1 ? "" : "s"}`;
+
+// Billing period, e.g. "1 Month (7 Sep 2026 - 7 Oct 2026)" or "7 Days Trial (...)".
+// Apple/Google sandbox periods are minutes long (1 month = 5 minutes), so
+// periods under a day show in minutes/hours with times instead of "-".
+export const planDuration = (
+  start?: string | null,
+  end?: string | null,
+  isTrial = false,
+  isSandbox = false,
+) => {
   if (!start || !end) return "-";
-  const days = Math.round(
-    (new Date(end).getTime() - new Date(start).getTime()) / (24 * 3600 * 1000),
-  );
-  if (days <= 0) return "-";
-  if (days < 28) return `${days} Day${days > 1 ? "s" : ""}`;
-  const months = Math.round(days / 30.44);
-  if (months < 12) return `${months} Month${months > 1 ? "s" : ""}`;
-  const years = Math.round(months / 12);
-  return `${years} Year${years > 1 ? "s" : ""}`;
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return "-";
+
+  const minutes = Math.round(ms / 60000);
+  const days = Math.round(ms / (24 * 3600 * 1000));
+  let length: string;
+  if (minutes < 60) length = plural(Math.max(minutes, 1), "Minute");
+  else if (minutes < 24 * 60) length = plural(Math.round(minutes / 60), "Hour");
+  else if (days < 28) length = plural(days, "Day");
+  else {
+    const months = Math.round(days / 30.44);
+    length = months < 12 ? plural(months, "Month") : plural(Math.round(months / 12), "Year");
+  }
+
+  const range =
+    minutes < 24 * 60
+      ? `${formatDate(start)} ${formatTime(start)} - ${formatTime(end)}`
+      : `${formatDate(start)} - ${formatDate(end)}`;
+  const tags = [isTrial && "Trial", isSandbox && "Sandbox"].filter(Boolean).join(", ");
+  return `${length}${tags ? ` ${tags}` : ""} (${range})`;
 };

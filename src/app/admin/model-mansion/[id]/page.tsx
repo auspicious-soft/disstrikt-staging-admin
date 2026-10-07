@@ -69,8 +69,10 @@ const ModelMansionDetailsPage = () => {
     {
       label: "Plan Duration",
       value: planDuration(
-        model.subscription?.currentPeriodStart,
-        model.subscription?.currentPeriodEnd,
+        model.subscription?.planPeriod?.start ?? model.subscription?.currentPeriodStart,
+        model.subscription?.planPeriod?.end ?? model.subscription?.currentPeriodEnd,
+        model.subscription?.planPeriod?.isTrial,
+        // model.subscription?.environment === "Sandbox",
       ),
     },
     {
@@ -87,7 +89,7 @@ const ModelMansionDetailsPage = () => {
       <section className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 lg:gap-8 items-start">
         <div className="relative w-full max-w-[420px] mx-auto xl:mx-0 aspect-[1.16/1] rounded-2xl overflow-hidden bg-neutral-800">
           <SafeImage
-            src={[portfolio?.headshot, model.image].filter(Boolean)}
+            src={model.image}
             alt={formatName(model.fullName)}
             className="h-full w-full object-cover"
           />

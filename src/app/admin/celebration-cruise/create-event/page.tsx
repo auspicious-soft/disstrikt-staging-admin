@@ -546,6 +546,9 @@ const CreateCelebrationCruiseEvent = () => {
                       <option value="gbp" className="bg-stone-700">
                         GBP
                       </option>
+                      <option value="usd" className="bg-stone-700">
+                        USD
+                      </option>
                     </select>
                     <NavArrowDownSolid className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
                   </div>

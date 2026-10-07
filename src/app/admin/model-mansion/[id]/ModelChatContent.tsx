@@ -99,7 +99,9 @@ const ModelChatContent = ({
 
   // ---- Live updates over the socket (see backend src/config/socket.ts) ----
   const queryClient = useQueryClient();
-  const { mansionApi } = usePanel();
+  const { mansionApi, kind } = usePanel();
+  // Admins only watch this thread; the model's agent replies
+  const readOnly = kind === "admin";
   const { socket } = useSocket();
   const chatQueryKey = useMemo(() => [mansionApi, "modelChatMessages", modelId], [mansionApi, modelId]);
   const modelUserId = latestPage?.userId ? String(latestPage.userId) : "";
@@ -137,7 +139,7 @@ const ModelChatContent = ({
     if (message.senderType === "user") {
       // Replying means the model has read everything before it
       setOtherLastReadAt(message.createdAt);
-      markRead();
+      if (!readOnly) markRead();
     }
   });
 
@@ -164,7 +166,7 @@ const ModelChatContent = ({
 
   // Tell the model (and the rest of the team) while this user types
   const { onType, stop: stopTyping } = useTypingEmitter(
-    socket && modelUserId
+    socket && modelUserId && !readOnly
       ? (isTyping) => socket.emit("admin-chat:typing", { userId: modelUserId, isTyping })
       : null,
   );
@@ -176,11 +178,12 @@ const ModelChatContent = ({
     [data],
   );
 
-  // Mark as read whenever the model has sent something unread
+  // Mark as read whenever the model has sent something unread (not for
+  // admins: viewing shouldn't clear the agent's unread or turn ticks blue)
   const unreadCount = latestPage?.unreadCount ?? 0;
   useEffect(() => {
-    if (unreadCount > 0) markRead();
-  }, [unreadCount, markRead]);
+    if (!readOnly && unreadCount > 0) markRead();
+  }, [readOnly, unreadCount, markRead]);
 
   // Stick to the bottom when a new message arrives (not when loading older ones)
   const newestId =
@@ -246,8 +249,9 @@ const ModelChatContent = ({
           <p className="m-auto text-xs text-stone-400">Couldn&apos;t load the chat.</p>
         ) : !messages.length && !pending.length ? (
           <p className="m-auto text-center text-xs text-stone-400">
-            No messages yet. Say hello to {modelName}. They&apos;ll get a push
-            notification and can reply from the app.
+            {readOnly
+              ? `No messages yet between ${modelName} and their agent.`
+              : `No messages yet. Say hello to ${modelName}. They'll get a push notification and can reply from the app.`}
           </p>
         ) : (
           <div className="mt-auto pb-1">
@@ -339,15 +343,21 @@ const ModelChatContent = ({
         </p>
       )}
 
-      <div className="p-4">
-        <ChatInput
-          value={text}
-          onChange={handleTextChange}
-          onSend={handleSend}
-          onAttach={handleAttach}
-          disabled={isPending || isError}
-        />
-      </div>
+      {readOnly ? (
+        <p className="border-t border-stone-700 bg-[#2B2426] px-4 py-3 text-center text-xs text-stone-400">
+          Read-only: admins can view this chat but not post in it.
+        </p>
+      ) : (
+        <div className="p-4">
+          <ChatInput
+            value={text}
+            onChange={handleTextChange}
+            onSend={handleSend}
+            onAttach={handleAttach}
+            disabled={isPending || isError}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -45,7 +45,7 @@ export default async function RootLayout({
               <Suspense fallback={null}>
                 <AppHeader />
               </Suspense>
-              <div className="relative min-w-0 flex-1 flex flex-col gap-4 py-6 px-4 md:py-8 md:px-7 md:gap-7">
+              <div className="relative min-w-0 flex-1 flex flex-col gap-4 py-6 pt-4 px-4 md:py-8 md:pt-2 md:px-7 md:gap-7">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0"

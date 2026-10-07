@@ -49,6 +49,7 @@ const ModelMansionTabContent = ({ activeTab, model }: TabContentProps) => {
           profileImage={model?.portfolio?.headshot || model?.image || undefined}
           portfolio={model?.portfolio}
           gender={model?.gender}
+          country={model?.country}
         />
       )}
     </div>

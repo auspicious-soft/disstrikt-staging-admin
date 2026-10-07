@@ -13,6 +13,12 @@ import femaleBackImg from "../../assets/images/Component 2.svg";
 import { User } from "iconoir-react";
 import SafeImage from "./SafeImage";
 import { resolveMediaUrl } from "@/lib/media";
+import {
+  heightFromCm,
+  measurementFromCm,
+  measurementUnits,
+  shoeSizeFromUK,
+} from "@/lib/measurements";
 
 // Default gender used until this is wired up dynamically
 const DEFAULT_GENDER: "male" | "female" = "male";
@@ -113,6 +119,8 @@ type ModelProfileSliderProps = {
   // null means the model hasn't created a portfolio yet.
   portfolio?: any;
   gender?: string | null;
+  // Model's country: measurements are shown in its units, like the app
+  country?: string | null;
 };
 
 // Portfolio field for each label shown in the slider
@@ -160,18 +168,35 @@ const DETAILED_KEYS: Record<string, string> = {
   "Dress Size": "dressSize",
   "Hat Size": "hatSize",
 };
-const CM_FIELDS = new Set(["height", "bust", "waist", "hips"]);
+// Stored as text and shown as is; every other measurement is stored in cm
+const TEXT_FIELDS = new Set(["hairColor", "eyeColor", "dressSize"]);
 
-const displayValue = (value: any, unit = "") =>
-  value === null || value === undefined || value === ""
-    ? "-"
-    : `${value}${unit && typeof value === "number" ? ` ${unit}` : ""}`;
+const displayValue = (value: any) =>
+  value === null || value === undefined || value === "" ? "-" : String(value);
 
 export default function ModelProfileSlider({
   profileImage,
   portfolio,
   gender,
+  country,
 }: ModelProfileSliderProps) {
+  // Same conversions as the app: cm → country units, UK shoe size → country size
+  const formatField = (key: string, value: any) => {
+    if (TEXT_FIELDS.has(key)) return displayValue(value);
+    if (key === "height") return heightFromCm(country, value) ?? "-";
+    if (key === "shoeSize") return shoeSizeFromUK(country, value, gender) ?? "-";
+    return measurementFromCm(country, value) ?? "-";
+  };
+
+  // Label with the unit the value is shown in, e.g. "Bust (cm)" / "Bust (in)"
+  const units = measurementUnits(country);
+  const fieldLabel = (label: string, key: string) => {
+    if (!key || TEXT_FIELDS.has(key)) return label;
+    if (key === "height") return `${label} (${units.height})`;
+    if (key === "shoeSize") return `${label} (${units.shoe})`;
+    return `${label} (${units.length})`;
+  };
+
   const [index, setIndex] = useState(0);
   const total = sections.length;
   const section = sections[index];
@@ -194,13 +219,24 @@ export default function ModelProfileSlider({
     );
   }
 
-  const headshotValue = (label: string, fallback: string) =>
-    hasData
-      ? displayValue(
-          portfolio?.[HEADSHOT_KEYS[label]],
-          CM_FIELDS.has(HEADSHOT_KEYS[label]) ? "cm" : "",
-        )
-      : fallback;
+  const filled = (value: any) =>
+    value !== null && value !== undefined && value !== "";
+
+  // The app saves height / bust / waist / hips and shoe size both at the top
+  // level and in the detailed sections, so either copy can fill the other
+  const SHARED_FRONT = new Set(["height", "bust", "waist", "hips"]);
+  const sharedValue = (key: string) => {
+    if (SHARED_FRONT.has(key)) return portfolio?.detailedMeasurementsFront?.[key];
+    if (key === "shoeSize") return portfolio?.detailedMeasurementsBack?.shoeSize;
+    return undefined;
+  };
+
+  const headshotValue = (label: string, fallback: string) => {
+    if (!hasData) return fallback;
+    const key = HEADSHOT_KEYS[label];
+    const value = filled(portfolio?.[key]) ? portfolio[key] : sharedValue(key);
+    return formatField(key, value);
+  };
 
   const detailedValue = (field: string, type: string) => {
     const key = DETAILED_KEYS[field];
@@ -208,7 +244,12 @@ export default function ModelProfileSlider({
       type === "detailed-front"
         ? portfolio?.detailedMeasurementsFront
         : portfolio?.detailedMeasurementsBack;
-    return displayValue(source?.[key], "cm");
+    const value = filled(source?.[key])
+      ? source[key]
+      : SHARED_FRONT.has(key) || key === "shoeSize"
+        ? portfolio?.[key]
+        : undefined;
+    return formatField(key, value);
   };
 
   // Each card shows the uploaded photos of its two labels (first that loads)
@@ -305,7 +346,7 @@ export default function ModelProfileSlider({
                     }
                   >
                     <p className="mb-1 text-xs leading-none text-neutral-400">
-                      {item.label}
+                      {hasData ? fieldLabel(item.label, HEADSHOT_KEYS[item.label]) : item.label}
                     </p>
                     <div className="flex h-12 items-center rounded-sm border border-[#242424] bg-black px-3">
                       <input
@@ -407,12 +448,12 @@ export default function ModelProfileSlider({
                 {section.fields.map((field) => (
                   <div key={field} className="min-w-0">
                     <p className="mb-1 text-xs leading-none text-neutral-400">
-                      {field}
+                      {fieldLabel(field, DETAILED_KEYS[field])}
                     </p>
                     <div className="flex h-12 items-center rounded-sm border border-[#242424] bg-black px-3">
                       <input
                         type="text"
-                        placeholder="cm"
+                        placeholder={units.length}
                         value={hasData ? detailedValue(field, section.type) : undefined}
                         readOnly={hasData}
                         className="h-full w-full bg-transparent text-sm font-normal leading-tight text-neutral-400 outline-none placeholder:text-neutral-500"

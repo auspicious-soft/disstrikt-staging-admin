@@ -7,6 +7,12 @@ import type { ReactNode } from "react";
 import { Calendar } from "iconoir-react";
 import SafeImage from "@/app/components/SafeImage";
 import { formatName } from "@/lib/media";
+import {
+  heightFromCm,
+  measurementFromCm,
+  measurementUnits,
+  shoeSizeFromUK,
+} from "@/lib/measurements";
 import { usePanel } from "@/app/components/PanelContext";
 import { getSession } from "@/lib/auth";
 import {
@@ -31,6 +37,7 @@ type ProjectModel = {
   image: string | null;
   headshot: string | null;
   country: string | null;
+  gender: string | null;
   agent: { _id: string; fullName: string } | null;
   height: number | null;
   bust: number | null;
@@ -54,7 +61,15 @@ const modelBadge = (model: ProjectModel) => {
   return { label: "Awaiting Answer", className: "bg-[#E09F1F]" };
 };
 
-const cm = (value: number | null) => (value ? Math.round(value) : "-");
+// Stored as UK; shown in the model's country system like the app. Without a
+// MALE / FEMALE gender it can't be converted, so the stored UK size is shown.
+const shoeSize = (model: ProjectModel) => {
+  if (!model.shoeSize) return null;
+  const converted = shoeSizeFromUK(model.country, model.shoeSize, model.gender);
+  return converted
+    ? `${measurementUnits(model.country).shoe} ${converted}`
+    : `UK ${model.shoeSize}`;
+};
 
 const ModelCard = ({ model, currency }: { model: ProjectModel; currency: string | null }) => {
   const badge = modelBadge(model);
@@ -91,11 +106,13 @@ const ModelCard = ({ model, currency }: { model: ProjectModel; currency: string 
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-light text-stone-400">
-          <span>{model.height ? `${cm(model.height)} cm` : "-"}</span>
+          <span>{heightFromCm(model.country, model.height) ?? "-"}</span>
           <span>
-            {cm(model.bust)} / {cm(model.waist)} / {cm(model.hips)}
+            {[model.bust, model.waist, model.hips]
+              .map((value) => measurementFromCm(model.country, value) ?? "-")
+              .join(" / ")}
           </span>
-          <span>{model.shoeSize ? `Shoe ${model.shoeSize}` : ""}</span>
+          <span>{shoeSize(model) ? `Shoe ${shoeSize(model)}` : ""}</span>
         </div>
 
         <div className="mt-2 flex items-center justify-between gap-2">

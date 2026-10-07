@@ -73,10 +73,10 @@ export default function SettingsModal({ isOpen, onClose }) {
 
           {/* Settings Modal */}
           <div
-            className={`bottom-42 fixed left-3 w-72 z-50 transition-all duration-300 ease-in-out ${
-              isOpen
-                ? "opacity-100 translate-y-[calc(100%+0.5rem)]"
-                : "opacity-0 translate-y-[calc(100%+2rem)]"
+            // Anchored to the viewport bottom so it always sits just above the
+            // sidebar's Settings footer (~49px tall), whatever the screen height.
+            className={`fixed bottom-14 left-2 w-72 z-50 transition-all duration-300 ease-in-out ${
+              isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
             <div

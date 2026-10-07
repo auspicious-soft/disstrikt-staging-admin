@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import { Plus } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
@@ -182,7 +183,8 @@ const ReviewActivityPage = () => {
     router.push("/admin/training-theater");
   };
 
-  if (isPending || isSaving) return <Loader />;
+  // Saving shows on the Save button, not as a page loader
+  if (isPending) return <Loader />;
 
   return (
     <div className="w-full space-y-5 text-stone-100">
@@ -365,8 +367,9 @@ const ReviewActivityPage = () => {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600"
+            className="inline-flex items-center justify-center gap-2 h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-70"
           >
+            {isSaving && <ButtonSpinner />}
             {isSaving ? "Saving..." : "Save"}
           </button>
         )}

@@ -3,7 +3,7 @@ import * as React from "react";
 import { File, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BellNotification, Notes } from "iconoir-react";
-import Loader from "@/app/admin/components/ui/Loader";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const modalRef = React.useRef(null);
@@ -53,7 +53,6 @@ export default function SettingsModal({ isOpen, onClose }) {
       onClose();
     } catch (error) {
       console.error("Logout failed", error);
-    } finally {
       setLoading(false);
     }
   };
@@ -65,9 +64,6 @@ export default function SettingsModal({ isOpen, onClose }) {
 
   return (
     <>
-      {loading ? (
-        <Loader />
-      ) : (
         <>
           <div
             className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ease-in-out ${
@@ -148,9 +144,11 @@ export default function SettingsModal({ isOpen, onClose }) {
                         Cancel
                       </button>
                       <button
-                        className="flex-1 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 flex-1 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
                         onClick={handleLogout}
+                        disabled={loading}
                       >
+                        {loading && <ButtonSpinner className="h-3.5 w-3.5" />}
                         Confirm
                       </button>
                     </div>
@@ -160,7 +158,6 @@ export default function SettingsModal({ isOpen, onClose }) {
             </>
           )}
         </>
-      )}
     </>
   );
 }

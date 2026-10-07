@@ -8,6 +8,7 @@ import {
   useSaveTermsAndCondition,
 } from "@/hooks/useAdmin";
 import { toast } from "sonner";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 interface PlatformInfo {
   privacyPolicy: {
@@ -397,6 +398,7 @@ const PrivacyPolicyPage: React.FC = () => {
             }`}
             onClick={isSavingPrivacy ? undefined : handleSavePrivacyPolicy}
           >
+            {isSavingPrivacy && <ButtonSpinner className="text-white" />}
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
               {isSavingPrivacy ? "Saving..." : "Save Privacy Policy"}
             </div>
@@ -411,6 +413,7 @@ const PrivacyPolicyPage: React.FC = () => {
             }`}
             onClick={isSavingTerms ? undefined : handleSaveTerms}
           >
+            {isSavingTerms && <ButtonSpinner className="text-white" />}
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
               {isSavingTerms ? "Saving..." : "Save Terms & Conditions"}
             </div>
@@ -425,6 +428,7 @@ const PrivacyPolicyPage: React.FC = () => {
             }`}
             onClick={isSavingSupport ? undefined : handleSaveSupport}
           >
+            {isSavingSupport && <ButtonSpinner className="text-white" />}
             <div className="justify-start text-white text-sm font-medium font-['Raleway']">
               {isSavingSupport ? "Saving..." : "Save Contact/Support"}
             </div>

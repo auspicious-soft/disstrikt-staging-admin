@@ -22,6 +22,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
 import { CITY_MAP } from "@/config/city";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 type FieldProps = {
   label: string;
@@ -1510,8 +1511,9 @@ const PostJobPage = () => {
               <button
                 type="submit"
                 disabled={isBusy}
-                className="h-11 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:opacity-60"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
+                {isBusy && <ButtonSpinner />}
                 {isUploading
                   ? "Uploading..."
                   : isCreating || isUpdating

@@ -8,7 +8,6 @@ import React, { useEffect, useState } from "react";
 import InputField from "./components/InputField";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Loader from "./admin/components/ui/Loader";
 import { Email, Lock } from "@/lib/icons";
 import { Eye } from "iconoir-react";
 import { useLogin } from "@/hooks/useLogin";
@@ -62,9 +61,6 @@ export default function LoginPage() {
 
   return (
     <>
-      {loading ? (
-        <Loader />
-      ) : (
         <>
           <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
             <div className="absolute inset-0">
@@ -163,7 +159,7 @@ export default function LoginPage() {
                     <ArrowButton
                       type="submit"
                       text={loading ? "Logging in..." : "Login"}
-                      disabled={loading}
+                      loading={loading}
                     />
 
                     <div className="flex justify-center mt-4 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap ">
@@ -181,7 +177,6 @@ export default function LoginPage() {
             </div>
           </div>
         </>
-      )}
     </>
   );
 }

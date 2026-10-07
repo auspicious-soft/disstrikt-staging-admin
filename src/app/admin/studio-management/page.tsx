@@ -239,10 +239,6 @@ const CelebrationCruise: React.FC = () => {
 
   return (
     <>
-    {isFetching && !isLoading || deleteLoading ?
-    <Loader/>
-    :
-    <>
       <div className="w-full inline-flex flex-col justify-center items-start gap-10">
         <div className="self-stretch flex flex-col justify-start items-end gap-4">
 
@@ -292,6 +288,10 @@ const CelebrationCruise: React.FC = () => {
             </div>
           </div>
           <div className="w-full rounded-[10px]">
+            {/* Loader only in the table while studios load (search, paging) */}
+            {isLoading || isFetching ? (
+              <Loader />
+            ) : (
             <div className="w-full rounded-md outline outline-offset-[-1px] outline-stone-700">
 
               <DynamicTable
@@ -304,6 +304,7 @@ const CelebrationCruise: React.FC = () => {
               />
 
             </div>
+            )}
           </div>
           
           {totalPages > 1 && (
@@ -383,8 +384,6 @@ const CelebrationCruise: React.FC = () => {
           </div>
         </div>
       )}
-      </>
-    }
     </>
   );
 };

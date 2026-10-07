@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -115,8 +116,9 @@ const NotificationsContent = ({
           <button
             type="submit"
             disabled={!canSend}
-            className="h-10 rounded-md bg-rose-500 px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 h-10 rounded-md bg-rose-500 px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {isPending && <ButtonSpinner />}
             {isPending ? "Sending..." : "Send Notification"}
           </button>
         </div>

@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 export const ConfirmModal = ({
   open,
@@ -50,7 +51,7 @@ export const ConfirmModal = ({
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex items-center gap-1 rounded-lg border border-[#212121] px-3 py-2 text-xs font-medium text-white hover:text-stone-300"
+            className="flex items-center gap-1 rounded-lg border border-[#212121] px-3 py-2 text-xs font-medium text-white hover:text-stone-300 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -63,6 +64,7 @@ export const ConfirmModal = ({
                 : "bg-[#212121] hover:bg-[#2a2a2a]"
             } disabled:opacity-60`}
           >
+            {loading && <ButtonSpinner className="h-3.5 w-3.5" />}
             {loading ? "Please wait..." : confirmLabel}
           </button>
         </div>

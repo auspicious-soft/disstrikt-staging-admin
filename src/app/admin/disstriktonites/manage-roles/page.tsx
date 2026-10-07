@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React, { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -155,8 +156,9 @@ const ManageRolesPage = () => {
           <button
             type="submit"
             disabled={!selectedRoleId || isSaving}
-            className="h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 h-11 rounded-md bg-[#EF476F] text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {isSaving && <ButtonSpinner />}
             {isSaving ? "Saving..." : "Confirm"}
           </button>
         </div>

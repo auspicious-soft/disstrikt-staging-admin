@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React from "react";
 import { CalendarDays, Trash2, Eye, ChevronUp, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -824,7 +825,8 @@ const EditStudioDetails = () => {
 
   return (
     <>
-    {isEditMode && isStudioLoading || isDeletingSubSlot ?
+    {/* Deleting a sub-slot shows on the modal's Delete button */}
+    {isEditMode && isStudioLoading ?
         <Loader/>
         :
     <main className="w-full text-stone-200">
@@ -1434,8 +1436,9 @@ const EditStudioDetails = () => {
             type="button"
             onClick={handleSubmit}
             disabled={isSaving}
-            className="h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            {isSaving && <ButtonSpinner />}
             {isSaving
               ? isEditMode
                 ? "Updating..."
@@ -1486,8 +1489,9 @@ const EditStudioDetails = () => {
               <button
                 onClick={confirmDeleteSubSlot}
                 disabled={isDeletingSubSlot}
-                className="flex-1 h-12 rounded-md bg-rose-500 text-white text-sm font-medium hover:bg-rose-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-1 h-12 rounded-md bg-rose-500 text-white text-sm font-medium hover:bg-rose-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer gap-2"
               >
+                {isDeletingSubSlot && <ButtonSpinner />}
                 {isDeletingSubSlot ? "Deleting..." : "Delete"}
               </button>
             </div>

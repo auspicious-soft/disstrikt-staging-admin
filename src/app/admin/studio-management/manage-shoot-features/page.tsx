@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React from "react";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { TextEditor } from "../../components/policies/txtEditor";
@@ -843,8 +844,9 @@ const ManageShootFeatures = () => {
           <button
             type="submit"
             disabled={isUpdating}
-            className="h-9 rounded-md bg-rose-500 text-xs font-medium text-white transition-colors hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 h-9 rounded-md bg-rose-500 text-xs font-medium text-white transition-colors hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {isUpdating && <ButtonSpinner />}
             {isUpdating
               ? "Updating..."
               : "Save"}

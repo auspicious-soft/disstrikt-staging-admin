@@ -86,20 +86,30 @@ const CelebrationCruise: React.FC = () => {
   const tableData: TableRow[] = useMemo(() => {
     return (
       data?.data?.map((event: any) => {
-        // First day, in the venue's local time
-        const slot = event.slots?.[0];
+        // Every day of the event (one line each), in the venue's local time.
+        // Only day 1 used to show, so later days of multi-day events looked missing.
+        const slots: any[] = event.slots ?? [];
         return {
           _id: event._id,
           eventName: event.title,
-          date: slot
-            ? new Date(`${slot.date}T00:00:00`).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })
+          date: slots.length
+            ? slots
+                .map((slot) =>
+                  new Date(`${slot.date}T00:00:00`).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }),
+                )
+                .join("\n")
             : "-",
-          time: slot
-            ? `${slot.startTime} - ${slot.endTime}${slot.endsNextDay ? " (+1)" : ""}`
+          time: slots.length
+            ? slots
+                .map(
+                  (slot) =>
+                    `${slot.startTime} - ${slot.endTime}${slot.endsNextDay ? " (+1)" : ""}`,
+                )
+                .join("\n")
             : "-",
           location: `${event.city}, ${event.country}`,
           status: event.status,
@@ -120,11 +130,6 @@ const CelebrationCruise: React.FC = () => {
   const totalPages = data?.pagination?.totalPages ?? 1;
 
   return (
-    <>
-    {isPending ?
-    <Loader/>
-     : 
-    (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
       <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
         <div className="flex flex-wrap justify-between items-end gap-2.5 w-full">
@@ -172,11 +177,22 @@ const CelebrationCruise: React.FC = () => {
           </div>
         </div>
 
+        {/* Filters and search stay put; only the table area loads */}
+        {isPending ? (
+          <Loader label="Loading events..." />
+        ) : (
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
             data={tableData}
             isEyeShow={false}
+            renderCell={(row: TableRow, key: string) =>
+              key === "date" || key === "time" ? (
+                <span className="whitespace-pre-line leading-5">{row[key]}</span>
+              ) : (
+                row[key]
+              )
+            }
             renderActions={(row) => (
               <button
                 type="button"
@@ -191,8 +207,9 @@ const CelebrationCruise: React.FC = () => {
             showActionsHeaderLabel={true}
           />
         </div>
+        )}
 
-        {totalPages > 1 && (
+        {!isPending && totalPages > 1 && (
           <Pagination
             currentPage={page}
             totalPages={totalPages}
@@ -201,8 +218,6 @@ const CelebrationCruise: React.FC = () => {
         )}
       </div>
     </div>
-    )}
-    </>
   );
 };
 

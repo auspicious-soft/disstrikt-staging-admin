@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "../../components/ui/Loader";
+import ButtonSpinner from "../../components/ui/ButtonSpinner";
 
 const fieldBase =
   "h-12 w-full rounded-md border border-stone-700 bg-transparent px-4 text-sm text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-400";
@@ -71,7 +72,9 @@ const CreateCelebrationCruiseEvent = () => {
     useUpdateCelebrationCruise(editId);
   const { data: existing, isPending: isLoadingExisting } =
     useGetCelebrationCruiseById(editId);
-  const isPending = isCreating || isUpdating || (isEdit && isLoadingExisting);
+  // Saving shows on the submit button; only loading an event replaces the form
+  const isSaving = isCreating || isUpdating;
+  const isPending = isEdit && isLoadingExisting;
   const router = useRouter();
   const [existingImage, setExistingImage] = useState<string | null>(null);
   const [existingBanner, setExistingBanner] = useState<string | null>(null);
@@ -911,15 +914,24 @@ const CreateCelebrationCruiseEvent = () => {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="h-12 rounded-md border border-stone-200/70 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10"
+                disabled={isSaving}
+                className="h-12 rounded-md border border-stone-200/70 text-sm font-medium text-stone-200 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400"
+                disabled={isSaving}
+                className="flex h-12 items-center justify-center gap-2 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isEdit ? "Save Changes" : "Add Event"}
+                {isSaving && <ButtonSpinner />}
+                {isSaving
+                  ? isEdit
+                    ? "Saving..."
+                    : "Adding..."
+                  : isEdit
+                    ? "Save Changes"
+                    : "Add Event"}
               </button>
             </div>
           </form>

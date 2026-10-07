@@ -55,9 +55,6 @@ function OtpPageContent() {
 
   return (
     <>
-      {loading ? (
-        <Loader />
-      ) : (
         <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
           <div className="absolute inset-0">
             <Image
@@ -110,7 +107,7 @@ function OtpPageContent() {
                 />
               </div>
 
-              <ArrowButton text="Verify OTP" type="submit" disabled={loading} />
+              <ArrowButton text={loading ? "Verifying..." : "Verify OTP"} type="submit" loading={loading} />
 
               <div className="flex justify-center mt-2 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap gap-2">
                 <span className="text-black/60">Remember Password?</span>
@@ -124,14 +121,13 @@ function OtpPageContent() {
             </form>
           </div>
         </div>
-      )}
     </>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense fallback={<Loader />}>
+    <Suspense fallback={<Loader fullScreen />}>
       <OtpPageContent />
     </Suspense>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React from "react";
 import { CalendarDays, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -1130,8 +1131,9 @@ const StudioDetails = () => {
             type="button"
             onClick={handleSubmit}
             disabled={isCreating}
-            className="h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 h-12 rounded-md bg-rose-500 text-sm font-medium text-white transition-colors hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            {isCreating && <ButtonSpinner />}
             {isCreating
               ? "Saving..."
               : "Save"}

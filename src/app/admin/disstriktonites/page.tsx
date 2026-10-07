@@ -92,11 +92,6 @@ const totalPages = data?.pagination?.totalPages ?? 1;
   }, [debouncedSearch]);
 
   return (
-    <>
-    {isLoading ?
-    <Loader/>
-     : 
-    (
      <main className="w-full">
       <div className="flex w-full flex-col gap-2.5">
         <div className="flex flex-wrap items-stretch justify-end gap-2.5 sm:flex-row sm:items-center">
@@ -126,6 +121,11 @@ const totalPages = data?.pagination?.totalPages ?? 1;
           </div>
         </div>
 
+        {/* Search stays put; only the table area loads */}
+        {isLoading ? (
+          <Loader />
+        ) : (
+        <>
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
@@ -175,11 +175,10 @@ const totalPages = data?.pagination?.totalPages ?? 1;
           totalPages={totalPages}
           onPageChange={setPage}
         />
+        </>
+        )}
       </div>
     </main>
-    )
-    }
-    </>
   );
 };
 

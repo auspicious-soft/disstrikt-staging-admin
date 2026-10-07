@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React, { useEffect, useMemo, useState } from "react";
 import { InfoCircle } from "iconoir-react";
 import { useGetSubscriptions, useUpdateSubscriptions } from "@/hooks/useAdmin";
@@ -603,8 +604,9 @@ const SubscriptionPlans = () => {
               const payload = buildEditablePlanPayload(activePlan);
               updateSubscriptionPlan.mutate(payload);
             }}
-            className="mt-10 h-[42px] w-full rounded-[6px] bg-[#EF476F] text-[12px] font-medium uppercase text-white transition-colors hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 mt-10 h-[42px] w-full rounded-[6px] bg-[#EF476F] text-[12px] font-medium uppercase text-white transition-colors hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            {updateSubscriptionPlan.isPending && <ButtonSpinner />}
             {updateSubscriptionPlan.isPending ? "Saving..." : "SAVE"}
           </button>
         </form>

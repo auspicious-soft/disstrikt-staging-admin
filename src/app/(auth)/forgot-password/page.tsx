@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useDataContext } from "@/app/components/DataContext";
-import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
 import { Email } from "@/lib/icons";
 import { useForgetPassword } from "@/hooks/useLogin";
@@ -97,9 +96,9 @@ export default function Home() {
 
                   <ArrowButton
                     type="submit"
-                    text={loading ? "Loading":"Next"}
+                    text={loading ? "Sending..." : "Next"}
                     onClick={handleFogetPassword}
-                    disabled={loading}
+                    loading={loading}
                   />
 
                   <div className="flex justify-center mt-4 items-center text-zinc-400 text-sm sm:text-base md:text-base lg:text-lg font-medium flex-wrap gap-2">

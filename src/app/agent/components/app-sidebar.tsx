@@ -14,7 +14,7 @@ import AppLogo from "./app-logo";
 import { SettingsIcon, UsersIcon } from "../../../lib/icons";
 import TripleDotIcon from "../././../../assets/icons/ThreeDots.png";
 import { useRouter } from "next/navigation";
-import Loader from "./ui/Loader";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import {
   Camera,
   ChatLines,
@@ -109,16 +109,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
-    } finally {
       setLoading(false);
     }
   };
 
   return (
     <>
-      {loading ? (
-        <Loader />
-      ) : (
         <>
           <div className="relative shrink-0">
             <Sidebar
@@ -235,9 +231,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         Cancel
                       </button>
                       <button
-                        className="flex-1 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 flex-1 py-2 rounded-lg bg-rose-500 text-white hover:bg-rose-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
                         onClick={handleLogout}
+                        disabled={loading}
                       >
+                        {loading && <ButtonSpinner className="h-3.5 w-3.5" />}
                         Confirm
                       </button>
                     </div>
@@ -256,7 +254,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             />
           </div>
         </>
-      )}
     </>
   );
 }

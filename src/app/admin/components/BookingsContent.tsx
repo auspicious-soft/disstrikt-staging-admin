@@ -144,8 +144,10 @@ export default function BookingsContent({ modelId }: { modelId: string }) {
                   className="w-full flex-1 rounded-md bg-white/10 p-4 cursor-pointer"
                   onClick={() => setSelectedBooking(booking)}
                 >
-                  <div className="flex justify-between gap-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-10">
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Fixed first column so "Creative Team" lines up on every card */}
+                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-[110px_minmax(0,1fr)] lg:gap-x-10">
+
                       <div>
                         <p className="text-[10px] font-normal text-gray-400">
                           Travel Covered
@@ -161,7 +163,7 @@ export default function BookingsContent({ modelId }: { modelId: string }) {
                           Creative Team
                         </p>
 
-                        <p className="mt-1 text-xs text-white font-medium">
+                        <p className="mt-1 text-xs text-white font-medium break-words">
                           {booking.creativeTeam?.length
                             ? booking.creativeTeam.join(", ")
                             : "-"}
@@ -171,7 +173,7 @@ export default function BookingsContent({ modelId }: { modelId: string }) {
 
                     {badge && (
                       <span
-                        className={`h-fit rounded-full flex justify-start lg:justify-end px-3 py-1 text-[10px] font-semibold ${badge.className}`}
+                        className={`h-fit shrink-0 whitespace-nowrap rounded-full flex justify-start lg:justify-end px-3 py-1 text-[10px] font-semibold ${badge.className}`}
                       >
                         {badge.label}
                         {booking.isRefunded ? " · Refunded" : ""}

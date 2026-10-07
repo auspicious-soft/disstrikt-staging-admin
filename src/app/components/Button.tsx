@@ -1,11 +1,13 @@
 import React from "react";
-import { MoveRight } from "lucide-react";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 interface ArrowButtonProps {
   text: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
+  // Shows a spinner and disables the button (e.g. while a request runs)
+  loading?: boolean;
 }
 
 const ArrowButton: React.FC<ArrowButtonProps> = ({
@@ -13,22 +15,20 @@ const ArrowButton: React.FC<ArrowButtonProps> = ({
   onClick,
   type = "button",
   disabled = false,
+  loading = false,
 }) => {
+  const isDisabled = disabled || loading;
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      aria-disabled={disabled}
-      className={`self-stretch px-2.5 py-4 bg-rose-500 rounded-[10px] inline-flex justify-center items-center gap-2.5 transition-opacity ${disabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}`}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
+      aria-busy={loading}
+      className={`self-stretch px-2.5 py-4 bg-rose-500 rounded-[10px] inline-flex justify-center items-center gap-2.5 transition-opacity ${isDisabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}`}
     >
+      {loading && <ButtonSpinner className="text-white" />}
       <span className="text-[#FFFFFF] text-sm font-medium ">{text}</span>
-      <span className="w-4 h-5 relative origin-top-left overflow-hidden flex items-center justify-center">
-        {/* <MoveRight
-          className=" text-[#FFFFFF]"
-          //   style={{ transform: 'rotate(0deg)' }}
-        /> */}
-      </span>
     </button>
   );
 };

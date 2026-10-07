@@ -9,7 +9,6 @@ import InputField from "../../components/InputField";
 import UpdatePasswordModal from "@/app/components/UpdatePasswordModal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import Loader from "@/app/admin/components/ui/Loader";
 import Link from "next/link";
 import { useChangePassword } from "@/hooks/useLogin";
 
@@ -90,9 +89,6 @@ export default function Home() {
 
   return (
     <>
-      {isPending ? (
-        <Loader />
-      ) : (
         <>
           <div className="min-h-screen w-full bg-neutral-900 relative overflow-hidden font-body flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6 md:px-8 lg:px-12">
             <div className="absolute inset-0">
@@ -212,9 +208,9 @@ export default function Home() {
                 </div>
 
                 <ArrowButton
-                  text="Update Password"
+                  text={isPending ? "Updating..." : "Update Password"}
                   type="submit"
-                  disabled={isPending}
+                  loading={isPending}
                 />
 
                 <UpdatePasswordModal
@@ -235,7 +231,6 @@ export default function Home() {
             </div>
           </div>
         </>
-      )}
     </>
   );
 }

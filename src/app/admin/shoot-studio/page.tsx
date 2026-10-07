@@ -213,10 +213,6 @@ const ShootStudio: React.FC = () => {
     setPage(1);
   }, [debouncedSearch, activeFilter]);
 
-  if (isPending) {
-    return <Loader />;
-  }
-
   return (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
       <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
@@ -253,6 +249,10 @@ const ShootStudio: React.FC = () => {
           </div>
         </div>
 
+        {/* Filters and search stay put; only the table area loads */}
+        {isPending ? (
+          <Loader />
+        ) : (
         <div className="self-stretch rounded-md outline outline-offset-[-1px] outline-stone-700">
           <DynamicTable
             headers={headers}
@@ -325,8 +325,9 @@ const ShootStudio: React.FC = () => {
             showActionsHeaderLabel={true}
           />
         </div>
+        )}
 
-        {totalPages > 1 && (
+        {!isPending && totalPages > 1 && (
           <Pagination
             currentPage={page}
             totalPages={totalPages}

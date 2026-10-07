@@ -1,5 +1,6 @@
 "use client";
 
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import { NavArrowDownSolid } from "iconoir-react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -172,8 +173,9 @@ const EditBookingPage = () => {
         type="button"
         onClick={() => setShowCancelModal(true)}
         disabled={isCancelling}
-        className="h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 h-12 w-full rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
+        {isCancelling && <ButtonSpinner />}
         {isCancelling ? "Cancelling..." : "Cancel Booking"}
       </button>
 
@@ -219,8 +221,9 @@ const EditBookingPage = () => {
                 type="button"
                 onClick={handleCancelBooking}
                 disabled={isCancelling || !cancelReason.trim()}
-                className="h-11 flex-1 rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-11 flex-1 rounded-md bg-[#EA3838] text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 gap-2"
               >
+                {isCancelling && <ButtonSpinner />}
                 {isCancelling ? "Cancelling..." : "Confirm Cancel"}
               </button>
             </div>

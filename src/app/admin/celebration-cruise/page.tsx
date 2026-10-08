@@ -11,6 +11,7 @@ import { useGetCelebrationCruise } from "@/hooks/useAdmin";
 import Loader from "../components/ui/Loader";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { useCountry } from "@/app/components/CountryContext";
+import { liveCruiseStatus, useNow } from "./status";
 
 interface SelectOption {
   label: string;
@@ -36,7 +37,7 @@ interface TableHeader {
 }
 type ApplicantFilter = "ALL" | "ACTIVE" | "CLOSED" | "UPCOMING";
 
-// The API's status, worked out per calendar day in the admin's time zone (CLOSED = past)
+// The API's status, to the minute (CLOSED = past)
 const statusLabels: Record<string, string> = {
   UPCOMING: "Upcoming",
   ACTIVE: "Active",
@@ -54,13 +55,23 @@ const CelebrationCruise: React.FC = () => {
   const { country } = useCountry();
   const debouncedSearch = useDebouncedValue(search, 500);
 
-  const { data, isPending } = useGetCelebrationCruise({
+  const { data, isPending, refetch } = useGetCelebrationCruise({
     page,
     limit,
     country,
     search: debouncedSearch,
     activeFilter,
   });
+  const now = useNow();
+
+  // An event just started or ended while the page is open: reload, so a
+  // status tab drops it and the paging stays right
+  const statusChanged = (data?.data ?? []).some(
+    (event: any) => liveCruiseStatus(event, now) !== event.status,
+  );
+  useEffect(() => {
+    if (statusChanged) refetch();
+  }, [statusChanged, refetch]);
 
   const headers: TableHeader[] = [
     {
@@ -119,11 +130,14 @@ const CelebrationCruise: React.FC = () => {
                 .join("\n")
             : "-",
           location: `${event.city}, ${event.country}`,
-          status: statusLabels[event.status] ?? event.status ?? "-",
+          status: (() => {
+            const live = liveCruiseStatus(event, now);
+            return (live && statusLabels[live]) ?? live ?? "-";
+          })(),
         };
       }) ?? []
     );
-  }, [data]);
+  }, [data, now]);
 
   const filters: { label: string; value: ApplicantFilter }[] = [
     { label: "All", value: "ALL" },

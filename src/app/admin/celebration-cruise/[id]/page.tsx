@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import Loader from "../../components/ui/Loader";
 import { formatName } from "@/lib/media";
+import { liveCruiseStatus, useNow } from "../status";
 
 // Same keys as the backend and the app
 const includedItemOptions = [
@@ -112,7 +113,10 @@ const CelebrationCruiseDetails = () => {
   const { mutate: deleteCruise, isPending: isDeleting } =
     useDeleteCelebrationCruise();
 
-  const status = statusLabels[data?.status] ?? statusLabels.UPCOMING;
+  const now = useNow();
+  // Flips at the exact start and end while the page is open
+  const liveStatus = liveCruiseStatus(data, now);
+  const status = statusLabels[liveStatus ?? ""] ?? statusLabels.UPCOMING;
   const includedItems = includedItemOptions.filter((option) =>
     (data?.includedItems ?? []).includes(option.key),
   );
@@ -196,7 +200,7 @@ const CelebrationCruiseDetails = () => {
                     </span>
                   )}
                 </span>
-                {data.status !== "CLOSED" && (
+                {liveStatus !== "CLOSED" && (
                   <button
                     type="button"
                     onClick={() =>

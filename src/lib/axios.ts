@@ -37,14 +37,6 @@ const attachAuthToken = async (config: InternalAxiosRequestConfig) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // The admin's own zone: the API works out "today" in it (e.g. Celebration Cruise status)
-    try {
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (timeZone) config.headers["x-timezone"] = timeZone;
-    } catch {
-      // the API falls back to each event's venue zone
-    }
   }
 
   return config;

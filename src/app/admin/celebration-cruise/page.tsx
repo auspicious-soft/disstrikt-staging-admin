@@ -36,6 +36,13 @@ interface TableHeader {
 }
 type ApplicantFilter = "ALL" | "ACTIVE" | "CLOSED" | "UPCOMING";
 
+// The API's status, worked out per calendar day in the admin's time zone (CLOSED = past)
+const statusLabels: Record<string, string> = {
+  UPCOMING: "Upcoming",
+  ACTIVE: "Active",
+  CLOSED: "Past",
+};
+
 const CelebrationCruise: React.FC = () => {
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
@@ -112,7 +119,7 @@ const CelebrationCruise: React.FC = () => {
                 .join("\n")
             : "-",
           location: `${event.city}, ${event.country}`,
-          status: event.status,
+          status: statusLabels[event.status] ?? event.status ?? "-",
         };
       }) ?? []
     );

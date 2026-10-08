@@ -4,9 +4,16 @@ import { File, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BellNotification, Notes } from "iconoir-react";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
+import { useAgentProfile } from "@/hooks/useAgentAccount";
+import { resolveMediaUrl } from "@/lib/media";
 
 export default function SettingsModal({ isOpen, onClose }) {
   const modalRef = React.useRef(null);
+  // Same cached query as the Account Settings page, so a save updates this too
+  const { data: profile } = useAgentProfile();
+  const photo = resolveMediaUrl(profile?.image);
+  const [photoFailed, setPhotoFailed] = React.useState(false);
+  React.useEffect(() => setPhotoFailed(false), [photo]);
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
@@ -89,16 +96,24 @@ export default function SettingsModal({ isOpen, onClose }) {
                 type="button"
                 onClick={handleRedirectAccount}
               >
-                <img
-                  className="w-9 h-9 rounded"
-                  src="https://placehold.co/36x36"
-                />
-                <div className="inline-flex flex-col justify-center items-start gap-1.5">
-                  <div className="justify-start text-stone-200 text-sm font-normal ">
-                    Account Settings
+                {photo && !photoFailed ? (
+                  <img
+                    className="w-9 h-9 shrink-0 rounded object-cover"
+                    src={photo}
+                    alt="Profile"
+                    onError={() => setPhotoFailed(true)}
+                  />
+                ) : (
+                  <div className="flex w-9 h-9 shrink-0 items-center justify-center rounded border border-stone-700 bg-[#171314] p-0.5">
+                    <img className="w-full object-contain" src="/assets/Logo.png" alt="No profile picture" />
                   </div>
-                  <div className="justify-start text-stone-200 text-[10px] font-normal ">
-                    info@disstriktapp.com
+                )}
+                <div className="inline-flex min-w-0 flex-col justify-center items-start gap-1.5">
+                  <div className="max-w-full truncate text-stone-200 text-sm font-normal">
+                    {profile?.fullName || "Account Settings"}
+                  </div>
+                  <div className="max-w-full truncate text-stone-400 text-[10px] font-normal">
+                    {profile?.email || ""}
                   </div>
                 </div>
               </button>

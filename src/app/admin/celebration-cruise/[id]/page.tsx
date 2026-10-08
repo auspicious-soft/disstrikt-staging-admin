@@ -73,8 +73,8 @@ const ticketHeaders = [
 
 const statusLabels: Record<string, { label: string; className: string }> = {
   UPCOMING: { label: "Upcoming Event", className: "bg-blue-500 text-white" },
-  ACTIVE: { label: "Ongoing", className: "bg-green-500 text-white" },
-  CLOSED: { label: "Closed", className: "bg-yellow-500 text-black" },
+  ACTIVE: { label: "Active Event", className: "bg-green-500 text-white" },
+  CLOSED: { label: "Past Event", className: "bg-yellow-500 text-black" },
 };
 
 const formatDate = (value: string) =>

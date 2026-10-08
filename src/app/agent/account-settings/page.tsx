@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { X, Pencil, ChevronDown, Clock } from "lucide-react";
+import { X, Pencil, ChevronDown, Clock, Eye, EyeOff } from "lucide-react";
 import { Check, LightBulbOn } from "iconoir-react";
 import { toast } from "sonner";
 import { generateSignedUrlForProfile } from "@/actions";
@@ -143,6 +143,9 @@ const AccountSettings = () => {
   });
   const [errors, setErrors] = useState<Partial<Record<FieldId, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [touched, setTouched] = useState<Set<FieldId>>(new Set());
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [imageFailed, setImageFailed] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -155,6 +158,7 @@ const AccountSettings = () => {
   useEffect(() => {
     if (!profile) return;
     setForm({ fullName: profile.fullName ?? "", email: profile.email ?? "", password: "", confirmPassword: "" });
+    setImageFailed(false);
   }, [profile]);
 
   useEffect(() => () => {
@@ -173,19 +177,34 @@ const AccountSettings = () => {
     if (!email) next.email = "Email is required";
     else if (!EMAIL_REGEX.test(email)) next.email = "Enter a valid email address";
 
+    // Both empty keeps the current password; filling either one requires both
     if (values.password || values.confirmPassword) {
-      if (!PASSWORD_REGEX.test(values.password))
+      if (!values.password) next.password = "Enter a new password";
+      else if (!PASSWORD_REGEX.test(values.password))
         next.password = "At least 8 characters with a letter and a number";
-      if (values.password !== values.confirmPassword)
+      if (!values.confirmPassword) next.confirmPassword = "Please confirm your new password";
+      else if (values.password !== values.confirmPassword)
         next.confirmPassword = "Passwords do not match";
     }
     return next;
   };
 
+  // Errors show once a field was left (or on submit), then update while typing
+  const visibleErrors = (found: Partial<Record<FieldId, string>>, seen: Set<FieldId>) =>
+    Object.fromEntries(
+      Object.entries(found).filter(([id]) => submitted || seen.has(id as FieldId)),
+    ) as Partial<Record<FieldId, string>>;
+
   const setField = (id: FieldId, value: string) => {
     const next = { ...form, [id]: value };
     setForm(next);
-    if (submitted) setErrors(validate(next));
+    setErrors(visibleErrors(validate(next), touched));
+  };
+
+  const touchField = (id: FieldId) => {
+    const seen = new Set(touched).add(id);
+    setTouched(seen);
+    setErrors(visibleErrors(validate(form), seen));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,6 +221,7 @@ const AccountSettings = () => {
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    setImageFailed(false);
   };
 
   const uploadImage = async (file: File) => {
@@ -262,6 +282,7 @@ const AccountSettings = () => {
         setImageFile(null);
         setImagePreview(null);
         setSubmitted(false);
+        setTouched(new Set());
         setErrors({});
       },
       onError: (error) => toast.error(apiErrorMessage(error, "Couldn't update your profile")),
@@ -362,23 +383,27 @@ const AccountSettings = () => {
   const savedSame = saved.days.every(
     (d) => d.startTime === saved.days[0]?.startTime && d.endTime === saved.days[0]?.endTime,
   );
-  const imageSrc = imagePreview || resolveMediaUrl(profile.image) || "/assets/LoginImg.jpg";
+  // No photo yet (or it fails to load): show the Disstrikt logo as a placeholder
+  const photo = imagePreview || resolveMediaUrl(profile.image);
+  const showLogo = !photo || imageFailed;
   const activeOrdered = draft ? AVAILABILITY_DAYS.filter((d) => draft.activeDays.includes(d)) : [];
 
   return (
     <main className="w-full">
       <section className="flex w-full flex-col items-start gap-4">
         <div className="flex w-[300px] max-w-full flex-col gap-3">
-          <img
-            src={imageSrc}
-            alt="Profile"
-            onError={(e) => {
-              if (!e.currentTarget.src.endsWith("/assets/LoginImg.jpg")) {
-                e.currentTarget.src = "/assets/LoginImg.jpg";
-              }
-            }}
-            className="aspect-[4/4.75] w-full rounded-lg border border-black/70 object-cover grayscale"
-          />
+          {showLogo ? (
+            <div className="flex aspect-[4/4.75] w-full items-center justify-center rounded-lg border border-neutral-800 bg-[#171314] p-6">
+              <img src="/assets/Logo.png" alt="No profile picture" className="w-full object-contain" />
+            </div>
+          ) : (
+            <img
+              src={photo}
+              alt="Profile"
+              onError={() => setImageFailed(true)}
+              className="aspect-[4/4.75] w-full rounded-lg border border-black/70 object-cover grayscale"
+            />
+          )}
 
           <label
             className={`flex h-8 w-full cursor-pointer items-center justify-center rounded-full border border-neutral-600 bg-transparent px-4 text-xs font-normal text-stone-200 transition-colors hover:border-rose-400 hover:text-white ${
@@ -406,26 +431,41 @@ const AccountSettings = () => {
               <label htmlFor={field.id} className="text-xs font-light text-stone-200">
                 {field.label}
               </label>
-              <input
-                id={field.id}
-                name={field.id}
-                type={field.type}
-                placeholder={field.placeholder}
-                value={form[field.id]}
-                disabled={saving}
-                autoComplete={field.type === "password" ? "new-password" : undefined}
-                onChange={(e) => setField(field.id, e.target.value)}
-                className={`h-11 w-full rounded-md border bg-transparent px-3 text-xs text-stone-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-rose-400 disabled:opacity-60 ${
-                  errors[field.id] ? "border-[#E0414F]" : "border-neutral-700"
-                }`}
-              />
+              <div className="relative">
+                <input
+                  id={field.id}
+                  name={field.id}
+                  type={field.type === "password" && showPassword[field.id] ? "text" : field.type}
+                  placeholder={field.placeholder}
+                  value={form[field.id]}
+                  disabled={saving}
+                  autoComplete={field.type === "password" ? "new-password" : undefined}
+                  onChange={(e) => setField(field.id, e.target.value)}
+                  onBlur={() => touchField(field.id)}
+                  aria-invalid={Boolean(errors[field.id])}
+                  className={`h-11 w-full rounded-md border bg-transparent px-3 text-xs text-stone-100 outline-none transition-colors placeholder:text-neutral-500 focus:border-rose-400 disabled:opacity-60 ${
+                    field.type === "password" ? "pr-10" : ""
+                  } ${errors[field.id] ? "border-[#E0414F]" : "border-neutral-700"}`}
+                />
+                {field.type === "password" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => ({ ...prev, [field.id]: !prev[field.id] }))}
+                    aria-label={showPassword[field.id] ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 transition-colors hover:text-stone-200"
+                  >
+                    {showPassword[field.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                )}
+              </div>
               {errors[field.id] && (
                 <p className="text-[11px] text-[#F27A8A]">{errors[field.id]}</p>
               )}
             </div>
           ))}
           <p className="text-[11px] text-neutral-500 md:col-span-2">
-            Leave the password fields empty to keep your current password.
+            Leave the password fields empty to keep your current password. A new password needs at
+            least 8 characters with a letter and a number.
           </p>
 
           <div className="rounded-xl border border-[#2C2C2C] bg-[#171314] md:col-span-2">

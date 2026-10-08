@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useGetEmployeesRoles, useUpdateEmployeeRole } from "@/hooks/useAdmin";
-import { ROLE_MODULES } from "@/lib/permissions";
+import { modulesForRole, ROLE_MODULES } from "@/lib/permissions";
 
 const selectClass =
   "h-11 w-full appearance-none rounded-md border border-stone-700 bg-transparent px-3 pr-9 text-xs font-normal text-stone-200 outline-none transition-colors focus:border-rose-400";
@@ -39,6 +39,11 @@ const ManageRolesPage = () => {
 
   const [selectedRoleId, setSelectedRoleId] = useState("");
   const [enabledModules, setEnabledModules] = useState<Set<string>>(() => new Set());
+
+  const selectedRole = roleOptions.find((role) => roleIdOf(role) === selectedRoleId);
+  // Modules not shown keep their saved value on submit, since enabledModules
+  // starts from the role's saved access
+  const visibleModules = modulesForRole(selectedRole?.role);
 
   // Load the role's saved access only when a role is picked, so toggles
   // aren't reset by refetches while editing
@@ -120,7 +125,7 @@ const ManageRolesPage = () => {
           <FieldLabel>Access</FieldLabel>
 
           <div className="space-y-2">
-            {ROLE_MODULES.map((module) => {
+            {visibleModules.map((module) => {
               const checked = enabledModules.has(module.key);
 
               return (

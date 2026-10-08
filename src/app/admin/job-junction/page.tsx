@@ -10,10 +10,16 @@ import { useGetJobJunction } from "@/hooks/useAdmin";
 import Pagination from "@/app/components/Pagination";
 import { useCountry } from "@/app/components/CountryContext";
 import Loader from "../components/ui/Loader";
+import { usePanel } from "@/app/components/PanelContext";
 
 type Option = { label: string; value: string };
 
-const filterOptions: Record<"postedBy" | "role" | "status", Option[]> = {
+const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]> = {
+  // Agent panel only: jobs one of the agent's models applied to
+  applied: [
+    { label: "All Jobs", value: "" },
+    { label: "My Models Applied", value: "true" },
+  ],
   postedBy: [
     { label: "Posted By", value: "" },
     { label: "AGENCY", value: "AGENCIES" },
@@ -67,6 +73,9 @@ const FilterSelect = ({
 
 const JobJunction: React.FC = () => {
   const router = useRouter();
+  const { kind, jobsPath } = usePanel();
+  const isAgent = kind === "agent";
+  const [applied, setApplied] = useState(filterOptions.applied[0].value);
   const [postedBy, setPostedBy] = useState(filterOptions.postedBy[0].value);
   const [role, setRole] = useState(filterOptions.role[0].value);
   const [status, setStatus] = useState(filterOptions.status[0].value);
@@ -76,24 +85,32 @@ const JobJunction: React.FC = () => {
   const debouncedSearch = useDebouncedValue(search, 500);
   const { country } = useCountry();
   const { data, isPending } = useGetJobJunction({
-  search: debouncedSearch,
-  page,
-  limit,
-  country,
-  status,
-  role,
-  postedBy,
-});
+    search: debouncedSearch,
+    page,
+    limit,
+    country,
+    status,
+    role,
+    postedBy,
+    applied: isAgent && applied === "true",
+  });
   const jobs = data?.data?.data ?? [];
   const pagination = data?.data?.pagination;
   const totalPages = pagination?.totalPages ?? 1;
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, postedBy, role, status, country]);
+  }, [debouncedSearch, postedBy, role, status, country, applied]);
   return (
     <main className="min-h-screen w-full text-stone-100">
       <div className="mb-6 flex justify-end flex-col gap-3 sm:flex-row sm:items-center">
         {/* <div className="flex flex-1 flex-col gap-3 sm:flex-row"> */}
+        {isAgent && (
+          <FilterSelect
+            options={filterOptions.applied}
+            value={applied}
+            onChange={setApplied}
+          />
+        )}
         <FilterSelect
           options={filterOptions.postedBy}
           value={postedBy}
@@ -119,13 +136,15 @@ const JobJunction: React.FC = () => {
           <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
         </label>
         {/* </div> */}
-        <button
-          className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
-          onClick={() => router.push("/admin/job-junction/post-job")}
-        >
-          <Plus className="h-4 w-4" />
-          Post A New Job
-        </button>
+        {!isAgent && (
+          <button
+            className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
+            onClick={() => router.push("/admin/job-junction/post-job")}
+          >
+            <Plus className="h-4 w-4" />
+            Post A New Job
+          </button>
+        )}
       </div>
 
       {isPending ? (
@@ -137,8 +156,9 @@ const JobJunction: React.FC = () => {
               <JobCard
                 key={job._id}
                 job={job}
-                href={`/admin/job-junction/${job._id}`}
+                href={`${jobsPath}/${job._id}`}
                 isjob={true}
+                readOnly={isAgent}
               />
             ))}
           </div>

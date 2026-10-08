@@ -72,8 +72,10 @@ const CreateCelebrationCruiseEvent = () => {
     useUpdateCelebrationCruise(editId);
   const { data: existing, isPending: isLoadingExisting } =
     useGetCelebrationCruiseById(editId);
+  // Image uploads run before the request, so they count as saving too
+  const [isUploading, setIsUploading] = useState(false);
   // Saving shows on the submit button; only loading an event replaces the form
-  const isSaving = isCreating || isUpdating;
+  const isSaving = isUploading || isCreating || isUpdating;
   const isPending = isEdit && isLoadingExisting;
   const router = useRouter();
   const [existingImage, setExistingImage] = useState<string | null>(null);
@@ -399,18 +401,19 @@ const CreateCelebrationCruiseEvent = () => {
     let imageKey: string | null = null;
     let bannerKey: string | null = null;
 
+    setIsUploading(true);
     try {
-      if (image) {
-        imageKey = await uploadImage(image);
-      }
-      if (banner) {
-        bannerKey = await uploadImage(banner);
-      }
+      [imageKey, bannerKey] = await Promise.all([
+        image ? uploadImage(image) : null,
+        banner ? uploadImage(banner) : null,
+      ]);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Image upload failed",
       );
       return;
+    } finally {
+      setIsUploading(false);
     }
 
     const payload = {

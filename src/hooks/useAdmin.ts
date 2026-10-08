@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ADMIN_URLS } from "@/constants/apiUrls";
+import { usePanel } from "@/app/components/PanelContext";
 
 interface GetCelebrationCruiseParams {
   page: number;
@@ -340,6 +341,8 @@ export const CreateJobAdmin = () => {
     },
   });
 };
+// Admin: /admin/jobs. Agent: /agent/job-junction (applicant counts are the
+// agent's models only; applied=true keeps jobs one of them applied to)
 export const useGetJobJunction = ({
   page,
   limit,
@@ -348,27 +351,106 @@ export const useGetJobJunction = ({
   postedBy,
   status,
   role,
+  applied = false,
+}: {
+  page: number;
+  limit: number;
+  search: string;
+  country: string;
+  postedBy: string;
+  status: string;
+  role: string;
+  applied?: boolean;
 }) => {
+  const { jobsApi } = usePanel();
   return useQuery({
-    queryKey: ["getjobJunction", search, postedBy, status, role,country,page,limit],
+    queryKey: ["getjobJunction", jobsApi, search, postedBy, status, role, country, applied, page, limit],
     queryFn: async () => {
-      const { data } = await axiosInstance.get(
-        `admin/jobs?page=${page}&limit=${limit}&search=${search}&postedBy=${postedBy}&status=${status}&role=${role}&country=${country}`,
+      const { data } = await axiosInstance.get(jobsApi, {
+        params: {
+          page,
+          limit,
+          ...(search ? { search } : {}),
+          ...(postedBy ? { postedBy } : {}),
+          ...(status ? { status } : {}),
+          ...(role ? { role } : {}),
+          ...(country ? { country } : {}),
+          ...(applied ? { applied: true } : {}),
+        },
+      });
+      return data;
+    },
+    placeholderData: (previous) => previous,
+  });
+};
+// Job detail with `appliedJobs`, per-status `counts` and `pagination`
+export const useGetJobById = ({
+  id,
+  status,
+  page,
+  limit,
+}: {
+  id?: string | string[];
+  status: string;
+  page: number;
+  limit: number;
+}) => {
+  const { jobByIdApi } = usePanel();
+  return useQuery({
+    queryKey: ["getjobById", jobByIdApi, id, status, page, limit],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`${jobByIdApi}/${id}`, {
+        params: { status, page, limit },
+      });
+      return data;
+    },
+    enabled: !!id,
+    placeholderData: (previous) => previous,
+  });
+};
+// Shortlist (SELECTED) or reject one application; notifies the applicant.
+// The id is the application's _id, not the job's.
+export const useUpdateJobApplicantStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      appliedJobId,
+      status,
+    }: {
+      appliedJobId: string;
+      status: "SELECTED" | "REJECTED";
+    }) => {
+      const { data } = await axiosInstance.put(
+        `/admin/jobsById/${appliedJobId}`,
+        { status },
       );
       return data;
     },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["getjobById"] });
+      void queryClient.invalidateQueries({ queryKey: ["getjobJunction"] });
+    },
   });
 };
-export const useGetJobById = ({id,status,page,limit})=>{
-  return useQuery({
-    queryKey:["getjobById",id,status,page,limit],
-    queryFn:async ()=>{
-      const {data}= await axiosInstance.get(`admin/jobsById/${id}?status=${status}&page=${page}&limit=${limit}`);
-      return data
+// Downloads the job's applicants as CSV (admin only)
+export const useDownloadJobCSV = () => {
+  return useMutation({
+    mutationFn: async ({ id, title }: { id: string; title?: string }) => {
+      const { data } = await axiosInstance.get(
+        `/admin/jobDataCSV/${id}`,
+        { responseType: "blob" },
+      );
+      const url = URL.createObjectURL(new Blob([data], { type: "text/csv" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `job_${(title || id).replace(/[^\w-]+/g, "_")}_applications.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     },
-    enabled: !!id,
-  })
-}
+  });
+};
 export const useUpdateJobAdmin = () => {
    const queryClient = useQueryClient();
 

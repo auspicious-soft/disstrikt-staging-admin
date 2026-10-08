@@ -31,6 +31,8 @@ type JobCardProps = {
   job: any;
   href: string;
   isjob: boolean;
+  // Agent panel: shows the job status without the Complete / Remove actions
+  readOnly?: boolean;
 };
 type JobStatus = "OPEN" | "COMPLETED" | "REMOVED";
 
@@ -59,7 +61,7 @@ const StatusPill = ({ status }: { status: JobStatus }) => {
 };
 
 
-export const JobCard = ({ job, href, isjob }: JobCardProps) => {
+export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) => {
   const [status, setStatus] = useState<JobStatus>(job?.status || "Pending");
   const [removed, setRemoved] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
@@ -201,7 +203,18 @@ export const JobCard = ({ job, href, isjob }: JobCardProps) => {
             </span>
           </div>
         )}
-        {isjob ? (
+        {isjob && readOnly ? (
+          <div className="flex items-center border-t border-[#232327] pt-3">
+            <span
+              className={`flex items-center gap-1.5 text-xs font-semibold ${
+                status === "OPEN" ? "text-[#EF476F]" : "text-stone-400"
+              }`}
+            >
+              <CheckSquare className="h-5 w-5 bg-[#2C121B]" />
+              {status === "OPEN" ? "Open" : status === "COMPLETED" ? "Closed" : "Removed"}
+            </span>
+          </div>
+        ) : isjob ? (
           <div className="flex items-center justify-between border-t border-[#232327] pt-3">
             <button
               onClick={handleCompleteClick}

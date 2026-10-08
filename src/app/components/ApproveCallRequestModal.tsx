@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 
 interface ApproveCallRequestModalProps {
   open: boolean;
@@ -15,6 +16,10 @@ interface ApproveCallRequestModalProps {
   };
   meetingLink: string;
   setMeetingLink: (value: string) => void;
+  // Optional: request in progress / API error
+  pending?: "approve" | "reject" | null;
+  error?: string;
+  note?: string | null;
 }
 
 const ApproveCallRequestModal = ({
@@ -25,6 +30,9 @@ const ApproveCallRequestModal = ({
   data,
   meetingLink,
   setMeetingLink,
+  pending = null,
+  error,
+  note,
 }: ApproveCallRequestModalProps) => {
   if (!open) return null;
 
@@ -69,6 +77,13 @@ const ApproveCallRequestModal = ({
               {data.date}
             </p>
           </div>
+
+          {note && (
+            <div className="col-span-2">
+              <p className="mb-1 text-[10px] text-stone-400">Note from Model</p>
+              <p className="whitespace-pre-wrap text-sm text-white">{note}</p>
+            </div>
+          )}
         </div>
 
         <div className="my-6 border-t border-stone-700" />
@@ -83,23 +98,29 @@ const ApproveCallRequestModal = ({
             value={meetingLink}
             onChange={(e) => setMeetingLink(e.target.value)}
             placeholder="Paste URL"
+            disabled={Boolean(pending)}
             className="h-12 w-full rounded-lg border border-stone-600 bg-transparent px-4 text-white outline-none focus:border-[#EF476F]"
           />
+          {error && <p className="mt-2 text-xs text-[#F27A8A]">{error}</p>}
         </div>
 
         {/* Buttons */}
         <div className="mt-8 grid grid-cols-2 gap-4">
           <button
             onClick={onReject}
-            className="h-12 rounded-lg border border-[#EF476F] text-[#EF476F] transition hover:bg-[#EF476F]/10"
+            disabled={Boolean(pending)}
+            className="flex h-12 items-center justify-center gap-2 rounded-lg border border-[#EF476F] text-[#EF476F] transition hover:bg-[#EF476F]/10 disabled:opacity-60"
           >
+            {pending === "reject" && <ButtonSpinner />}
             Reject
           </button>
 
           <button
             onClick={onApprove}
-            className="h-12 rounded-lg bg-[#40A84F] text-white transition hover:bg-[#369444]"
+            disabled={Boolean(pending)}
+            className="flex h-12 items-center justify-center gap-2 rounded-lg bg-[#40A84F] text-white transition hover:bg-[#369444] disabled:opacity-60"
           >
+            {pending === "approve" && <ButtonSpinner />}
             Approve Call
           </button>
         </div>

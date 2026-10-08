@@ -11,19 +11,34 @@ import Pagination from "@/app/components/Pagination";
 import DynamicTable from "@/app/components/DynamicTable";
 import { TableRow } from "@/types/interface-types";
 import { ArrowDown, NavArrowDownSolid } from "iconoir-react";
-import { useGetJobById } from "@/hooks/useAdmin";
+import {
+  useDownloadJobCSV,
+  useGetJobById,
+  useUpdateJobApplicantStatus,
+} from "@/hooks/useAdmin";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import axios from "axios";
+import { usePanel } from "@/app/components/PanelContext";
 import Loader from "../../components/ui/Loader";
 
-type ApplicantStatus = "PENDING" | "SHORTLISTED" | "SELECTED" | "REJECTED";
-type ApplicantFilter = "ALL" | ApplicantStatus;
+// SELECTED is shown as "Shortlisted" (the app's name for it)
+type ApplicantStatus = "PENDING" | "SELECTED" | "ACCEPTED" | "REJECTED";
+type ApplicantFilter = "ALL" | "PENDING" | "SELECTED" | "REJECTED";
 
 const filters: { label: string; value: ApplicantFilter }[] = [
-  { label: "All (60)", value: "ALL" },
-  { label: "Pending Applications (10)", value: "PENDING" },
-  { label: "Shortlisted (40)", value: "SELECTED" },
-  { label: "Rejected (10)", value: "REJECTED" },
+  { label: "All", value: "ALL" },
+  { label: "Pending Applications", value: "PENDING" },
+  { label: "Shortlisted", value: "SELECTED" },
+  { label: "Rejected", value: "REJECTED" },
 ];
+
+const statusLabel: Record<ApplicantStatus, string> = {
+  PENDING: "Pending",
+  SELECTED: "Shortlisted",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+};
 
 const applicantHeaders = [
   {
@@ -62,8 +77,9 @@ const applicantHeaders = [
 const statusClassName = (status: ApplicantStatus) => {
   switch (status) {
     case "SELECTED":
-    case "SHORTLISTED":
       return "bg-sky-500 text-white";
+    case "ACCEPTED":
+      return "bg-emerald-600 text-white";
     case "REJECTED":
       return "bg-red-500 text-white";
     default:
@@ -149,18 +165,57 @@ const SectionPanel = ({
 const JobJunctionDetailsPage = () => {
   const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { kind } = usePanel();
+  const isAgent = kind === "agent";
   const { data, isPending } = useGetJobById({
     id,
-    status: activeFilter === "ALL" ? "ALL" : activeFilter,
+    status: activeFilter,
     page: currentPage,
     limit: 10,
   });
+  const { mutate: updateApplicantStatus, isPending: isUpdatingStatus } =
+    useUpdateJobApplicantStatus();
+  const { mutate: downloadCSV, isPending: isDownloading } = useDownloadJobCSV();
 
   const job = data?.data?.revisedData;
   const appliedJobs = data?.data?.appliedJobs ?? [];
   const pagination = data?.data?.pagination;
+  const counts = data?.data?.counts ?? {};
+
+  const toastError = (error: unknown, fallback: string) => {
+    toast.error(
+      (axios.isAxiosError(error) && error.response?.data?.message) || fallback,
+    );
+  };
+
+  const handleStatusChange = (
+    appliedJobId: string,
+    status: "SELECTED" | "REJECTED",
+  ) => {
+    updateApplicantStatus(
+      { appliedJobId, status },
+      {
+        onSuccess: () =>
+          toast.success(
+            status === "SELECTED" ? "Applicant shortlisted" : "Applicant rejected",
+          ),
+        onError: (error) => toastError(error, "Could not update the status"),
+      },
+    );
+  };
+
+  const handleExportCSV = () => {
+    if (!id) return;
+    downloadCSV(
+      { id, title: job?.title },
+      {
+        // The CSV comes back as a blob, so the server's message isn't readable here
+        onError: () => toast.error("Could not export the applicants"),
+      },
+    );
+  };
 
   const applicantRows = useMemo(() => {
     return appliedJobs.map((appliedJob: any) => ({
@@ -203,18 +258,44 @@ const JobJunctionDetailsPage = () => {
     }
 
     if (key === "status") {
+      const status = (row[key] as ApplicantStatus) || "PENDING";
+
+      // Agents can't change statuses; ACCEPTED is set by the model, not here
+      if (isAgent || status === "ACCEPTED") {
+        return (
+          <span
+            className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium ${statusClassName(
+              status,
+            )}`}
+          >
+            {statusLabel[status] ?? status}
+          </span>
+        );
+      }
+
+      // The API only accepts SELECTED or REJECTED, so Pending can't be picked
       return (
         <select
-          defaultValue={String(row[key] ?? "PENDING")}
+          value={status}
+          disabled={isUpdatingStatus}
+          onChange={(event) =>
+            handleStatusChange(
+              String(row._id),
+              event.target.value as "SELECTED" | "REJECTED",
+            )
+          }
           aria-label="Applicant status"
-          className={`min-w-32 appearance-none rounded-full px-3 py-1.5 text-center text-xs font-medium outline-none ${statusClassName(
-            row[key] as ApplicantStatus,
+          className={`min-w-32 cursor-pointer appearance-none rounded-full px-3 py-1.5 text-center text-xs font-medium outline-none disabled:cursor-wait disabled:opacity-70 ${statusClassName(
+            status,
           )}`}
         >
-          <option value="SHORTLISTED">Shortlisted</option>
+          {status === "PENDING" && (
+            <option value="PENDING" disabled>
+              Pending
+            </option>
+          )}
+          <option value="SELECTED">Shortlisted</option>
           <option value="REJECTED">Rejected</option>
-          <option value="PENDING">Pending</option>
-          <option value="SELECTED">Selected</option>
         </select>
       );
     }
@@ -281,20 +362,28 @@ const JobJunctionDetailsPage = () => {
                 <span className="rounded-full bg-[#256533] px-4 py-1 text-base font-medium text-white">
                   {formatLabel(job?.userMode)}
                 </span>
-                <button
-                  type="button"
-                  aria-label="Edit job"
-                  onClick={() => router.push(`/admin/job-junction/edit/${id}`)}
-                  className="rounded-md border border-stone-700 bg-stone-800 px-3 py-2 text-xs font-medium text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
-                >
-                  Edit
-                </button>
+                {!isAgent && (
+                  <button
+                    type="button"
+                    aria-label="Edit job"
+                    onClick={() => router.push(`/admin/job-junction/edit/${id}`)}
+                    className="rounded-md border border-stone-700 bg-stone-800 px-3 py-2 text-xs font-medium text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-x-16 gap-y-5 md:grid-cols-2">
               <InfoItem label="Posted By" value={job?.companyName || "N/A"} />
-              <InfoItem label="Niche" value={job?.niche || "N/A"} />
+              <InfoItem
+                label="Niche"
+                value={
+                  (Array.isArray(job?.niche) ? job.niche.join(", ") : job?.niche) ||
+                  "N/A"
+                }
+              />
               <InfoItem
                 label="Location"
                 value={job?.location || job?.city || job?.country || "N/A"}
@@ -375,19 +464,23 @@ const JobJunctionDetailsPage = () => {
                           : "text-stone-400 hover:bg-stone-800 hover:text-white"
                       }`}
                     >
-                      {filter.label}
+                      {filter.label} ({counts[filter.value] ?? 0})
                     </button>
                   ))}
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="flex h-10 w-full lg:w-fit shrink-0 items-center justify-center gap-2 rounded-md bg-rose-500 px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600"
-              >
-                <ArrowDown className="h-4 w-4" />
-                Export CSV
-              </button>
+              {!isAgent && (
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  disabled={isDownloading}
+                  className="flex h-10 w-full lg:w-fit shrink-0 items-center justify-center gap-2 rounded-md bg-rose-500 px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-wait disabled:opacity-70"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                  {isDownloading ? "Exporting..." : "Export CSV"}
+                </button>
+              )}
             </div>
 
             <div className="w-full rounded-md border border-stone-700">
@@ -399,7 +492,7 @@ const JobJunctionDetailsPage = () => {
               />
             </div>
 
-            {pagination.totalPages > 1 && (
+            {(pagination?.totalPages ?? 1) > 1 && (
               <Pagination
                 currentPage={pagination?.page || currentPage}
                 totalPages={pagination?.totalPages || 1}

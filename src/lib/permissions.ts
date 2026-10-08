@@ -25,12 +25,18 @@ export type Permissions = Partial<Record<ModuleKey, boolean>>;
 
 // Agent panel sections and the module that controls each. Sections without a
 // module (messages, calls, account settings) are always available.
-export const AGENT_SECTION_MODULES: { url: string; module: ModuleKey }[] = [
-  { url: "/agent/dashboard", module: "dashboard" },
-  { url: "/agent/assigned-models", module: "modelMansion" },
-  { url: "/agent/job-junction", module: "jobJunction" },
-  { url: "/agent/model-market", module: "modelMarket" },
+export const AGENT_SECTION_MODULES: { url: string; module: ModuleKey; label: string }[] = [
+  { url: "/agent/dashboard", module: "dashboard", label: "Dashboard" },
+  { url: "/agent/assigned-models", module: "modelMansion", label: "Assigned Models" },
+  { url: "/agent/job-junction", module: "jobJunction", label: "Job Junction" },
+  { url: "/agent/model-market", module: "modelMarket", label: "Model Market" },
 ];
+
+/** The toggles Manage Roles offers for a role. Agents only get their sidebar sections. */
+export const modulesForRole = (roleName?: string): { key: ModuleKey; label: string }[] =>
+  roleName === "AGENT"
+    ? AGENT_SECTION_MODULES.map(({ module, label }) => ({ key: module, label }))
+    : [...ROLE_MODULES];
 
 /** The module that controls a path, or null when the path isn't restricted. */
 export const moduleForPath = (pathname: string): ModuleKey | null =>

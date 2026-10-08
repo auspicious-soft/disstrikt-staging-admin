@@ -1,35 +1,35 @@
 "use client";
 
-import React, { ReactElement, useEffect, useMemo, useState } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import CustomInput from "@/app/components/CustomInput";
-import CustomSelect from "@/app/components/CustomSelect";
 import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
+import Loader from "@/app/admin/components/ui/Loader";
 import { Search, ChevronsUpDown } from "lucide-react";
 import eyeimg from "../../../assets/icons/Eye.png";
-import { useRouter } from "next/navigation";
 import { useDebouncedValue } from "@/hooks/useDebounce";
-import MessagesPage from "@/app/components/chatUi";
 import ApproveCallRequestModal from "@/app/components/ApproveCallRequestModal";
 import { Link } from "iconoir-react";
-
-interface TableRow {
-  _id: string;
-  modelName: string;
-  chapter: string;
-  module: string;
-  task: string;
-  agent: string;
-  lastCompleted: string;
-  progress: string;
-}
+import { toast } from "sonner";
+import { getSession } from "@/lib/auth";
+import { formatName } from "@/lib/media";
+import {
+  AgentCall,
+  AgentCallTab,
+  apiErrorMessage,
+  useAgentCalls,
+  useRespondToCall,
+} from "@/hooks/useAgentAccount";
 
 interface CallRow {
   _id: string;
   modelName: string;
-  agent: string;
+  // "YYYY-MM-DD HH:mm" so the column sorts by time
+  sortDate: string;
   date: string;
-  link: string;
+  link: string | null;
+  note: string;
+  call: AgentCall;
 }
 
 interface TableHeader {
@@ -45,317 +45,105 @@ interface TabProps {
   tabs: string[];
   activeTab: string;
   onChange: (tab: string) => void;
-  variant?: "pill" | "underline";
 }
 
-const Tabs = ({ tabs, activeTab, onChange, variant = "pill" }: TabProps) => {
-  if (variant === "underline") {
-    return (
-      <div className="inline-flex h-8 items-end gap-6">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab;
-
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => onChange(tab)}
-              className={`h-full border-b-2 px-0 text-sm font-medium leading-none transition-colors ${
-                isActive
-                  ? "border-[#EF476F] text-[#EF476F]"
-                  : "border-transparent text-stone-400 hover:text-stone-200"
-              }`}
-            >
-              {tab}
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return (
-    <div className="inline-flex rounded-full bg-[#2A2425] p-1">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => onChange(tab)}
-          className={`rounded-full px-5 py-2 text-xs transition-all ${
-            activeTab === tab
-              ? "bg-[#EF476F] text-white"
-              : "text-stone-400 hover:text-white"
-          }`}
-        >
-          {tab}
-        </button>
-      ))}
-    </div>
-  );
+const TABS: Record<string, AgentCallTab> = {
+  "Upcoming Calls": "upcoming",
+  Requests: "requests",
+  Past: "past",
 };
 
-const UniversityUnion: React.FC = () => {
-  // --- previously-missing state that the JSX below depends on ---
+const STATUS_LABEL: Record<AgentCall["status"], { label: string; className: string }> = {
+  REQUESTED: { label: "Expired", className: "bg-[#6B6B6B]" },
+  APPROVED: { label: "Completed", className: "bg-[#3DA755]" },
+  REJECTED: { label: "Rejected", className: "bg-[#E0414F]" },
+  CANCELLED: { label: "Cancelled", className: "bg-[#6B6B6B]" },
+};
+
+const Tabs = ({ tabs, activeTab, onChange }: TabProps) => (
+  <div className="inline-flex rounded-full bg-[#2A2425] p-1">
+    {tabs.map((tab) => (
+      <button
+        key={tab}
+        type="button"
+        onClick={() => onChange(tab)}
+        className={`rounded-full px-5 py-2 text-xs transition-all ${
+          activeTab === tab ? "bg-[#EF476F] text-white" : "text-stone-400 hover:text-white"
+        }`}
+      >
+        {tab}
+      </button>
+    ))}
+  </div>
+);
+
+// "2026-10-09" + "10:00 - 10:30" -> "Fri, 9 Oct 2026 · 10:00 - 10:30"
+const formatCallDate = (call: AgentCall) => {
+  const [y, m, d] = call.date.split("-").map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  return `${day} · ${call.time}`;
+};
+
+const AgentCalls: React.FC = () => {
   const [activeTab, setActiveTab] = useState("Upcoming Calls");
-  const [agent, setAgent] = useState("");
-  const [activeCallTab, setActiveCallTab] = useState("Scheduled Calls");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(5);
-  const router = useRouter();
+  const [limit] = useState(10);
   const debouncedSearch = useDebouncedValue(search, 500);
-  const [openModal, setOpenModal] = useState(false);
+  const [selected, setSelected] = useState<AgentCall | null>(null);
   const [meetingLink, setMeetingLink] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState({
-    modelName: "",
-    agent: "",
-    date: "",
-    meetingLink: "",
+  const [modalError, setModalError] = useState("");
+  const [agentName, setAgentName] = useState("");
+
+  const tab = TABS[activeTab];
+  const { data, isLoading, isFetching } = useAgentCalls({
+    tab,
+    search: debouncedSearch,
+    page,
+    limit,
   });
+  const respond = useRespondToCall();
 
-  const headers: TableHeader[] = [
-    {
-      label: "Model Name",
-      key: "modelName",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Chapter",
-      key: "chapter",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Module",
-      key: "module",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Task",
-      key: "task",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Agent",
-      key: "agent",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Last Completed",
-      key: "lastCompleted",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Progress",
-      key: "progress",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-  ];
-
-  const dummyUsers: TableRow[] = [
-    {
-      _id: "1",
-      modelName: "Naomi",
-      chapter: "Introduction",
-      module: "Model Basics",
-      task: "Profile Setup",
-      agent: "Sarah",
-      lastCompleted: "10 Jul 2026",
-      progress: "100%",
-    },
-    {
-      _id: "2",
-      modelName: "Emily Smith",
-      chapter: "Posing",
-      module: "Beginner",
-      task: "Standing Poses",
-      agent: "Michael",
-      lastCompleted: "11 Jul 2026",
-      progress: "85%",
-    },
-    {
-      _id: "3",
-      modelName: "David Wilson",
-      chapter: "Lighting",
-      module: "Studio Lights",
-      task: "Soft Light",
-      agent: "Olivia",
-      lastCompleted: "12 Jul 2026",
-      progress: "70%",
-    },
-    {
-      _id: "4",
-      modelName: "Sophia Brown",
-      chapter: "Runway",
-      module: "Catwalk",
-      task: "Walking Practice",
-      agent: "Daniel",
-      lastCompleted: "13 Jul 2026",
-      progress: "90%",
-    },
-    {
-      _id: "5",
-      modelName: "Liam Johnson",
-      chapter: "Photography",
-      module: "Portraits",
-      task: "Headshots",
-      agent: "Emma",
-      lastCompleted: "14 Jul 2026",
-      progress: "60%",
-    },
-    {
-      _id: "6",
-      modelName: "Noah Williams",
-      chapter: "Expressions",
-      module: "Advanced",
-      task: "Facial Expressions",
-      agent: "Lucas",
-      lastCompleted: "15 Jul 2026",
-      progress: "45%",
-    },
-    {
-      _id: "7",
-      modelName: "Ava Davis",
-      chapter: "Fashion",
-      module: "Editorial",
-      task: "Magazine Shoot",
-      agent: "Henry",
-      lastCompleted: "16 Jul 2026",
-      progress: "100%",
-    },
-    {
-      _id: "8",
-      modelName: "James Miller",
-      chapter: "Fitness",
-      module: "Workout",
-      task: "Gym Shoot",
-      agent: "Mia",
-      lastCompleted: "17 Jul 2026",
-      progress: "75%",
-    },
-    {
-      _id: "9",
-      modelName: "Charlotte Moore",
-      chapter: "Commercial",
-      module: "Advertising",
-      task: "Product Shoot",
-      agent: "Ethan",
-      lastCompleted: "18 Jul 2026",
-      progress: "55%",
-    },
-    {
-      _id: "10",
-      modelName: "Benjamin Taylor",
-      chapter: "Final Assessment",
-      module: "Certification",
-      task: "Complete Exam",
-      agent: "Grace",
-      lastCompleted: "19 Jul 2026",
-      progress: "95%",
-    },
-  ];
-
-  const callHeaders: TableHeader[] = [
-    {
-      label: "Name Of Model",
-      key: "modelName",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Agent",
-      key: "agent",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Date & Time",
-      key: "date",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Call Link",
-      key: "link",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-  ];
-  const requestHeaders: TableHeader[] = [
-    {
-      label: "Name Of Model",
-      key: "modelName",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Agent",
-      key: "agent",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-    {
-      label: "Date & Time",
-      key: "date",
-      icon: <ChevronsUpDown className="w-4 h-4" />,
-    },
-  ];
-
-  const scheduledCalls: CallRow[] = [
-    {
-      _id: "1",
-      modelName: "Alex Johnson",
-      agent: "Alex Johnson",
-      date: "2023-10-01 10:00 AM",
-      link: "Link",
-    },
-  ];
-  const requests: CallRow[] = [
-    {
-      _id: "1",
-      modelName: "Alex Johnson",
-      agent: "Alex Johnson",
-      date: "2023-10-01 10:00 AM",
-      link: "Link",
-    },
-  ];
-
-
-
-  const filteredUsers = useMemo(() => {
-    let data = [...dummyUsers];
-
-    if (debouncedSearch) {
-      const keyword = debouncedSearch.toLowerCase();
-      data = data.filter(
-        (user) =>
-          user.modelName.toLowerCase().includes(keyword) ||
-          user.chapter.toLowerCase().includes(keyword) ||
-          user.module.toLowerCase().includes(keyword) ||
-          user.task.toLowerCase().includes(keyword) ||
-          user.agent.toLowerCase().includes(keyword),
-      );
-    }
-
-    if (agent) {
-      data = data.filter((user) => user.agent === agent);
-    }
-
-    return data;
-  }, [debouncedSearch, agent]);
-
-  const totalPages = Math.ceil(filteredUsers.length / limit) || 1;
+  useEffect(() => {
+    setAgentName(formatName(getSession().admin?.fullName));
+  }, []);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, agent, activeTab, activeCallTab]);
+  }, [debouncedSearch, activeTab]);
 
-  const renderCell = (row: TableRow, key: string) => {
-    if (key === "progress") {
-      return <span className="font-medium text-blue-500">{row.progress}</span>;
-    }
-    return row[key as keyof TableRow];
-  };
+  const rows: CallRow[] = (data?.calls ?? []).map((call) => ({
+    _id: call._id,
+    modelName: formatName(call.model?.fullName) || "Deleted user",
+    sortDate: `${call.date} ${call.time}`,
+    date: formatCallDate(call),
+    link: call.meetingLink,
+    note: call.note || "-",
+    call,
+  }));
 
-  // previously-missing render function for the Calls table
+  const headers: TableHeader[] = [
+    { label: "Name Of Model", key: "modelName", icon: <ChevronsUpDown className="w-4 h-4" /> },
+    { label: "Date & Time", key: "sortDate", icon: <ChevronsUpDown className="w-4 h-4" /> },
+    tab === "upcoming"
+      ? { label: "Call Link", key: "link" }
+      : tab === "requests"
+        ? { label: "Note", key: "note" }
+        : { label: "Status", key: "status" },
+  ];
+
   const renderCallCell = (row: CallRow, key: string) => {
+    if (key === "sortDate") return row.date;
     if (key === "link") {
-      return (
+      return row.link ? (
         <a
-          // href={row.link}
+          href={row.link}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[#3B82F6] hover:underline"
@@ -363,103 +151,152 @@ const UniversityUnion: React.FC = () => {
           <Link className="h-4 w-4" />
           Link
         </a>
+      ) : (
+        "-"
       );
     }
-
-    return row[key as keyof CallRow];
+    if (key === "note") {
+      return <span className="line-clamp-2 break-words">{row.note}</span>;
+    }
+    if (key === "status") {
+      // An approved call in "Past" has ended; an open request there has expired
+      const status = STATUS_LABEL[row.call.status];
+      return (
+        <span
+          className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-[10px] leading-none text-white ${status.className}`}
+        >
+          {status.label}
+        </span>
+      );
+    }
+    return row[key as keyof CallRow] as React.ReactNode;
   };
+
+  const openRequest = (id: string) => {
+    const call = data?.calls.find((item) => item._id === id);
+    if (!call) return;
+    setSelected(call);
+    setMeetingLink("");
+    setModalError("");
+  };
+
+  const closeModal = () => {
+    if (respond.isPending) return;
+    setSelected(null);
+  };
+
+  const handleApprove = () => {
+    if (!selected) return;
+    const link = meetingLink.trim();
+    if (!/^https?:\/\/\S+\.\S+/i.test(link)) {
+      setModalError("Paste a valid meeting link (starting with https://)");
+      return;
+    }
+    respond.mutate(
+      { id: selected._id, type: "approve", meetingLink: link },
+      {
+        onSuccess: () => {
+          toast.success("Call approved");
+          setSelected(null);
+        },
+        onError: (error) => setModalError(apiErrorMessage(error, "Couldn't approve the call")),
+      },
+    );
+  };
+
+  const handleReject = () => {
+    if (!selected) return;
+    respond.mutate(
+      { id: selected._id, type: "reject" },
+      {
+        onSuccess: () => {
+          toast.success("Call request rejected");
+          setSelected(null);
+        },
+        onError: (error) => setModalError(apiErrorMessage(error, "Couldn't reject the call")),
+      },
+    );
+  };
+
+  const emptyText =
+    tab === "requests"
+      ? "No call requests waiting for you."
+      : tab === "upcoming"
+        ? "No upcoming calls."
+        : "No past calls.";
 
   return (
     <div className="w-full inline-flex flex-col justify-center items-start gap-10">
       <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
-        <div className="flex flex-col sm:flex-row justify-end items-end gap-2.5 w-full">
-          <div className="flex flex-wrap justify-between gap-3 w-full">
-            <Tabs
-              tabs={["Upcoming Calls", "Requests"]}
-              activeTab={activeTab}
-              onChange={setActiveTab}
-            />
+        <div className="flex flex-wrap justify-between gap-3 w-full">
+          <Tabs tabs={Object.keys(TABS)} activeTab={activeTab} onChange={setActiveTab} />
 
-            <div className="flex gap-2">
-              <div className="w-52">
-                <CustomSelect
-                  placeholder="Select Agent"
-                  options={[
-                    { label: "All", value: "" },
-                    { label: "Sarah", value: "Sarah" },
-                    { label: "Michael", value: "Michael" },
-                  ]}
-                  value={agent}
-                  onChange={setAgent}
-                />
-              </div>
-
-              <CustomInput
-                placeholder="Search"
-                icon={<Search size={16} />}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
+          <CustomInput
+            placeholder="Search model"
+            icon={<Search size={16} />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
 
-        <div className="self-stretch rounded-md ">
+        <div className="self-stretch rounded-md">
+          {isLoading ? (
+            <Loader />
+          ) : (
+            <div className={isFetching ? "opacity-70 transition-opacity" : ""}>
+              {rows.length ? (
+                <DynamicTable
+                  headers={headers}
+                  data={rows}
+                  rowIcon={tab === "requests" ? eyeimg.src : undefined}
+                  isEyeShow={tab === "requests"}
+                  renderCell={renderCallCell}
+                  showActionsHeaderLabel={tab === "requests"}
+                  onclickFunction={openRequest}
+                />
+              ) : (
+                <p className="py-16 text-center text-sm text-stone-400">{emptyText}</p>
+              )}
 
-            <>
-
-              <DynamicTable
-                headers={callHeaders}
-                data={ activeTab === "Upcoming Calls" ? scheduledCalls : requests}
-                rowIcon={activeTab === "Upcoming Calls" ? null : eyeimg.src}
-                renderCell={renderCallCell}
-                showActionsHeaderLabel={activeTab === "Upcoming Calls" ? false : true}
-                onclickFunction={(id) => {
-    const request = requests.find((item) => item._id === id);
-
-    if (!request) return;
-
-    setSelectedRequest({
-      modelName: request.modelName,
-      agent: request.agent,
-      date: request.date,
-      meetingLink: "",
-    });
-
-    setMeetingLink("");
-    setOpenModal(true);
-  }}
-              />
-
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-              />
-            </>
-          
-
+              {(data?.pagination.totalPages ?? 1) > 1 && (
+                <Pagination
+                  currentPage={page}
+                  totalPages={data?.pagination.totalPages ?? 1}
+                  onPageChange={setPage}
+                />
+              )}
+            </div>
+          )}
+          {data?.timeZone && rows.length > 0 && (
+            <p className="mt-2 text-[11px] text-neutral-500">
+              Times are in {data.timeZone.replace(/_/g, " ")}.
+            </p>
+          )}
         </div>
       </div>
-      <ApproveCallRequestModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-        data={selectedRequest}
-        meetingLink={meetingLink}
-        setMeetingLink={setMeetingLink}
-        onReject={() => {
-          console.log("Reject");
-          setOpenModal(false);
-        }}
-        onApprove={() => {
-          console.log("Meeting Link:", meetingLink);
-          console.log("Approve:", selectedRequest);
 
-          setOpenModal(false);
+      <ApproveCallRequestModal
+        open={Boolean(selected)}
+        onClose={closeModal}
+        data={{
+          modelName: formatName(selected?.model?.fullName) || "-",
+          agent: agentName || "-",
+          date: selected ? formatCallDate(selected) : "",
+          meetingLink: "",
         }}
+        note={selected?.note}
+        meetingLink={meetingLink}
+        setMeetingLink={(value) => {
+          setMeetingLink(value);
+          setModalError("");
+        }}
+        pending={respond.isPending ? (respond.variables?.type ?? null) : null}
+        error={modalError}
+        onReject={handleReject}
+        onApprove={handleApprove}
       />
     </div>
   );
 };
 
-export default UniversityUnion;
+export default AgentCalls;

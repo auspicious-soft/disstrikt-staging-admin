@@ -37,6 +37,36 @@ const cityMap: Record<string, string[]> = {
   NL: ["Amsterdam", "Rotterdam", "The Hague", "Utrecht", "Eindhoven"],
   BE: ["Brussels", "Antwerp", "Ghent", "Bruges", "Liège"],
 };
+// Venue time zones, same as the backend's CRUISE_TIME_ZONES (Amsterdam fallback)
+const venueTimeZones: Record<string, string> = {
+  NL: "Europe/Amsterdam",
+  BE: "Europe/Brussels",
+  FR: "Europe/Paris",
+  ES: "Europe/Madrid",
+  UK: "Europe/London",
+};
+
+// Today's date ("YYYY-MM-DD") and the current time ("HH:mm") at the venue
+const venueNow = (timeZone: string) => {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date())
+      .map((part) => [part.type, part.value]),
+  );
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  };
+};
+
 interface EventFormState {
   title: string;
   description: string;
@@ -146,27 +176,23 @@ const CreateCelebrationCruiseEvent = () => {
     }
   }, [isEdit, existing]);
 
-  const getTodayDate = () => {
-    const today = new Date();
+  // Past dates/times are judged in the venue's time zone, not the admin's or UTC
+  const timeZone =
+    venueTimeZones[form.country] ?? existing?.timeZone ?? "Europe/Amsterdam";
 
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
+  const getTodayDate = () => venueNow(timeZone).date;
 
-    return `${year}-${month}-${day}`;
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-
-    return `${hours}:${minutes}`;
-  };
+  const getCurrentTime = () => venueNow(timeZone).time;
 
   const isToday = (date: string) => {
     return date === getTodayDate();
+  };
+
+  // The native time picker doesn't hide times before `min`, so check here too
+  const isPastStart = (date: string, startTime: string) => {
+    if (!date || !startTime) return false;
+    const now = venueNow(timeZone);
+    return date < now.date || (date === now.date && startTime <= now.time);
   };
 
   const normalizeCountryValue = (
@@ -324,6 +350,10 @@ const CreateCelebrationCruiseEvent = () => {
     }
 
     if (field === "startTime") {
+      if (!isEdit && isPastStart(temp[index].date, value)) {
+        toast.error("Start time has already passed at the venue.");
+        return;
+      }
       temp[index].startTime = value;
     }
 
@@ -395,6 +425,15 @@ const CreateCelebrationCruiseEvent = () => {
 
     if (!form.includedItems.length) {
       toast.error("Select at least one item under What's Included.");
+      return;
+    }
+
+    // The venue (country) may have changed after the times were picked
+    if (
+      !isEdit &&
+      schedule.some((item) => isPastStart(item.date, item.startTime))
+    ) {
+      toast.error("A start time has already passed at the venue.");
       return;
     }
 

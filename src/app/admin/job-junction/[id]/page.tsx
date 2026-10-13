@@ -380,7 +380,9 @@ const JobJunctionDetailsPage = () => {
               <InfoItem
                 label="Niche"
                 value={
-                  (Array.isArray(job?.niche) ? job.niche.join(", ") : job?.niche) ||
+                  (Array.isArray(job?.niche)
+                    ? job.niche.join(", ")
+                    : job?.niche?.split(",").join(", ")) ||
                   "N/A"
                 }
               />

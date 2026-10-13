@@ -68,8 +68,8 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
   Belgium: "BE",
   France: "FR",
   Spain: "ES",
-  "United Kingdom": "GB",
-  UK: "GB",
+  "United Kingdom": "UK",
+  UK: "UK",
 };
 
 // Multi-select niche options for MODEL jobs.
@@ -378,9 +378,11 @@ const PostJobPage = () => {
     setMinHeight(job.minHeightInCm == null ? "" : String(job.minHeightInCm));
     setMaxHeight(job.maxHeightInCm == null ? "" : String(job.maxHeightInCm));
 
-    // Niche (handles both array and legacy single string)
+    // Niche: stored as "Fashion,Fitness" (older jobs: one value or an array)
     setNiches(
-      Array.isArray(job.niche) ? job.niche : job.niche ? [job.niche] : [],
+      (Array.isArray(job.niche) ? job.niche : String(job.niche ?? "").split(","))
+        .map((n: string) => n.trim())
+        .filter(Boolean),
     );
 
     // Stylist: number of models

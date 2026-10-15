@@ -26,6 +26,7 @@ const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]
     { label: "DESIGNER", value: "DESIGNER" },
     { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
     { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
+    { label: "BRAND", value: "BRAND" },
     { label: "DISTRIKT", value: "DISTRIKT" },
   ],
   role: [
@@ -34,6 +35,10 @@ const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]
     { label: "DESIGNER", value: "DESIGNER" },
     { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
     { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
+    { label: "BRAND", value: "BRAND" },
+    { label: "AGENCY", value: "AGNECY" },
+    { label: "ACTOR", value: "ACTOR" },
+    { label: "CONTENT CREATOR", value: "CREATOR" },
   ],
   status: [
     { label: "Status", value: "" },

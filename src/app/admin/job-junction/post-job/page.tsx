@@ -856,6 +856,11 @@ const PostJobPage = () => {
                   "MODEL",
                   "PHOTOGRAPHER",
                   { label: "BEAUTY PROFESSIONAL", value: "STYLIST" },
+                  "DESIGNER",
+                  "BRAND",
+                  { label: "AGENCY", value: "AGNECY" },
+                  "ACTOR",
+                  { label: "CONTENT CREATOR", value: "CREATOR" },
                 ]}
               />
             </section>

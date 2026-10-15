@@ -11,8 +11,12 @@ import Pagination from "@/app/components/Pagination";
 import { useCountry } from "@/app/components/CountryContext";
 import Loader from "../components/ui/Loader";
 import { usePanel } from "@/app/components/PanelContext";
+import { JOB_POSTED_BY_OPTIONS, JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
 
 type Option = { label: string; value: string };
+
+// The filter selects use upper-case labels
+const upperLabel = (option: Option): Option => ({ ...option, label: option.label.toUpperCase() });
 
 const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]> = {
   // Agent panel only: jobs one of the agent's models applied to
@@ -20,26 +24,13 @@ const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]
     { label: "All Jobs", value: "" },
     { label: "My Models Applied", value: "true" },
   ],
+  // "DISTRIKT" = posted from the admin panel (the API filters on no app user)
   postedBy: [
     { label: "Posted By", value: "" },
-    { label: "AGENCY", value: "AGENCIES" },
-    { label: "DESIGNER", value: "DESIGNER" },
-    { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
-    { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
-    { label: "BRAND", value: "BRAND" },
+    ...JOB_POSTED_BY_OPTIONS.filter((option) => option.value !== "FOUNDER").map(upperLabel),
     { label: "DISTRIKT", value: "DISTRIKT" },
   ],
-  role: [
-    { label: "Role", value: "" },
-    { label: "MODEL", value: "MODEL" },
-    { label: "DESIGNER", value: "DESIGNER" },
-    { label: "PHOTOGRAPHER", value: "PHOTOGRAPHER" },
-    { label: "BEAUTY PROFESSIONALS", value: "STYLIST" },
-    { label: "BRAND", value: "BRAND" },
-    { label: "AGENCY", value: "AGNECY" },
-    { label: "ACTOR", value: "ACTOR" },
-    { label: "CONTENT CREATOR", value: "CREATOR" },
-  ],
+  role: [{ label: "Role", value: "" }, ...JOB_USER_MODE_OPTIONS.map(upperLabel)],
   status: [
     { label: "Status", value: "" },
     { label: "Completed", value: "Completed" },

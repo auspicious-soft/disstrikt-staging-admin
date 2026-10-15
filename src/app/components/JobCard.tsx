@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { ConfirmModal } from "./ConfirmModal";
 import SafeImage from "./SafeImage";
+import { jobPostedByLabel, jobUserModeLabel } from "@/lib/jobLabels";
 
 type Job = {
   id: string;
@@ -149,7 +150,7 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
         {isjob && (
           <>
             <span className="mb-2 inline-block rounded-[6px] bg-[#EF476F]/15 px-2.5 py-1 border border-[#501C2E] text-xs font-semibold text-[#EF476F]">
-              {job.postedBy === "FOUNDER" ? "DISTRIKT" : job.postedBy}
+              {job.postedBy ? jobPostedByLabel(job.postedBy).toUpperCase() : ""}
             </span>
             <h3 className="mb-3 text-base font-medium leading-snug">
               {job.title}
@@ -184,7 +185,7 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
             </span>
             <span className="flex items-center gap-1.5">
               <Asterisk className="h-3.5 w-3.5 text-[#EF476F]" />
-              {job.userMode}
+              {job.userMode ? jobUserModeLabel(job.userMode).toUpperCase() : ""}
             </span>{" "}
           </div>
         ) : (

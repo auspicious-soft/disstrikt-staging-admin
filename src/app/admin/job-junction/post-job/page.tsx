@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
 import { CITY_MAP } from "@/config/city";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
+import { JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
 
 type FieldProps = {
   label: string;
@@ -852,16 +853,10 @@ const PostJobPage = () => {
                 label="What Are You Looking For ?"
                 value={userMode}
                 onChange={setUserMode}
-                options={[
-                  "MODEL",
-                  "PHOTOGRAPHER",
-                  { label: "BEAUTY PROFESSIONAL", value: "STYLIST" },
-                  "DESIGNER",
-                  "BRAND",
-                  { label: "AGENCY", value: "AGNECY" },
-                  "ACTOR",
-                  { label: "CONTENT CREATOR", value: "CREATOR" },
-                ]}
+                options={JOB_USER_MODE_OPTIONS.map((option) => ({
+                  ...option,
+                  label: option.label.toUpperCase(),
+                }))}
               />
             </section>
 

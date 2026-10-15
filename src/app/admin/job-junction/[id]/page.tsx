@@ -21,6 +21,17 @@ import { toast } from "sonner";
 import axios from "axios";
 import { usePanel } from "@/app/components/PanelContext";
 import Loader from "../../components/ui/Loader";
+import { formatName } from "@/lib/media";
+import { jobPostedByLabel, jobUserModeLabel } from "@/lib/jobLabels";
+
+// Company name, else the app user who posted it ("Name (Brand)"), else the poster type
+const postedByText = (job: any) => {
+  if (job?.companyName) return job.companyName;
+  if (job?.poster?.fullName) {
+    return `${formatName(job.poster.fullName)} (${jobUserModeLabel(job.poster.userMode)})`;
+  }
+  return job?.postedBy ? jobPostedByLabel(job.postedBy) : "N/A";
+};
 
 // SELECTED is shown as "Shortlisted" (the app's name for it)
 type ApplicantStatus = "PENDING" | "SELECTED" | "ACCEPTED" | "REJECTED";
@@ -360,7 +371,7 @@ const JobJunctionDetailsPage = () => {
 
               <div className="flex shrink-0 items-center gap-2">
                 <span className="rounded-full bg-[#256533] px-4 py-1 text-base font-medium text-white">
-                  {formatLabel(job?.userMode)}
+                  {jobUserModeLabel(job?.userMode)}
                 </span>
                 {!isAgent && (
                   <button
@@ -376,7 +387,7 @@ const JobJunctionDetailsPage = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-x-16 gap-y-5 md:grid-cols-2">
-              <InfoItem label="Posted By" value={job?.companyName || "N/A"} />
+              <InfoItem label="Posted By" value={postedByText(job)} />
               <InfoItem
                 label="Niche"
                 value={

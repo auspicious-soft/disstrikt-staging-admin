@@ -11,7 +11,7 @@ import Pagination from "@/app/components/Pagination";
 import { useCountry } from "@/app/components/CountryContext";
 import Loader from "../components/ui/Loader";
 import { usePanel } from "@/app/components/PanelContext";
-import { JOB_POSTED_BY_OPTIONS, JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
+import { DOME_POSTED_BY, JOB_POSTED_BY_OPTIONS, JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
 
 type Option = { label: string; value: string };
 
@@ -24,11 +24,13 @@ const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]
     { label: "All Jobs", value: "" },
     { label: "My Models Applied", value: "true" },
   ],
-  // "DISTRIKT" = posted from the admin panel (the API filters on no app user)
+  // "DISTRIKT" = posted from the admin panel (the API filters on no app user),
+  // "DOME" = posted by any app user
   postedBy: [
     { label: "Posted By", value: "" },
-    ...JOB_POSTED_BY_OPTIONS.filter((option) => option.value !== "FOUNDER").map(upperLabel),
     { label: "DISTRIKT", value: "DISTRIKT" },
+    { label: "DOME USERS", value: DOME_POSTED_BY },
+    ...JOB_POSTED_BY_OPTIONS.filter((option) => option.value !== "FOUNDER").map(upperLabel),
   ],
   role: [{ label: "Role", value: "" }, ...JOB_USER_MODE_OPTIONS.map(upperLabel)],
   status: [

@@ -17,7 +17,12 @@ import { toast } from "sonner";
 import axios from "axios";
 import { ConfirmModal } from "./ConfirmModal";
 import SafeImage from "./SafeImage";
-import { jobPostedByLabel, jobUserModeLabel } from "@/lib/jobLabels";
+import {
+  jobPostedByLabel,
+  jobPosterImage,
+  jobPosterName,
+  jobUserModeLabel,
+} from "@/lib/jobLabels";
 
 type Job = {
   id: string;
@@ -152,9 +157,26 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
             <span className="mb-2 inline-block rounded-[6px] bg-[#EF476F]/15 px-2.5 py-1 border border-[#501C2E] text-xs font-semibold text-[#EF476F]">
               {job.postedBy ? jobPostedByLabel(job.postedBy).toUpperCase() : ""}
             </span>
-            <h3 className="mb-3 text-base font-medium leading-snug">
+            <h3 className="mb-2 text-base font-medium leading-snug">
               {job.title}
             </h3>{" "}
+            {"poster" in job && (
+              <div className="mb-3 flex min-w-0 items-center gap-2 text-xs text-stone-400">
+                {jobPosterImage(job.poster) && (
+                  <SafeImage
+                    src={jobPosterImage(job.poster)}
+                    alt={jobPosterName(job.poster)}
+                    className="h-5 w-5 shrink-0 rounded-full object-cover"
+                  />
+                )}
+                <span className="truncate">
+                  By <span className="text-stone-200">{jobPosterName(job.poster)}</span>
+                  {job.poster?.type === "USER" && job.poster.userMode
+                    ? ` · ${jobUserModeLabel(job.poster.userMode)}`
+                    : ""}
+                </span>
+              </div>
+            )}
           </>
         )}
         <div className="mb-3 aspect-[4/5] max-h-60 w-full overflow-hidden rounded-[10px] bg-stone-800">

@@ -22,14 +22,19 @@ import axios from "axios";
 import { usePanel } from "@/app/components/PanelContext";
 import Loader from "../../components/ui/Loader";
 import { formatName } from "@/lib/media";
-import { jobPostedByLabel, jobUserModeLabel } from "@/lib/jobLabels";
+import { jobPostedByLabel, jobPosterName, jobUserModeLabel } from "@/lib/jobLabels";
 
-// Company name, else the app user who posted it ("Name (Brand)"), else the poster type
+// Dome user: "Studio (Brand)", with their name when the studio has one.
+// Admin-panel job: the company name, else "Distrikt".
 const postedByText = (job: any) => {
-  if (job?.companyName) return job.companyName;
-  if (job?.poster?.fullName) {
-    return `${formatName(job.poster.fullName)} (${jobUserModeLabel(job.poster.userMode)})`;
+  const poster = job?.poster;
+  if (poster?.type === "USER") {
+    const name = jobPosterName(poster);
+    const person = poster.studioName && poster.fullName ? `, ${formatName(poster.fullName)}` : "";
+    return `${name} (${jobUserModeLabel(poster.userMode)}${person})`;
   }
+  if (poster === null) return "Deleted account";
+  if (job?.companyName) return job.companyName;
   return job?.postedBy ? jobPostedByLabel(job.postedBy) : "N/A";
 };
 

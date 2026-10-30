@@ -913,11 +913,22 @@ const PostJobPage = () => {
                   <label
                     className={`${controlClass} flex cursor-pointer items-center justify-between`}
                   >
-                    <span className="text-stone-500">
+                    <span
+                      className={`truncate ${
+                        imageFile || existingImage
+                          ? "text-stone-200"
+                          : "text-stone-500"
+                      }`}
+                      title={imageFile?.name ?? existingImage ?? undefined}
+                    >
                       {imageFile
                         ? imageFile.name
                         : existingImage
-                          ? "Current image (browse to replace)"
+                          ? // Saved value is an S3 key/URL; show just the file name
+                            decodeURIComponent(
+                              existingImage.split("?")[0].split("/").pop() ||
+                                existingImage,
+                            )
                           : "Browse"}
                     </span>
                     <Paperclip className="h-3.5 w-3.5 text-stone-500" />

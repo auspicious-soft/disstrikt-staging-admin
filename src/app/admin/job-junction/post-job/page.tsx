@@ -23,7 +23,11 @@ import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
 import { CITY_MAP } from "@/config/city";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
-import { JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
+import {
+  JOB_COMPENSATION_OPTIONS,
+  JOB_POST_USER_MODES,
+  JOB_USER_MODE_OPTIONS,
+} from "@/lib/jobLabels";
 
 type FieldProps = {
   label: string;
@@ -56,14 +60,7 @@ type CheckboxProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
 };
-// Lookup maps to translate form-friendly labels into the API's expected enum values.
-// Adjust these if the actual backend contract differs.
-const COMPENSATION_TYPE_MAP: Record<string, string> = {
-  Paid: "PAID",
-  Unpaid: "TFP",
-  Barter: "FREE_PRODUCT",
-};
-
+// Lookup map to translate the country label into the API's expected code.
 const COUNTRY_CODE_MAP: Record<string, string> = {
   Netherlands: "NL",
   Belgium: "BE",
@@ -173,7 +170,7 @@ const SelectField = ({
             <option
               key={optionValue}
               value={optionValue}
-              className="bg-neutral-900 text-sm font-light text-white/20"
+              className="bg-neutral-900 text-sm font-normal text-stone-100"
             >
               {optionLabel}
             </option>
@@ -211,6 +208,12 @@ const Checkbox = ({ label, checked, onChange }: CheckboxProps) => (
     <span>{label}</span>
   </label>
 );
+
+// Keeps only digits and one decimal point, for fields that take a number
+const toNumberText = (value: string): string => {
+  const [whole, ...rest] = value.replace(/[^\d.]/g, "").split(".");
+  return rest.length ? `${whole}.${rest.join("")}` : whole;
+};
 
 const parseNumericValue = (value: string): number => {
   const match = value.match(/-?\d+(\.\d+)?/);
@@ -279,7 +282,7 @@ const PostJobPage = () => {
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [compensationType, setCompensationType] = useState("Paid");
+  const [compensationType, setCompensationType] = useState("PAID");
   const [currency, setCurrency] = useState("GBP");
   const [amount, setAmount] = useState("");
   const [minExperience, setMinExperience] = useState("");
@@ -330,9 +333,6 @@ const PostJobPage = () => {
     const job = existingJobData?.data?.revisedData;
     if (!isEditMode || !job) return;
 
-    const compensationType = Object.entries(COMPENSATION_TYPE_MAP).find(
-      ([, value]) => value === job.compensationType,
-    )?.[0];
     const startDate = job.startDateTime ? new Date(job.startDateTime) : null;
     const schedule = job.schedule?.length
       ? job.schedule.map((entry: { date?: string; time?: string }) => ({
@@ -354,7 +354,7 @@ const PostJobPage = () => {
     setAddress(job.location || job.en?.location || "");
     setCountry(job.country || "Select");
     setCity(job.city || "Select");
-    setCompensationType(compensationType || "Paid");
+    setCompensationType(job.compensationType || "PAID");
     setCurrency(String(job.currency || "GBP").toUpperCase());
     setAmount(job.pay == null ? "" : String(job.pay));
 
@@ -758,7 +758,7 @@ const PostJobPage = () => {
       currency: currency.toLowerCase(),
       countryCode: COUNTRY_CODE_MAP[country],
       userMode,
-      compensationType: COMPENSATION_TYPE_MAP[compensationType],
+      compensationType,
       travelCovered,
       city,
       lat,
@@ -853,7 +853,12 @@ const PostJobPage = () => {
                 label="What Are You Looking For ?"
                 value={userMode}
                 onChange={setUserMode}
-                options={JOB_USER_MODE_OPTIONS.map((option) => ({
+                options={JOB_USER_MODE_OPTIONS.filter(
+                  // Keeps an older job's role selectable when editing it
+                  (option) =>
+                    JOB_POST_USER_MODES.includes(option.value) ||
+                    option.value === userMode,
+                ).map((option) => ({
                   ...option,
                   label: option.label.toUpperCase(),
                 }))}
@@ -1029,11 +1034,7 @@ const PostJobPage = () => {
                   label="Type"
                   value={compensationType}
                   onChange={setCompensationType}
-                  options={[
-                    "Paid",
-                    "Barter",
-                    { label: "TFP (Time for Print)", value: "Unpaid" },
-                  ]}
+                  options={JOB_COMPENSATION_OPTIONS}
                 />
                 <SelectField
                   label="Currency"
@@ -1045,7 +1046,7 @@ const PostJobPage = () => {
                   label="Amount"
                   placeholder="350"
                   value={amount}
-                  onChange={setAmount}
+                  onChange={(value) => setAmount(toNumberText(value))}
                 />
               </div>
             </Section>
@@ -1087,25 +1088,25 @@ const PostJobPage = () => {
                     label="Min age"
                     placeholder="24"
                     value={minAge}
-                    onChange={setMinAge}
+                    onChange={(value) => setMinAge(toNumberText(value))}
                   />
                   <TextInput
                     label="Max Age"
                     placeholder="45"
                     value={maxAge}
-                    onChange={setMaxAge}
+                    onChange={(value) => setMaxAge(toNumberText(value))}
                   />
                   <TextInput
                     label="Min Height (cm)"
                     placeholder="160"
                     value={minHeight}
-                    onChange={setMinHeight}
+                    onChange={(value) => setMinHeight(toNumberText(value))}
                   />
                   <TextInput
                     label="Max height (cm)"
                     placeholder="172"
                     value={maxHeight}
-                    onChange={setMaxHeight}
+                    onChange={(value) => setMaxHeight(toNumberText(value))}
                   />
                 </div>
               )}

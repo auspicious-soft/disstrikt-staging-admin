@@ -22,7 +22,70 @@ import axios from "axios";
 import { usePanel } from "@/app/components/PanelContext";
 import Loader from "../../components/ui/Loader";
 import { formatName } from "@/lib/media";
-import { jobPostedByLabel, jobPosterName, jobUserModeLabel } from "@/lib/jobLabels";
+import {
+  jobCompensationLabel,
+  jobPostedByLabel,
+  jobPosterName,
+  jobUserModeLabel,
+} from "@/lib/jobLabels";
+
+// Checkbox groups of photographer / MUA-hairstylist jobs, labelled as in the post form
+const STYLE_LABELS: Record<string, string> = {
+  fashion: "Fashion",
+  beauty: "Beauty",
+  lifestyle: "Lifestyle",
+  commercial: "Commercial",
+  editorial: "Editorial",
+  product: "Product",
+  other: "Other",
+};
+
+const EQUIPMENT_LABELS: Record<string, string> = {
+  studio: "Studio",
+  lighting: "Lighting",
+  drone: "Drone",
+  video: "Video",
+  salon: "Salon",
+  makeUpMirror: "Make Up Mirror",
+  highChair: "High Chair",
+  makeUpProducts: "Make Up Products",
+};
+
+const DELIVERABLE_LABELS: Record<string, string> = {
+  rawImages: "Raw Images",
+  editedImages: "Edited Images",
+  btsContent: "BTS Content",
+  modelsAmount: "How many models (amount)",
+};
+
+// Labels of the keys set to true, e.g. { studio: true, drone: false } -> "Studio"
+const checkedLabels = (
+  value: Record<string, boolean> | undefined,
+  labels: Record<string, string>,
+) => {
+  const selected = Object.entries(labels)
+    .filter(([key]) => value?.[key])
+    .map(([, label]) => label);
+  return selected.length ? selected.join(", ") : "None";
+};
+
+// The job's days: schedule dates are stored as the picked day at midnight UTC
+const formatSchedule = (job: any) => {
+  const days = (job?.schedule ?? [])
+    .map((entry: { date?: string; time?: string }) => {
+      const date = entry.date ? new Date(entry.date) : null;
+      if (!date || Number.isNaN(date.getTime())) return "";
+      const day = date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      });
+      return entry.time ? `${day}, ${entry.time}` : day;
+    })
+    .filter(Boolean);
+  return days.length ? days.join(" | ") : formatDateTime(job?.startDateTime);
+};
 
 // Dome user: "Studio (Brand)", with their name when the studio has one.
 // Admin-panel job: the company name, else "Distrikt".
@@ -306,12 +369,12 @@ const JobJunctionDetailsPage = () => {
           )}`}
         >
           {status === "PENDING" && (
-            <option value="PENDING" disabled>
+            <option value="PENDING" disabled className="bg-neutral-900 text-stone-400">
               Pending
             </option>
           )}
-          <option value="SELECTED">Shortlisted</option>
-          <option value="REJECTED">Rejected</option>
+          <option value="SELECTED" className="bg-neutral-900 text-stone-100">Shortlisted</option>
+          <option value="REJECTED" className="bg-neutral-900 text-stone-100">Rejected</option>
         </select>
       );
     }
@@ -319,14 +382,27 @@ const JobJunctionDetailsPage = () => {
     return String(row[key] ?? "N/A");
   };
 
-  const summarySections = useMemo(
-    () => [
+  const summarySections = useMemo(() => {
+    const isModelJob = job?.userMode === "MODEL";
+    const isPhotographerJob = job?.userMode === "PHOTOGRAPHER";
+    const isStylistJob = job?.userMode === "STYLIST";
+
+    return [
+      {
+        title: "Job Details",
+        items: [
+          { label: "Company Name", value: job?.companyName || "N/A" },
+          { label: "Country", value: job?.country || "N/A" },
+          { label: "City", value: job?.city || "N/A" },
+          { label: "Schedule", value: formatSchedule(job) },
+        ],
+      },
       {
         title: "Compensation",
         items: [
           {
             label: "Compensation Type",
-            value: formatLabel(job?.compensationType),
+            value: jobCompensationLabel(job?.compensationType),
           },
           {
             label: "Currency",
@@ -338,22 +414,75 @@ const JobJunctionDetailsPage = () => {
       },
       {
         title: "Eligibility Criteria",
+        // Gender, age and height are only asked for model jobs
         items: [
           {
             label: "Experience",
-            value: job?.experience != null ? `${job.experience} Years` : "N/A",
+            value: job?.experience ? `${job.experience} Years` : "N/A",
           },
-          { label: "Gender", value: formatLabel(job?.gender) },
-          { label: "Age Range", value: formatRange(job?.minAge, job?.maxAge) },
-          {
-            label: "Height Range",
-            value: formatRange(job?.minHeightInCm, job?.maxHeightInCm, " Cm"),
-          },
+          ...(isModelJob
+            ? [
+                { label: "Gender", value: formatLabel(job?.gender) },
+                {
+                  label: "Age Range",
+                  value: formatRange(job?.minAge, job?.maxAge),
+                },
+                {
+                  label: "Height Range",
+                  value: formatRange(
+                    job?.minHeightInCm,
+                    job?.maxHeightInCm,
+                    " Cm",
+                  ),
+                },
+              ]
+            : []),
         ],
       },
-    ],
-    [job],
-  );
+      ...(isPhotographerJob || isStylistJob
+        ? [
+            {
+              title: "Job Requirements",
+              items: [
+                {
+                  label: "Style",
+                  value: checkedLabels(job?.style, STYLE_LABELS),
+                },
+                {
+                  label: "Equipment Required",
+                  value: checkedLabels(
+                    job?.equipmentRequired,
+                    EQUIPMENT_LABELS,
+                  ),
+                },
+                {
+                  label: "Deliverables",
+                  value: checkedLabels(job?.deliverables, DELIVERABLE_LABELS),
+                },
+                ...(isStylistJob
+                  ? [
+                      {
+                        label: "Number of Models",
+                        value: job?.numberOfModels
+                          ? String(job.numberOfModels)
+                          : "N/A",
+                      },
+                      {
+                        label: "Wardrobe Required",
+                        value: job?.wardrobeRequired ? "Yes" : "No",
+                      },
+                      {
+                        label: "Accessories Required",
+                        value: job?.accessoriesRequired ? "Yes" : "No",
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          ]
+        : []),
+    ];
+  }, [job]);
 
   const referenceImages = job?.uploadReference ?? [];
 
@@ -393,15 +522,18 @@ const JobJunctionDetailsPage = () => {
 
             <div className="grid grid-cols-1 gap-x-16 gap-y-5 md:grid-cols-2">
               <InfoItem label="Posted By" value={postedByText(job)} />
-              <InfoItem
-                label="Niche"
-                value={
-                  (Array.isArray(job?.niche)
-                    ? job.niche.join(", ")
-                    : job?.niche?.split(",").join(", ")) ||
-                  "N/A"
-                }
-              />
+              {/* Niche is only asked for model jobs */}
+              {job?.userMode === "MODEL" && (
+                <InfoItem
+                  label="Niche"
+                  value={
+                    (Array.isArray(job?.niche)
+                      ? job.niche.join(", ")
+                      : job?.niche?.split(",").join(", ")) ||
+                    "N/A"
+                  }
+                />
+              )}
               <InfoItem
                 label="Location"
                 value={job?.location || job?.city || job?.country || "N/A"}

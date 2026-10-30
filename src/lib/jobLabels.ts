@@ -9,12 +9,22 @@ export type JobOption = { label: string; value: string };
 export const JOB_USER_MODE_OPTIONS: JobOption[] = [
   { label: "Model", value: "MODEL" },
   { label: "Photographer", value: "PHOTOGRAPHER" },
-  { label: "Beauty Professional", value: "STYLIST" },
+  { label: "MUA/Hairstylist", value: "STYLIST" },
   { label: "Designer", value: "DESIGNER" },
   { label: "Brand", value: "BRAND" },
   { label: "Agency", value: "AGNECY" },
   { label: "Actor", value: "ACTOR" },
   { label: "Content Creator", value: "CREATOR" },
+];
+
+// The roles a job can be posted for, same as the app's post-job form
+export const JOB_POST_USER_MODES = ["MODEL", "PHOTOGRAPHER", "STYLIST", "DESIGNER"];
+
+// job.compensationType, labelled like the app
+export const JOB_COMPENSATION_OPTIONS: JobOption[] = [
+  { label: "Paid", value: "PAID" },
+  { label: "TFP", value: "TFP" },
+  { label: "Free Product", value: "FREE_PRODUCT" },
 ];
 
 // Who posted it (job.postedBy). FOUNDER = posted from the admin panel.
@@ -23,7 +33,7 @@ export const JOB_POSTED_BY_OPTIONS: JobOption[] = [
   { label: "Brand", value: "BRAND" },
   { label: "Designer", value: "DESIGNER" },
   { label: "Photographer", value: "PHOTOGRAPHER" },
-  { label: "Beauty Professional", value: "STYLIST" },
+  { label: "MUA/Hairstylist", value: "STYLIST" },
   { label: "Distrikt", value: "FOUNDER" },
 ];
 
@@ -45,6 +55,9 @@ export const jobUserModeLabel = (value?: string | null) =>
 
 export const jobPostedByLabel = (value?: string | null) =>
   labelOf(JOB_POSTED_BY_OPTIONS, value);
+
+export const jobCompensationLabel = (value?: string | null) =>
+  labelOf(JOB_COMPENSATION_OPTIONS, value);
 
 // postedBy filter value for jobs posted by any app (Dome) user
 export const DOME_POSTED_BY = "DOME";

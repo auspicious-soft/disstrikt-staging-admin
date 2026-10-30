@@ -386,6 +386,7 @@ const JobJunctionDetailsPage = () => {
     const isModelJob = job?.userMode === "MODEL";
     const isPhotographerJob = job?.userMode === "PHOTOGRAPHER";
     const isStylistJob = job?.userMode === "STYLIST";
+    const isPaidJob = job?.compensationType === "PAID";
 
     return [
       {
@@ -404,17 +405,24 @@ const JobJunctionDetailsPage = () => {
             label: "Compensation Type",
             value: jobCompensationLabel(job?.compensationType),
           },
-          {
-            label: "Currency",
-            value: job?.currency ? job.currency.toUpperCase() : "N/A",
-          },
-          { label: "Budget", value: formatBudget(job?.pay) },
+          // Currency and budget only apply to paid jobs
+          ...(isPaidJob
+            ? [
+                {
+                  label: "Currency",
+                  value: job?.currency ? job.currency.toUpperCase() : "N/A",
+                },
+                { label: "Budget", value: formatBudget(job?.pay) },
+              ]
+            : []),
           { label: "Travel Covered", value: job?.travelCovered ? "Yes" : "No" },
         ],
       },
       {
-        title: "Eligibility Criteria",
-        // Gender, age and height are only asked for model jobs
+        // Same fields as the post form's Preferences section: gender, age,
+        // height and niche for model jobs; style, equipment and deliverables
+        // for photographer / MUA-hairstylist jobs
+        title: "Preferences",
         items: [
           {
             label: "Experience",
@@ -423,6 +431,13 @@ const JobJunctionDetailsPage = () => {
           ...(isModelJob
             ? [
                 { label: "Gender", value: formatLabel(job?.gender) },
+                {
+                  label: "Niche",
+                  value:
+                    (Array.isArray(job?.niche)
+                      ? job.niche.join(", ")
+                      : job?.niche?.split(",").join(", ")) || "N/A",
+                },
                 {
                   label: "Age Range",
                   value: formatRange(job?.minAge, job?.maxAge),
@@ -437,13 +452,8 @@ const JobJunctionDetailsPage = () => {
                 },
               ]
             : []),
-        ],
-      },
-      ...(isPhotographerJob || isStylistJob
-        ? [
-            {
-              title: "Job Requirements",
-              items: [
+          ...(isPhotographerJob || isStylistJob
+            ? [
                 {
                   label: "Style",
                   value: checkedLabels(job?.style, STYLE_LABELS),
@@ -459,28 +469,28 @@ const JobJunctionDetailsPage = () => {
                   label: "Deliverables",
                   value: checkedLabels(job?.deliverables, DELIVERABLE_LABELS),
                 },
-                ...(isStylistJob
-                  ? [
-                      {
-                        label: "Number of Models",
-                        value: job?.numberOfModels
-                          ? String(job.numberOfModels)
-                          : "N/A",
-                      },
-                      {
-                        label: "Wardrobe Required",
-                        value: job?.wardrobeRequired ? "Yes" : "No",
-                      },
-                      {
-                        label: "Accessories Required",
-                        value: job?.accessoriesRequired ? "Yes" : "No",
-                      },
-                    ]
-                  : []),
-              ],
-            },
-          ]
-        : []),
+              ]
+            : []),
+          ...(isStylistJob
+            ? [
+                {
+                  label: "Number of Models",
+                  value: job?.numberOfModels
+                    ? String(job.numberOfModels)
+                    : "N/A",
+                },
+                {
+                  label: "Wardrobe Required",
+                  value: job?.wardrobeRequired ? "Yes" : "No",
+                },
+                {
+                  label: "Accessories Required",
+                  value: job?.accessoriesRequired ? "Yes" : "No",
+                },
+              ]
+            : []),
+        ],
+      },
     ];
   }, [job]);
 
@@ -522,18 +532,6 @@ const JobJunctionDetailsPage = () => {
 
             <div className="grid grid-cols-1 gap-x-16 gap-y-5 md:grid-cols-2">
               <InfoItem label="Posted By" value={postedByText(job)} />
-              {/* Niche is only asked for model jobs */}
-              {job?.userMode === "MODEL" && (
-                <InfoItem
-                  label="Niche"
-                  value={
-                    (Array.isArray(job?.niche)
-                      ? job.niche.join(", ")
-                      : job?.niche?.split(",").join(", ")) ||
-                    "N/A"
-                  }
-                />
-              )}
               <InfoItem
                 label="Location"
                 value={job?.location || job?.city || job?.country || "N/A"}

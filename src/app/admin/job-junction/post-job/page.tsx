@@ -70,6 +70,16 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
   UK: "UK",
 };
 
+// Reverse of COUNTRY_CODE_MAP, for jobs saved with only a countryCode
+const COUNTRY_NAME_BY_CODE: Record<string, string> = {
+  NL: "Netherlands",
+  BE: "Belgium",
+  FR: "France",
+  ES: "Spain",
+  UK: "United Kingdom",
+  GB: "United Kingdom",
+};
+
 // Multi-select niche options for MODEL jobs.
 const NICHE_OPTIONS = [
   "Fashion",
@@ -261,7 +271,7 @@ const PostJobPage = () => {
   const isEditMode = Boolean(editId);
   const { mutate: createJob, isPending: isCreating } = CreateJobAdmin();
   const { mutateAsync: updateJob, isPending: isUpdating } = useUpdateJobAdmin();
-  const { data: existingJobData, isPending: isLoadingJob } = useGetJobById({
+  const { data: existingJobData, isError: isJobError } = useGetJobById({
     id: editId,
     status: "ALL",
     page: 1,
@@ -278,7 +288,6 @@ const PostJobPage = () => {
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("Select");
   const [city, setCity] = useState("Select");
-  const [cityOptions, setCityOptions] = useState<string[]>(["Select"]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
@@ -325,13 +334,19 @@ const PostJobPage = () => {
   const [wardrobeRequired, setWardrobeRequired] = useState(false);
   const [accessoriesRequired, setAccessoriesRequired] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  // The job whose values are in the form, so a background refetch doesn't
+  // overwrite the admin's edits
+  const [loadedJobId, setLoadedJobId] = useState<string | null>(null);
 
   // Computed once per render; used as the `min` bound for date/time pickers.
   const todayISO = getTodayISO();
 
   useEffect(() => {
     const job = existingJobData?.data?.revisedData;
-    if (!isEditMode || !job) return;
+    // The query can briefly hold another job's data (placeholderData)
+    if (!isEditMode || !job || String(job._id) !== String(editId)) return;
+    if (loadedJobId === String(editId)) return;
+    setLoadedJobId(String(editId));
 
     const startDate = job.startDateTime ? new Date(job.startDateTime) : null;
     const schedule = job.schedule?.length
@@ -352,7 +367,11 @@ const PostJobPage = () => {
     setCompanyName(job.companyName || job.en?.companyName || "");
     setDates(schedule);
     setAddress(job.location || job.en?.location || "");
-    setCountry(job.country || "Select");
+    setCountry(
+      job.country ||
+        COUNTRY_NAME_BY_CODE[String(job.countryCode ?? "").toUpperCase()] ||
+        "Select",
+    );
     setCity(job.city || "Select");
     setCompensationType(job.compensationType || "PAID");
     setCurrency(String(job.currency || "GBP").toUpperCase());
@@ -373,7 +392,9 @@ const PostJobPage = () => {
         : (legacyExp?.[2] ?? ""),
     );
 
-    setGender(formatEnumValue(job.gender || job.en?.gender));
+    // Jobs posted from the app can store "BOTH", which the form calls "Any"
+    const savedGender = formatEnumValue(job.gender || job.en?.gender);
+    setGender(savedGender === "Both" ? "Any" : savedGender);
     setMinAge(job.minAge == null ? "" : String(job.minAge));
     setMaxAge(job.maxAge == null ? "" : String(job.maxAge));
     setMinHeight(job.minHeightInCm == null ? "" : String(job.minHeightInCm));
@@ -390,10 +411,24 @@ const PostJobPage = () => {
     setNumberOfModels(
       job.numberOfModels == null ? "" : String(job.numberOfModels),
     );
+
+    // Photographer / stylist checkboxes: only the keys the form knows
+    const pickFlags = <T extends Record<string, boolean>>(
+      defaults: T,
+      saved?: Record<string, boolean> | null,
+    ): T =>
+      Object.fromEntries(
+        Object.keys(defaults).map((key) => [key, Boolean(saved?.[key])]),
+      ) as T;
+    setStyle((prev) => pickFlags(prev, job.style));
+    setEquipmentRequired((prev) => pickFlags(prev, job.equipmentRequired));
     setDeliverables((prev) => ({
-      ...prev,
-      modelsAmount: Boolean(job.numberOfModels),
+      ...pickFlags(prev, job.deliverables),
+      modelsAmount:
+        Boolean(job.deliverables?.modelsAmount) || Boolean(job.numberOfModels),
     }));
+    setWardrobeRequired(Boolean(job.wardrobeRequired));
+    setAccessoriesRequired(Boolean(job.accessoriesRequired));
 
     setTravelCovered(Boolean(job.travelCovered));
     setAdditionalNotes(job.additionalNotes || "");
@@ -401,7 +436,7 @@ const PostJobPage = () => {
     setLng(job.lng ?? null);
     setExistingImage(job.image || null);
     setExistingReferences(job.uploadReference || []);
-  }, [existingJobData, isEditMode]);
+  }, [existingJobData, isEditMode, editId, loadedJobId]);
 
   const updateDate = (index: number, value: string) => {
     setDates((prev) =>
@@ -432,17 +467,22 @@ const PostJobPage = () => {
     );
   };
 
-  useEffect(() => {
-    const cities = CITY_MAP[country] || [];
-    const nextOptions = ["Select", ...cities];
+  // The country's cities, plus the current one when it isn't listed (a saved
+  // or geocoded city), so it still shows as selected
+  const countryCities = CITY_MAP[country] || [];
+  const cityOptions = [
+    "Select",
+    ...countryCities,
+    ...(city !== "Select" && !countryCities.includes(city) ? [city] : []),
+  ];
 
-    setCityOptions(nextOptions);
+  // Picking another country clears a city that isn't in it
+  const handleCountryChange = (nextCountry: string) => {
+    setCountry(nextCountry);
     setCity((prevCity) =>
-      prevCity && prevCity !== "Select" && cities.includes(prevCity)
-        ? prevCity
-        : "Select",
+      (CITY_MAP[nextCountry] || []).includes(prevCity) ? prevCity : "Select",
     );
-  }, [country]);
+  };
 
   const normalizeCountryValue = (
     countryCode?: string,
@@ -527,19 +567,12 @@ const PostJobPage = () => {
         countryComponent?.long_name,
       );
       const resolvedCity = cityComponent?.long_name || "";
-      const resolvedCountryCities = CITY_MAP[resolvedCountry] || [];
-      const nextCityOptions = ["Select", ...resolvedCountryCities].concat(
-        resolvedCity && !resolvedCountryCities.includes(resolvedCity)
-          ? [resolvedCity]
-          : [],
-      );
 
       if (resolvedCountry) {
-        setCountry(resolvedCountry);
+        handleCountryChange(resolvedCountry);
       }
 
       if (resolvedCity) {
-        setCityOptions(nextCityOptions);
         setCity(resolvedCity);
       }
 
@@ -753,8 +786,10 @@ const PostJobPage = () => {
       maxAge: parseNumericValue(maxAge),
       minHeightInCm: parseNumericValue(minHeight),
       maxHeightInCm: parseNumericValue(maxHeight),
-      image: imageKey,
-      pay: parseNumericValue(amount),
+      // Keeps the saved image when editing without picking a new one
+      image: imageKey ?? existingImage,
+      // Only paid jobs have an amount
+      pay: compensationType === "PAID" ? parseNumericValue(amount) : 0,
       currency: currency.toLowerCase(),
       countryCode: COUNTRY_CODE_MAP[country],
       userMode,
@@ -840,7 +875,7 @@ const PostJobPage = () => {
 
   return (
     <>
-      {isEditMode && isLoadingJob ? (
+      {isEditMode && !isJobError && loadedJobId !== String(editId) ? (
         <Loader />
       ) : (
         <>
@@ -879,7 +914,11 @@ const PostJobPage = () => {
                     className={`${controlClass} flex cursor-pointer items-center justify-between`}
                   >
                     <span className="text-stone-500">
-                      {imageFile ? imageFile.name : "Browse"}
+                      {imageFile
+                        ? imageFile.name
+                        : existingImage
+                          ? "Current image (browse to replace)"
+                          : "Browse"}
                     </span>
                     <Paperclip className="h-3.5 w-3.5 text-stone-500" />
                     <input
@@ -1009,7 +1048,7 @@ const PostJobPage = () => {
                 <SelectField
                   label="Country"
                   value={country}
-                  onChange={setCountry}
+                  onChange={handleCountryChange}
                   options={[
                     "Select",
                     "Netherlands",
@@ -1036,18 +1075,23 @@ const PostJobPage = () => {
                   onChange={setCompensationType}
                   options={JOB_COMPENSATION_OPTIONS}
                 />
-                <SelectField
-                  label="Currency"
-                  value={currency}
-                  onChange={setCurrency}
-                  options={["GBP", "EUR", "USD"]}
-                />
-                <TextInput
-                  label="Amount"
-                  placeholder="350"
-                  value={amount}
-                  onChange={(value) => setAmount(toNumberText(value))}
-                />
+                {/* Currency and amount only apply to paid jobs */}
+                {compensationType === "PAID" && (
+                  <>
+                    <SelectField
+                      label="Currency"
+                      value={currency}
+                      onChange={setCurrency}
+                      options={["GBP", "EUR", "USD"]}
+                    />
+                    <TextInput
+                      label="Amount"
+                      placeholder="350"
+                      value={amount}
+                      onChange={(value) => setAmount(toNumberText(value))}
+                    />
+                  </>
+                )}
               </div>
             </Section>
 

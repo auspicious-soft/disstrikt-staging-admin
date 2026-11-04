@@ -53,13 +53,13 @@ const FilterSelect = ({
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-10 w-full appearance-none rounded-[8px] border border-[#2A2A2E] bg-[#151518] px-4 pr-9 text-[13px] text-stone-300 outline-none focus:border-[#EF476F]"
+      className="h-10 w-full appearance-none rounded-[8px] border border-[#2A2A2E] bg-[#151518] px-4 pr-9 text-[13px] text-stone-100 outline-none focus:border-[#EF476F]"
     >
       {options.map((option) => (
         <option
           key={option.value}
           value={option.value}
-          className="bg-[#151518]"
+          className="bg-[#151518] text-stone-100"
         >
           {option.label}
         </option>
@@ -80,7 +80,8 @@ const JobJunction: React.FC = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const debouncedSearch = useDebouncedValue(search, 500);
+  // Ignore leading/trailing spaces and collapse repeated spaces in the search term
+  const debouncedSearch = useDebouncedValue(search.trim().replace(/\s+/g, " "), 500);
   const { country } = useCountry();
   const { data, isPending } = useGetJobJunction({
     search: debouncedSearch,

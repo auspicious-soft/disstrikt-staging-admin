@@ -23,7 +23,11 @@ import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
 import { CITY_MAP } from "@/config/city";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
-import { JOB_USER_MODE_OPTIONS } from "@/lib/jobLabels";
+import {
+  JOB_COMPENSATION_OPTIONS,
+  JOB_POST_USER_MODES,
+  JOB_USER_MODE_OPTIONS,
+} from "@/lib/jobLabels";
 
 type FieldProps = {
   label: string;
@@ -56,14 +60,7 @@ type CheckboxProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
 };
-// Lookup maps to translate form-friendly labels into the API's expected enum values.
-// Adjust these if the actual backend contract differs.
-const COMPENSATION_TYPE_MAP: Record<string, string> = {
-  Paid: "PAID",
-  Unpaid: "TFP",
-  Barter: "FREE_PRODUCT",
-};
-
+// Lookup map to translate the country label into the API's expected code.
 const COUNTRY_CODE_MAP: Record<string, string> = {
   Netherlands: "NL",
   Belgium: "BE",
@@ -71,6 +68,16 @@ const COUNTRY_CODE_MAP: Record<string, string> = {
   Spain: "ES",
   "United Kingdom": "UK",
   UK: "UK",
+};
+
+// Reverse of COUNTRY_CODE_MAP, for jobs saved with only a countryCode
+const COUNTRY_NAME_BY_CODE: Record<string, string> = {
+  NL: "Netherlands",
+  BE: "Belgium",
+  FR: "France",
+  ES: "Spain",
+  UK: "United Kingdom",
+  GB: "United Kingdom",
 };
 
 // Multi-select niche options for MODEL jobs.
@@ -173,7 +180,7 @@ const SelectField = ({
             <option
               key={optionValue}
               value={optionValue}
-              className="bg-neutral-900 text-sm font-light text-white/20"
+              className="bg-neutral-900 text-sm font-normal text-stone-100"
             >
               {optionLabel}
             </option>
@@ -211,6 +218,12 @@ const Checkbox = ({ label, checked, onChange }: CheckboxProps) => (
     <span>{label}</span>
   </label>
 );
+
+// Keeps only digits and one decimal point, for fields that take a number
+const toNumberText = (value: string): string => {
+  const [whole, ...rest] = value.replace(/[^\d.]/g, "").split(".");
+  return rest.length ? `${whole}.${rest.join("")}` : whole;
+};
 
 const parseNumericValue = (value: string): number => {
   const match = value.match(/-?\d+(\.\d+)?/);
@@ -258,7 +271,7 @@ const PostJobPage = () => {
   const isEditMode = Boolean(editId);
   const { mutate: createJob, isPending: isCreating } = CreateJobAdmin();
   const { mutateAsync: updateJob, isPending: isUpdating } = useUpdateJobAdmin();
-  const { data: existingJobData, isPending: isLoadingJob } = useGetJobById({
+  const { data: existingJobData, isError: isJobError } = useGetJobById({
     id: editId,
     status: "ALL",
     page: 1,
@@ -275,11 +288,10 @@ const PostJobPage = () => {
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("Select");
   const [city, setCity] = useState("Select");
-  const [cityOptions, setCityOptions] = useState<string[]>(["Select"]);
   const [lat, setLat] = useState<number | null>(null);
   const [lng, setLng] = useState<number | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [compensationType, setCompensationType] = useState("Paid");
+  const [compensationType, setCompensationType] = useState("PAID");
   const [currency, setCurrency] = useState("GBP");
   const [amount, setAmount] = useState("");
   const [minExperience, setMinExperience] = useState("");
@@ -322,17 +334,20 @@ const PostJobPage = () => {
   const [wardrobeRequired, setWardrobeRequired] = useState(false);
   const [accessoriesRequired, setAccessoriesRequired] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  // The job whose values are in the form, so a background refetch doesn't
+  // overwrite the admin's edits
+  const [loadedJobId, setLoadedJobId] = useState<string | null>(null);
 
   // Computed once per render; used as the `min` bound for date/time pickers.
   const todayISO = getTodayISO();
 
   useEffect(() => {
     const job = existingJobData?.data?.revisedData;
-    if (!isEditMode || !job) return;
+    // The query can briefly hold another job's data (placeholderData)
+    if (!isEditMode || !job || String(job._id) !== String(editId)) return;
+    if (loadedJobId === String(editId)) return;
+    setLoadedJobId(String(editId));
 
-    const compensationType = Object.entries(COMPENSATION_TYPE_MAP).find(
-      ([, value]) => value === job.compensationType,
-    )?.[0];
     const startDate = job.startDateTime ? new Date(job.startDateTime) : null;
     const schedule = job.schedule?.length
       ? job.schedule.map((entry: { date?: string; time?: string }) => ({
@@ -352,9 +367,13 @@ const PostJobPage = () => {
     setCompanyName(job.companyName || job.en?.companyName || "");
     setDates(schedule);
     setAddress(job.location || job.en?.location || "");
-    setCountry(job.country || "Select");
+    setCountry(
+      job.country ||
+        COUNTRY_NAME_BY_CODE[String(job.countryCode ?? "").toUpperCase()] ||
+        "Select",
+    );
     setCity(job.city || "Select");
-    setCompensationType(compensationType || "Paid");
+    setCompensationType(job.compensationType || "PAID");
     setCurrency(String(job.currency || "GBP").toUpperCase());
     setAmount(job.pay == null ? "" : String(job.pay));
 
@@ -373,7 +392,9 @@ const PostJobPage = () => {
         : (legacyExp?.[2] ?? ""),
     );
 
-    setGender(formatEnumValue(job.gender || job.en?.gender));
+    // Jobs posted from the app can store "BOTH", which the form calls "Any"
+    const savedGender = formatEnumValue(job.gender || job.en?.gender);
+    setGender(savedGender === "Both" ? "Any" : savedGender);
     setMinAge(job.minAge == null ? "" : String(job.minAge));
     setMaxAge(job.maxAge == null ? "" : String(job.maxAge));
     setMinHeight(job.minHeightInCm == null ? "" : String(job.minHeightInCm));
@@ -390,10 +411,24 @@ const PostJobPage = () => {
     setNumberOfModels(
       job.numberOfModels == null ? "" : String(job.numberOfModels),
     );
+
+    // Photographer / stylist checkboxes: only the keys the form knows
+    const pickFlags = <T extends Record<string, boolean>>(
+      defaults: T,
+      saved?: Record<string, boolean> | null,
+    ): T =>
+      Object.fromEntries(
+        Object.keys(defaults).map((key) => [key, Boolean(saved?.[key])]),
+      ) as T;
+    setStyle((prev) => pickFlags(prev, job.style));
+    setEquipmentRequired((prev) => pickFlags(prev, job.equipmentRequired));
     setDeliverables((prev) => ({
-      ...prev,
-      modelsAmount: Boolean(job.numberOfModels),
+      ...pickFlags(prev, job.deliverables),
+      modelsAmount:
+        Boolean(job.deliverables?.modelsAmount) || Boolean(job.numberOfModels),
     }));
+    setWardrobeRequired(Boolean(job.wardrobeRequired));
+    setAccessoriesRequired(Boolean(job.accessoriesRequired));
 
     setTravelCovered(Boolean(job.travelCovered));
     setAdditionalNotes(job.additionalNotes || "");
@@ -401,7 +436,7 @@ const PostJobPage = () => {
     setLng(job.lng ?? null);
     setExistingImage(job.image || null);
     setExistingReferences(job.uploadReference || []);
-  }, [existingJobData, isEditMode]);
+  }, [existingJobData, isEditMode, editId, loadedJobId]);
 
   const updateDate = (index: number, value: string) => {
     setDates((prev) =>
@@ -432,17 +467,22 @@ const PostJobPage = () => {
     );
   };
 
-  useEffect(() => {
-    const cities = CITY_MAP[country] || [];
-    const nextOptions = ["Select", ...cities];
+  // The country's cities, plus the current one when it isn't listed (a saved
+  // or geocoded city), so it still shows as selected
+  const countryCities = CITY_MAP[country] || [];
+  const cityOptions = [
+    "Select",
+    ...countryCities,
+    ...(city !== "Select" && !countryCities.includes(city) ? [city] : []),
+  ];
 
-    setCityOptions(nextOptions);
+  // Picking another country clears a city that isn't in it
+  const handleCountryChange = (nextCountry: string) => {
+    setCountry(nextCountry);
     setCity((prevCity) =>
-      prevCity && prevCity !== "Select" && cities.includes(prevCity)
-        ? prevCity
-        : "Select",
+      (CITY_MAP[nextCountry] || []).includes(prevCity) ? prevCity : "Select",
     );
-  }, [country]);
+  };
 
   const normalizeCountryValue = (
     countryCode?: string,
@@ -527,19 +567,12 @@ const PostJobPage = () => {
         countryComponent?.long_name,
       );
       const resolvedCity = cityComponent?.long_name || "";
-      const resolvedCountryCities = CITY_MAP[resolvedCountry] || [];
-      const nextCityOptions = ["Select", ...resolvedCountryCities].concat(
-        resolvedCity && !resolvedCountryCities.includes(resolvedCity)
-          ? [resolvedCity]
-          : [],
-      );
 
       if (resolvedCountry) {
-        setCountry(resolvedCountry);
+        handleCountryChange(resolvedCountry);
       }
 
       if (resolvedCity) {
-        setCityOptions(nextCityOptions);
         setCity(resolvedCity);
       }
 
@@ -753,12 +786,14 @@ const PostJobPage = () => {
       maxAge: parseNumericValue(maxAge),
       minHeightInCm: parseNumericValue(minHeight),
       maxHeightInCm: parseNumericValue(maxHeight),
-      image: imageKey,
-      pay: parseNumericValue(amount),
+      // Keeps the saved image when editing without picking a new one
+      image: imageKey ?? existingImage,
+      // Only paid jobs have an amount
+      pay: compensationType === "PAID" ? parseNumericValue(amount) : 0,
       currency: currency.toLowerCase(),
       countryCode: COUNTRY_CODE_MAP[country],
       userMode,
-      compensationType: COMPENSATION_TYPE_MAP[compensationType],
+      compensationType,
       travelCovered,
       city,
       lat,
@@ -840,7 +875,7 @@ const PostJobPage = () => {
 
   return (
     <>
-      {isEditMode && isLoadingJob ? (
+      {isEditMode && !isJobError && loadedJobId !== String(editId) ? (
         <Loader />
       ) : (
         <>
@@ -853,7 +888,12 @@ const PostJobPage = () => {
                 label="What Are You Looking For ?"
                 value={userMode}
                 onChange={setUserMode}
-                options={JOB_USER_MODE_OPTIONS.map((option) => ({
+                options={JOB_USER_MODE_OPTIONS.filter(
+                  // Keeps an older job's role selectable when editing it
+                  (option) =>
+                    JOB_POST_USER_MODES.includes(option.value) ||
+                    option.value === userMode,
+                ).map((option) => ({
                   ...option,
                   label: option.label.toUpperCase(),
                 }))}
@@ -873,8 +913,23 @@ const PostJobPage = () => {
                   <label
                     className={`${controlClass} flex cursor-pointer items-center justify-between`}
                   >
-                    <span className="text-stone-500">
-                      {imageFile ? imageFile.name : "Browse"}
+                    <span
+                      className={`truncate ${
+                        imageFile || existingImage
+                          ? "text-stone-200"
+                          : "text-stone-500"
+                      }`}
+                      title={imageFile?.name ?? existingImage ?? undefined}
+                    >
+                      {imageFile
+                        ? imageFile.name
+                        : existingImage
+                          ? // Saved value is an S3 key/URL; show just the file name
+                            decodeURIComponent(
+                              existingImage.split("?")[0].split("/").pop() ||
+                                existingImage,
+                            )
+                          : "Browse"}
                     </span>
                     <Paperclip className="h-3.5 w-3.5 text-stone-500" />
                     <input
@@ -1004,7 +1059,7 @@ const PostJobPage = () => {
                 <SelectField
                   label="Country"
                   value={country}
-                  onChange={setCountry}
+                  onChange={handleCountryChange}
                   options={[
                     "Select",
                     "Netherlands",
@@ -1029,24 +1084,25 @@ const PostJobPage = () => {
                   label="Type"
                   value={compensationType}
                   onChange={setCompensationType}
-                  options={[
-                    "Paid",
-                    "Barter",
-                    { label: "TFP (Time for Print)", value: "Unpaid" },
-                  ]}
+                  options={JOB_COMPENSATION_OPTIONS}
                 />
-                <SelectField
-                  label="Currency"
-                  value={currency}
-                  onChange={setCurrency}
-                  options={["GBP", "EUR", "USD"]}
-                />
-                <TextInput
-                  label="Amount"
-                  placeholder="350"
-                  value={amount}
-                  onChange={setAmount}
-                />
+                {/* Currency and amount only apply to paid jobs */}
+                {compensationType === "PAID" && (
+                  <>
+                    <SelectField
+                      label="Currency"
+                      value={currency}
+                      onChange={setCurrency}
+                      options={["GBP", "EUR", "USD"]}
+                    />
+                    <TextInput
+                      label="Amount"
+                      placeholder="350"
+                      value={amount}
+                      onChange={(value) => setAmount(toNumberText(value))}
+                    />
+                  </>
+                )}
               </div>
             </Section>
 
@@ -1087,25 +1143,25 @@ const PostJobPage = () => {
                     label="Min age"
                     placeholder="24"
                     value={minAge}
-                    onChange={setMinAge}
+                    onChange={(value) => setMinAge(toNumberText(value))}
                   />
                   <TextInput
                     label="Max Age"
                     placeholder="45"
                     value={maxAge}
-                    onChange={setMaxAge}
+                    onChange={(value) => setMaxAge(toNumberText(value))}
                   />
                   <TextInput
                     label="Min Height (cm)"
                     placeholder="160"
                     value={minHeight}
-                    onChange={setMinHeight}
+                    onChange={(value) => setMinHeight(toNumberText(value))}
                   />
                   <TextInput
                     label="Max height (cm)"
                     placeholder="172"
                     value={maxHeight}
-                    onChange={setMaxHeight}
+                    onChange={(value) => setMaxHeight(toNumberText(value))}
                   />
                 </div>
               )}

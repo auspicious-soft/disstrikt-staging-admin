@@ -507,8 +507,6 @@ export default function ModelProfileSlider({
                       <div className="flex flex-col items-center gap-2">
                         {/* <div className="rounded-full w-fit bg-[#2a1118] p-2 text-[#ef4b59]"> */}
                         <UnlockIcon className="h-8 w-8 text-[#A93E58]" />
-                        {/* </div> */}
-
                         <div>
                           <p className="mb-2 text-[#A93E58]">Locked</p>
                           <p className="text-xs text-neutral-500">

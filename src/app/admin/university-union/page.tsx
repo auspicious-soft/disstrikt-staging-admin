@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactElement, useEffect, useMemo, useState } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import CustomInput from "@/app/components/CustomInput";
 import CustomSelect from "@/app/components/CustomSelect";
 import DynamicTable from "@/app/components/DynamicTable";
@@ -12,25 +12,32 @@ import { useDebouncedValue } from "@/hooks/useDebounce";
 import MessagesPage from "@/app/components/chatUi";
 import ApproveCallRequestModal from "@/app/components/ApproveCallRequestModal";
 import { Link } from "iconoir-react";
+import { useGetModelMansionAgents } from "@/hooks/useModelMansion";
+import { apiErrorMessage } from "@/hooks/useAgentAccount";
+import {
+  UnionCallRow,
+  UnionModelRow,
+  useRespondUnionCall,
+  useUnionCalls,
+  useUnionModels,
+} from "@/hooks/useUniversityUnion";
+import { formatDate } from "../model-mansion/[id]/format";
 
-interface TableRow {
-  _id: string;
+type TaskRow = UnionModelRow & {
   modelName: string;
   chapter: string;
   module: string;
   task: string;
-  agent: string;
+  agentName: string;
   lastCompleted: string;
   progress: string;
-}
+};
 
-interface CallRow {
-  _id: string;
+type CallRow = UnionCallRow & {
   modelName: string;
-  agent: string;
-  date: string;
-  link: string;
-}
+  agentName: string;
+  dateTime: string;
+};
 
 interface TableHeader {
   label: string;
@@ -97,22 +104,36 @@ const Tabs = ({ tabs, activeTab, onChange, variant = "pill" }: TabProps) => {
 };
 
 const UniversityUnion: React.FC = () => {
-  // --- previously-missing state that the JSX below depends on ---
   const [activeTab, setActiveTab] = useState("Tasks");
   const [agent, setAgent] = useState("");
   const [activeCallTab, setActiveCallTab] = useState("Scheduled Calls");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(5);
+  const [limit] = useState(10);
+  const [onlyReview, setOnlyReview] = useState(false);
   const router = useRouter();
   const debouncedSearch = useDebouncedValue(search, 500);
   const [openModal, setOpenModal] = useState(false);
   const [meetingLink, setMeetingLink] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState({
-    modelName: "",
-    agent: "",
-    date: "",
-    meetingLink: "",
+  const [selectedCall, setSelectedCall] = useState<CallRow | null>(null);
+  const [callError, setCallError] = useState("");
+  const [callPending, setCallPending] = useState<"approve" | "reject" | null>(null);
+
+  const { data: agents } = useGetModelMansionAgents();
+  const respondCall = useRespondUnionCall();
+  const modelsQuery = useUnionModels({
+    page,
+    limit,
+    search: debouncedSearch,
+    agent,
+    review: onlyReview,
+  });
+  const callsQuery = useUnionCalls({
+    tab: activeCallTab === "Scheduled Calls" ? "upcoming" : "requests",
+    page,
+    limit,
+    search: debouncedSearch,
+    agent,
   });
 
   const headers: TableHeader[] = [
@@ -138,7 +159,7 @@ const UniversityUnion: React.FC = () => {
     },
     {
       label: "Agent",
-      key: "agent",
+      key: "agentName",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
@@ -153,109 +174,6 @@ const UniversityUnion: React.FC = () => {
     },
   ];
 
-  const dummyUsers: TableRow[] = [
-    {
-      _id: "1",
-      modelName: "Naomi",
-      chapter: "Introduction",
-      module: "Model Basics",
-      task: "Profile Setup",
-      agent: "Sarah",
-      lastCompleted: "10 Jul 2026",
-      progress: "100%",
-    },
-    {
-      _id: "2",
-      modelName: "Emily Smith",
-      chapter: "Posing",
-      module: "Beginner",
-      task: "Standing Poses",
-      agent: "Michael",
-      lastCompleted: "11 Jul 2026",
-      progress: "85%",
-    },
-    {
-      _id: "3",
-      modelName: "David Wilson",
-      chapter: "Lighting",
-      module: "Studio Lights",
-      task: "Soft Light",
-      agent: "Olivia",
-      lastCompleted: "12 Jul 2026",
-      progress: "70%",
-    },
-    {
-      _id: "4",
-      modelName: "Sophia Brown",
-      chapter: "Runway",
-      module: "Catwalk",
-      task: "Walking Practice",
-      agent: "Daniel",
-      lastCompleted: "13 Jul 2026",
-      progress: "90%",
-    },
-    {
-      _id: "5",
-      modelName: "Liam Johnson",
-      chapter: "Photography",
-      module: "Portraits",
-      task: "Headshots",
-      agent: "Emma",
-      lastCompleted: "14 Jul 2026",
-      progress: "60%",
-    },
-    {
-      _id: "6",
-      modelName: "Noah Williams",
-      chapter: "Expressions",
-      module: "Advanced",
-      task: "Facial Expressions",
-      agent: "Lucas",
-      lastCompleted: "15 Jul 2026",
-      progress: "45%",
-    },
-    {
-      _id: "7",
-      modelName: "Ava Davis",
-      chapter: "Fashion",
-      module: "Editorial",
-      task: "Magazine Shoot",
-      agent: "Henry",
-      lastCompleted: "16 Jul 2026",
-      progress: "100%",
-    },
-    {
-      _id: "8",
-      modelName: "James Miller",
-      chapter: "Fitness",
-      module: "Workout",
-      task: "Gym Shoot",
-      agent: "Mia",
-      lastCompleted: "17 Jul 2026",
-      progress: "75%",
-    },
-    {
-      _id: "9",
-      modelName: "Charlotte Moore",
-      chapter: "Commercial",
-      module: "Advertising",
-      task: "Product Shoot",
-      agent: "Ethan",
-      lastCompleted: "18 Jul 2026",
-      progress: "55%",
-    },
-    {
-      _id: "10",
-      modelName: "Benjamin Taylor",
-      chapter: "Final Assessment",
-      module: "Certification",
-      task: "Complete Exam",
-      agent: "Grace",
-      lastCompleted: "19 Jul 2026",
-      progress: "95%",
-    },
-  ];
-
   const callHeaders: TableHeader[] = [
     {
       label: "Name Of Model",
@@ -264,12 +182,12 @@ const UniversityUnion: React.FC = () => {
     },
     {
       label: "Agent",
-      key: "agent",
+      key: "agentName",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
       label: "Date & Time",
-      key: "date",
+      key: "dateTime",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
@@ -286,83 +204,77 @@ const UniversityUnion: React.FC = () => {
     },
     {
       label: "Agent",
-      key: "agent",
+      key: "agentName",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
     {
       label: "Date & Time",
-      key: "date",
+      key: "dateTime",
       icon: <ChevronsUpDown className="w-4 h-4" />,
     },
   ];
 
-  const scheduledCalls: CallRow[] = [
-    {
-      _id: "1",
-      modelName: "Alex Johnson",
-      agent: "Alex Johnson",
-      date: "2023-10-01 10:00 AM",
-      link: "Link",
-    },
-  ];
+  const taskRows: TaskRow[] = (modelsQuery.data?.models ?? []).map((model) => ({
+    ...model,
+    modelName: model.fullName,
+    task: model.currentKey ? `${model.currentKey} ${model.currentTitle}` : "All completed",
+    agentName: model.agent || "Unassigned",
+    lastCompleted: formatDate(model.lastCompletedAt) || "-",
+    progress: `${model.percentage}%`,
+  }));
 
-  // previously-missing data source for the "Call Requests" sub-tab
-  const callRequests: CallRow[] = [
-    {
-      _id: "2",
-      modelName: "Priya Nair",
-      agent: "Sarah",
-      date: "2026-07-31 02:00 PM",
-      link: "Pending",
-    },
-  ];
+  const callRows: CallRow[] = (callsQuery.data?.calls ?? []).map((call) => ({
+    ...call,
+    modelName: call.model?.fullName || "-",
+    agentName: call.agent?.fullName || "-",
+    dateTime: `${call.date} ${call.time}`,
+  }));
 
-  const filteredUsers = useMemo(() => {
-    let data = [...dummyUsers];
+  const totalPages =
+    (activeTab === "Calls"
+      ? callsQuery.data?.pagination?.totalPages
+      : modelsQuery.data?.pagination?.totalPages) || 1;
 
-    if (debouncedSearch) {
-      const keyword = debouncedSearch.toLowerCase();
-      data = data.filter(
-        (user) =>
-          user.modelName.toLowerCase().includes(keyword) ||
-          user.chapter.toLowerCase().includes(keyword) ||
-          user.module.toLowerCase().includes(keyword) ||
-          user.task.toLowerCase().includes(keyword) ||
-          user.agent.toLowerCase().includes(keyword),
-      );
-    }
-
-    if (agent) {
-      data = data.filter((user) => user.agent === agent);
-    }
-
-    return data;
-  }, [debouncedSearch, agent]);
-
-  const totalPages = Math.ceil(filteredUsers.length / limit) || 1;
-
-  const paginatedUsers = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredUsers.slice(start, start + limit);
-  }, [filteredUsers, page, limit]);
+  const answerCall = (type: "approve" | "reject") => {
+    if (!selectedCall) return;
+    setCallError("");
+    setCallPending(type);
+    respondCall.mutate(
+      { id: selectedCall._id, type, meetingLink },
+      {
+        onSuccess: () => setOpenModal(false),
+        onError: (err) => setCallError(apiErrorMessage(err)),
+        onSettled: () => setCallPending(null),
+      },
+    );
+  };
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, agent, activeTab, activeCallTab]);
+  }, [debouncedSearch, agent, activeTab, activeCallTab, onlyReview]);
 
-  const renderCell = (row: TableRow, key: string) => {
+  const renderCell = (row: TaskRow, key: string) => {
     if (key === "progress") {
       return <span className="font-medium text-blue-500">{row.progress}</span>;
     }
-    return row[key as keyof TableRow];
+    if (key === "task" && row.pendingKey) {
+      return (
+        <span>
+          {row.task}{" "}
+          <span className="ml-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-400">
+            Review
+          </span>
+        </span>
+      );
+    }
+    return row[key as keyof TaskRow] as React.ReactNode;
   };
 
-  // previously-missing render function for the Calls table
   const renderCallCell = (row: CallRow, key: string) => {
     if (key === "link") {
       return (
         <a
-          // href={row.link}
+          href={row.meetingLink || undefined}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[#3B82F6] hover:underline"
@@ -373,7 +285,7 @@ const UniversityUnion: React.FC = () => {
       );
     }
 
-    return row[key as keyof CallRow];
+    return row[key as keyof CallRow] as React.ReactNode;
   };
 
   return (
@@ -393,8 +305,11 @@ const UniversityUnion: React.FC = () => {
                   placeholder="Select Agent"
                   options={[
                     { label: "All", value: "" },
-                    { label: "Sarah", value: "Sarah" },
-                    { label: "Michael", value: "Michael" },
+                    { label: "Unassigned", value: "unassigned" },
+                    ...(agents ?? []).map((item: any) => ({
+                      label: item.fullName,
+                      value: item._id,
+                    })),
                   ]}
                   value={agent}
                   onChange={setAgent}
@@ -414,9 +329,18 @@ const UniversityUnion: React.FC = () => {
         <div className="self-stretch rounded-md ">
           {activeTab === "Tasks" && (
             <>
+              <label className="mb-3 inline-flex cursor-pointer items-center gap-2 text-xs text-stone-300">
+                <input
+                  type="checkbox"
+                  checked={onlyReview}
+                  onChange={(event) => setOnlyReview(event.target.checked)}
+                  className="accent-[#EF476F]"
+                />
+                Only models waiting for a review
+              </label>
               <DynamicTable
                 headers={headers}
-                data={paginatedUsers}
+                data={taskRows}
                 rowIcon={eyeimg.src}
                 onclickFunction={(id: string) =>
                   router.push(`/admin/university-union/${id}`)
@@ -450,27 +374,18 @@ const UniversityUnion: React.FC = () => {
                     ? callHeaders
                     : requestHeaders
                 }
-                data={
-                  activeCallTab === "Scheduled Calls"
-                    ? scheduledCalls
-                    : callRequests
-                }
+                data={callRows}
                 rowIcon={
                   activeCallTab === "Scheduled Calls" ? null : eyeimg.src
                 }
                 onclickFunction={(id) => {
-                  const request = callRequests.find((item) => item._id === id);
+                  const call = callRows.find((item) => item._id === id);
 
-                  if (!request) return;
+                  if (!call) return;
 
-                  setSelectedRequest({
-                    modelName: request.modelName,
-                    agent: request.agent,
-                    date: request.date,
-                    meetingLink: "",
-                  });
-
+                  setSelectedCall(call);
                   setMeetingLink("");
+                  setCallError("");
                   setOpenModal(true);
                 }}
                 renderCell={renderCallCell}
@@ -493,19 +408,19 @@ const UniversityUnion: React.FC = () => {
       <ApproveCallRequestModal
         open={openModal}
         onClose={() => setOpenModal(false)}
-        data={selectedRequest}
+        data={{
+          modelName: selectedCall?.modelName || "",
+          agent: selectedCall?.agentName || "",
+          date: selectedCall?.dateTime || "",
+          meetingLink: "",
+        }}
         meetingLink={meetingLink}
         setMeetingLink={setMeetingLink}
-        onReject={() => {
-          console.log("Reject");
-          setOpenModal(false);
-        }}
-        onApprove={() => {
-          console.log("Meeting Link:", meetingLink);
-          console.log("Approve:", selectedRequest);
-
-          setOpenModal(false);
-        }}
+        pending={callPending}
+        error={callError}
+        note={selectedCall?.note}
+        onReject={() => answerCall("reject")}
+        onApprove={() => answerCall("approve")}
       />
     </div>
   );

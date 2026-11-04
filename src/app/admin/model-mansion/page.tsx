@@ -27,6 +27,7 @@ type MansionModel = {
   likedCount: number;
   savedCount: number;
   bookingCount: number;
+  unionPendingKey?: string | null;
 };
 
 const FilterSelect = ({
@@ -117,8 +118,8 @@ const ModelMansion: React.FC = () => {
         <>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {models.map((model) => (
+              <div key={model._id} className="relative">
               <JobCard
-                key={model._id}
                 job={{
                   _id: model._id,
                   name: formatName(model.fullName),
@@ -131,6 +132,12 @@ const ModelMansion: React.FC = () => {
                 href={`${mansionPath}/${model._id}`}
                 isjob={false}
               />
+              {model.unionPendingKey && (
+                <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-medium text-black">
+                  Review task {model.unionPendingKey}
+                </span>
+              )}
+              </div>
             ))}
           </div>
 

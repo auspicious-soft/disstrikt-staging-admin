@@ -93,7 +93,7 @@ type ChatParticipantState = {
 
 export type ProjectChatPage = {
   chatId: string | null;
-  members: ({ userId: string; fullName: string; image: string | null; role: "owner" | "model" } &
+  members: ({ userId: string; fullName: string; image: string | null; role: "owner" | "model" | "collaborator" | "agency" } &
     ChatParticipantState)[];
   agents: ({ agentId: string; fullName: string; image: string | null; joinedAt: string } &
     ChatParticipantState)[];

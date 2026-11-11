@@ -74,6 +74,8 @@ interface EventFormState {
   currency: string;
   price: string;
   serviceFee: string;
+  // PUBLIC, or RISING_STAR: private, only Rising Star models see and book it
+  visibility: string;
   termsAndConditions: string;
   includedItems: string[];
   address: string;
@@ -119,6 +121,7 @@ const CreateCelebrationCruiseEvent = () => {
     currency: "",
     price: "",
     serviceFee: "",
+    visibility: "PUBLIC",
     termsAndConditions: "",
     includedItems: includedOptions.map((option) => option.key),
     address: "",
@@ -149,6 +152,7 @@ const CreateCelebrationCruiseEvent = () => {
       currency: existing.currency ?? "",
       price: String(existing.price ?? ""),
       serviceFee: String(existing.serviceFee ?? 0),
+      visibility: existing.visibility ?? "PUBLIC",
       termsAndConditions: existing.termsAndConditions ?? "",
       includedItems: existing.includedItems ?? [],
       address: existing.address ?? "",
@@ -462,6 +466,7 @@ const CreateCelebrationCruiseEvent = () => {
       currency: form.currency,
       price: Number(form.price),
       serviceFee: Number(form.serviceFee || 0),
+      visibility: form.visibility || "PUBLIC",
       includedItems: form.includedItems,
       termsAndConditions: form.termsAndConditions,
       image: image ? imageKey : existingImage,
@@ -506,6 +511,7 @@ const CreateCelebrationCruiseEvent = () => {
           currency: "",
           price: "",
           serviceFee: "",
+          visibility: "PUBLIC",
           termsAndConditions: "",
           includedItems: includedOptions.map((option) => option.key),
           address: "",
@@ -629,6 +635,25 @@ const CreateCelebrationCruiseEvent = () => {
                     value={form.serviceFee}
                     onChange={handleChange}
                   />
+                </label>
+
+                <label className="space-y-1">
+                  <span className="block text-xs font-medium text-stone-100">
+                    Who can see and book it
+                  </span>
+                  <select
+                    className={fieldBase}
+                    name="visibility"
+                    value={form.visibility}
+                    onChange={(e) => setForm((prev) => ({ ...prev, visibility: e.target.value }))}
+                  >
+                    <option value="PUBLIC">Everyone</option>
+                    <option value="RISING_STAR">Private invitation: Rising Star models only</option>
+                  </select>
+                  <span className="block text-[11px] text-stone-400">
+                    Private events are hidden from other plans. Rising Stars get a notification when one is published.
+                    Models pay their plan price: Aspire 10% off, Rising Star 25% off the ticket price.
+                  </span>
                 </label>
               </div>
               <div className="grid gap-4 lg:grid-cols-2 mb-3">

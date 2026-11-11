@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import SettingsModal from "../../components/SettingsModal";
 import { LogOutIcon } from "lucide-react";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
-import { Building, Camera, ColorWheel, CreditCard, GraduationCap, HomeSimple, ListSelect, ShoppingBag, ShopWindow } from "iconoir-react";
+import { Building, Camera, ColorWheel, CreditCard, Gift, GraduationCap, HomeSimple, ListSelect, ShoppingBag, ShopWindow } from "iconoir-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -92,6 +92,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: () => (
               <CreditCard/>
             ),
+          },
+          {
+            title: "Subscriptions & Add-ons",
+            url: "/admin/subscriptions",
+            icon: () => <Gift />,
           },
            {
             title: "Studio Management",

@@ -8,6 +8,7 @@ import Loader from "../components/ui/Loader";
 import { ModuleSection } from "@/app/components/ModuleSection";
 import { SectionShell } from "@/app/components/SectionShell";
 import { FieldLabel } from "@/app/components/FieldLabel";
+import { PlanEntitlements } from "./PlanEntitlements";
 
 type LocaleKey = "en" | "fr" | "es" | "nl";
 type BillingMode = "flex" | "commitment";
@@ -573,29 +574,8 @@ const SubscriptionPlans = () => {
             </div>
           </SectionShell>
 
-          <div className="space-y-3">
-            {activePlan.moduleSections.map((section) => (
-              <ModuleSection
-                key={section.title}
-                {...section}
-                onToggleSection={(enabled) =>
-                  updateModuleSectionToggle(section.title, enabled)
-                }
-                onToggleRow={(rowLabel, enabled) =>
-                  updateModuleSection(section.title, rowLabel, (row) =>
-                    row.type === "toggle"
-                      ? { ...row, enabled }
-                      : row,
-                  )
-                }
-                onSelectOption={(rowLabel, value) =>
-                  updateModuleSection(section.title, rowLabel, (row) =>
-                    row.type === "options" ? { ...row, active: value } : row,
-                  )
-                }
-              />
-            ))}
-          </div>
+          {/* Module switches are no longer used for access; the real matrix is shown read-only */}
+          <PlanEntitlements planKey={activePlan.key} />
 
           <button
             type="submit"

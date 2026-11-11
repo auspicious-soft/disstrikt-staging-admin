@@ -164,6 +164,8 @@ export function AppHeader() {
     pathSegments.length === 2
   ) {
     pageName = "Subscription Plan";
+  } else if (pathname.startsWith("/admin/subscriptions")) {
+    pageName = "Subscriptions & Add-ons";
   } else if (
     pathname.startsWith("/admin/job-junction") &&
     pathSegments.length > 2

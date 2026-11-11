@@ -139,6 +139,19 @@ export const useRespondUnionCall = () => {
   });
 };
 
+/** The model attended a Portfolio Bootcamp, which opens 9.3 (admin and agent panels). */
+export const useConfirmUnionBootcamp = (modelId: string) => {
+  const { mansionApi: BASE } = usePanel();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axiosInstance.put(`${BASE}/${modelId}/university-union/bootcamp-attended`);
+      return data?.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [BASE, STAFF_PROGRESS_KEY, modelId] }),
+  });
+};
+
 /** Approve or reject an upload a model is waiting on (admin and agent panels). */
 export const useReviewUnionSubTask = (modelId: string) => {
   const { mansionApi: BASE } = usePanel();

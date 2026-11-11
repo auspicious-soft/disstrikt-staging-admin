@@ -7,6 +7,7 @@ import {
   UnionSubTask,
   UnionSubTaskStatus,
   UnionTask,
+  useConfirmUnionBootcamp,
   useReviewUnionSubTask,
 } from "@/hooks/useUniversityUnion";
 import { apiErrorMessage } from "@/hooks/useAgentAccount";
@@ -89,7 +90,42 @@ const ReviewBox = ({ modelId, subTask }: { modelId: string; subTask: UnionSubTas
   );
 };
 
-const SubTaskCard = ({ modelId, subTask }: { modelId: string; subTask: UnionSubTask }) => {
+// Task 9.3 opens once the model attended. Also for a bootcamp done before this check existed.
+const BootcampAttendanceBox = ({ modelId }: { modelId: string }) => {
+  const confirm = useConfirmUnionBootcamp(modelId);
+  const [error, setError] = useState("");
+
+  return (
+    <div className="mt-4 rounded-md border border-sky-500/30 bg-sky-500/5 p-4">
+      <p className="text-sm font-medium text-white">Portfolio Bootcamp not confirmed</p>
+      <p className="mt-1 text-xs text-stone-400">
+        The model can&apos;t start this task until their attendance is confirmed.
+      </p>
+      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      <button
+        type="button"
+        disabled={confirm.isPending}
+        onClick={() => {
+          setError("");
+          confirm.mutate(undefined, { onError: (err) => setError(apiErrorMessage(err)) });
+        }}
+        className="mt-3 flex h-9 items-center gap-2 rounded-md bg-emerald-600 px-4 text-xs font-medium text-white disabled:opacity-60"
+      >
+        {confirm.isPending && <ButtonSpinner />} Confirm attendance
+      </button>
+    </div>
+  );
+};
+
+const SubTaskCard = ({
+  modelId,
+  subTask,
+  bootcampAttended,
+}: {
+  modelId: string;
+  subTask: UnionSubTask;
+  bootcampAttended: boolean;
+}) => {
   const details = [
     subTask.submittedAt && `Submitted ${formatDate(subTask.submittedAt)}`,
     subTask.score && `Score ${subTask.score.correct}/${subTask.score.total}`,
@@ -146,6 +182,9 @@ const SubTaskCard = ({ modelId, subTask }: { modelId: string; subTask: UnionSubT
       )}
 
       {subTask.status === "IN_REVIEW" && <ReviewBox modelId={modelId} subTask={subTask} />}
+      {subTask.key === "9.3" && !bootcampAttended && subTask.status !== "COMPLETED" && (
+        <BootcampAttendanceBox modelId={modelId} />
+      )}
     </div>
   );
 };
@@ -267,7 +306,12 @@ export default function UniversityUnionContent({ modelId }: { modelId: string })
               </p>
               <div className="space-y-3">
                 {selectedTask.subTasks.map((subTask) => (
-                  <SubTaskCard key={subTask.key} modelId={modelId} subTask={subTask} />
+                  <SubTaskCard
+                    key={subTask.key}
+                    modelId={modelId}
+                    subTask={subTask}
+                    bootcampAttended={!!data?.bootcampAttended}
+                  />
                 ))}
               </div>
             </>

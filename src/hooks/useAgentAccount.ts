@@ -90,7 +90,7 @@ export type AgentCallTab = "requests" | "upcoming" | "past";
 
 export type AgentCall = {
   _id: string;
-  status: "REQUESTED" | "APPROVED" | "REJECTED" | "CANCELLED";
+  status: "REQUESTED" | "APPROVED" | "REJECTED" | "CANCELLED" | "COMPLETED";
   startTime: string;
   endTime: string;
   // In timeZone (the agent's availability zone)

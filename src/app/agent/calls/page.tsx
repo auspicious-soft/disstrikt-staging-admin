@@ -58,6 +58,7 @@ const STATUS_LABEL: Record<AgentCall["status"], { label: string; className: stri
   APPROVED: { label: "Completed", className: "bg-[#3DA755]" },
   REJECTED: { label: "Rejected", className: "bg-[#E0414F]" },
   CANCELLED: { label: "Cancelled", className: "bg-[#6B6B6B]" },
+  COMPLETED: { label: "Completed", className: "bg-[#3DA755]" },
 };
 
 const Tabs = ({ tabs, activeTab, onChange }: TabProps) => (

@@ -3,7 +3,6 @@ import {
   useJsApiLoader,
   GoogleMap,
   MarkerF,          // ← Changed from Marker (deprecated)
-  Autocomplete,
 } from "@react-google-maps/api";
 import { toast } from "sonner";
 
@@ -21,6 +20,8 @@ interface LatLng {
 }
 
 const libraries: ("places" | "geometry" | "drawing" | "visualization")[] = ["places"];
+const searchRegionCodes = ["gb", "nl", "be", "es", "fr", "us"];
+const SEARCH_DEBOUNCE_MS = 300;
 
 const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   isOpen,
@@ -35,7 +36,14 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     initialCenter || defaultSpainCenter
   );
 
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [suggestions, setSuggestions] = useState<
+    google.maps.places.AutocompleteSuggestion[]
+  >([]);
+
+  const sessionTokenRef =
+    useRef<google.maps.places.AutocompleteSessionToken | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestRequestRef = useRef(0); // ← lets us ignore stale responses
   const mapRef = useRef<google.maps.Map | null>(null);
   const allowedCountries = ["FR", "ES", "GB","BE", "NL","US"];
   
@@ -64,15 +72,28 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     },
   ];
 
+  // Cancels any queued search and makes in-flight responses stale
+  const cancelPendingSearch = () => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    latestRequestRef.current += 1;
+    return latestRequestRef.current;
+  };
+
   // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
+      cancelPendingSearch();
       setSelectedPosition(null);
       setAddress("");
-      autocompleteRef.current = null;
+      setSuggestions([]);
+      sessionTokenRef.current = null;
       setMapCenter(defaultSpainCenter);
     }
   }, [isOpen]);
+
+  useEffect(() => () => {
+    cancelPendingSearch();
+  }, []);
 
   // Update map center when initialCenter changes or modal opens
   useEffect(() => {
@@ -116,19 +137,74 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     });
   };
 
-  const handlePlaceChanged = () => {
-    if (!autocompleteRef.current) return;
-    const place = autocompleteRef.current.getPlace();
-    if (place.geometry?.location) {
+  const handleAddressChange = (value: string) => {
+    setAddress(value);
+    const requestId = cancelPendingSearch();
+    const input = value.trim();
+
+    if (!input) {
+      setSuggestions([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (!sessionTokenRef.current) {
+        sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
+      }
+
+      try {
+        const { suggestions: results } =
+          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+            input,
+            includedRegionCodes: searchRegionCodes,
+            sessionToken: sessionTokenRef.current,
+          });
+        if (requestId === latestRequestRef.current) setSuggestions(results);
+      } catch (error) {
+        console.error("Location search failed:", error);
+        if (requestId === latestRequestRef.current) {
+          setSuggestions([]);
+          toast.error("Location search failed. Please pick a location on the map.", {
+            id: "location-search-error",
+          });
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  };
+
+  const handleSuggestionSelect = async (
+    prediction: google.maps.places.PlacePrediction,
+  ) => {
+    const requestId = cancelPendingSearch();
+    setSuggestions([]);
+    setAddress(prediction.text.text);
+    setSelectedPosition(null); // ← keeps Select disabled until the new coordinates arrive
+    sessionTokenRef.current = null; // ← fetchFields below ends the billing session
+
+    try {
+      const place = prediction.toPlace();
+      await place.fetchFields({ fields: ["location", "formattedAddress"] });
+      if (requestId !== latestRequestRef.current) return;
+
+      if (!place.location) {
+        toast.error("Could not get the coordinates for that location.");
+        return;
+      }
+
       const latLng: LatLng = {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
+        lat: place.location.lat(),
+        lng: place.location.lng(),
       };
       setSelectedPosition(latLng);
-      setAddress(place.formatted_address || "");
+      setAddress(place.formattedAddress || prediction.text.text);
       if (mapRef.current) {
         mapRef.current.panTo(latLng);
         mapRef.current.setZoom(15); // optional: zoom in on selection
+      }
+    } catch (error) {
+      console.error("Location details failed:", error);
+      if (requestId === latestRequestRef.current) {
+        toast.error("Could not load that location. Please pick it on the map.");
       }
     }
   };
@@ -172,7 +248,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         <div className="bg-zinc-900 rounded-xl p-8 max-w-md w-full text-center">
           <h2 className="text-red-400 text-xl mb-4">Failed to load Google Maps</h2>
           <p className="text-stone-300 mb-6">
-            Please check your API key, network, or if Maps JavaScript + Places API are enabled in Google Cloud Console.
+            Please check your API key, network, or if Maps JavaScript + Places API (New) + Geocoding API are enabled in Google Cloud Console.
           </p>
           <button
             onClick={onClose}
@@ -210,23 +286,34 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
           </button>
         </div>
 
-        <Autocomplete
-          onLoad={(autocomplete) => {
-            autocompleteRef.current = autocomplete;
-            autocomplete.setComponentRestrictions({
-              country: ["gb", "nl", "be", "es", "fr"],
-            });
-          }}
-          onPlaceChanged={handlePlaceChanged}
-        >
+        <div className="relative mb-5">
           <input
             type="text"
             placeholder="Search for a location..."
             value={address}                    // ← now controlled
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full p-3.5 mb-5 bg-zinc-800 border border-zinc-700 rounded-lg text-stone-200 placeholder-zinc-500 focus:outline-none focus:border-blue-600"
+            onChange={(e) => handleAddressChange(e.target.value)}
+            autoComplete="off"
+            className="w-full p-3.5 bg-zinc-800 border border-zinc-700 rounded-lg text-stone-200 placeholder-zinc-500 focus:outline-none focus:border-blue-600"
           />
-        </Autocomplete>
+
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full max-h-64 overflow-y-auto bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg">
+              {suggestions.map(({ placePrediction }) =>
+                placePrediction ? (
+                  <li key={placePrediction.placeId}>
+                    <button
+                      type="button"
+                      onClick={() => handleSuggestionSelect(placePrediction)}
+                      className="w-full px-3.5 py-2.5 text-left text-stone-200 hover:bg-zinc-700 focus:bg-zinc-700 focus:outline-none"
+                    >
+                      {placePrediction.text.text}
+                    </button>
+                  </li>
+                ) : null,
+              )}
+            </ul>
+          )}
+        </div>
 
         <GoogleMap
           mapContainerStyle={containerStyle}

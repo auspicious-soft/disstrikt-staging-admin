@@ -4,12 +4,45 @@ import { File, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import { BellNotification, Notes } from "iconoir-react";
+import { axiosInstance } from "@/lib/axios";
+import { resolveMediaUrl } from "@/lib/media";
+
+type Me = { image?: string | null; email?: string };
+
+// The stored session first (instant), then GET /admin/admin-data (fresh)
+const storedAdmin = (): Me => {
+  try {
+    return JSON.parse(localStorage.getItem("admin") || "null") || {};
+  } catch {
+    return {};
+  }
+};
 
 export default function SettingsModal({ isOpen, onClose }) {
   const modalRef = React.useRef(null);
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+  const [me, setMe] = React.useState<Me>({});
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    setMe(storedAdmin());
+    setImageFailed(false);
+    axiosInstance
+      .get("/admin/admin-data")
+      .then(({ data }) => {
+        if (active && data?.data) setMe({ image: data.data.image, email: data.data.email });
+      })
+      .catch(() => {
+        // keep the stored values
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,16 +122,24 @@ export default function SettingsModal({ isOpen, onClose }) {
                 type="button"
                 onClick={handleRedirectAccount}
               >
-                <img
-                  className="w-9 h-9 rounded"
-                  src="https://placehold.co/36x36"
-                />
-                <div className="inline-flex flex-col justify-center items-start gap-1.5">
+                {resolveMediaUrl(me.image) && !imageFailed ? (
+                  <img
+                    className="w-9 h-9 rounded object-cover shrink-0"
+                    src={resolveMediaUrl(me.image)}
+                    alt="Profile"
+                    onError={() => setImageFailed(true)}
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded shrink-0 border border-stone-700 bg-[#171314] p-1 flex items-center justify-center">
+                    <img src="/assets/Logo.png" alt="No profile picture" className="w-full object-contain" />
+                  </div>
+                )}
+                <div className="inline-flex flex-col justify-center items-start gap-1.5 min-w-0">
                   <div className="justify-start text-stone-200 text-sm font-normal ">
                     Account Settings
                   </div>
-                  <div className="justify-start text-stone-200 text-[10px] font-normal ">
-                    info@disstriktapp.com
+                  <div className="justify-start text-stone-200 text-[10px] font-normal truncate max-w-[200px]">
+                    {me.email || "info@disstriktapp.com"}
                   </div>
                 </div>
               </button>

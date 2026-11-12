@@ -1,6 +1,8 @@
 import { axiosInstance } from "@/lib/axios";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePanel } from "@/app/components/PanelContext";
+import { useSocket } from "@/app/components/SocketContext";
+import type { InboxChat } from "@/app/components/ChatInbox";
 
 export type UnionSubTaskStatus = "LOCKED" | "AVAILABLE" | "IN_REVIEW" | "REJECTED" | "COMPLETED";
 
@@ -115,6 +117,45 @@ export const useUnionCalls = (params: {
     },
     placeholderData: (previous) => previous,
   });
+
+export const UNION_CHATS_KEY = ["unionChats"];
+
+export type UnionChatType = "all" | "model" | "group";
+
+/**
+ * Messages tab: GET /admin/university-union/chats. Model threads and group
+ * chats, newest first, filtered on the server by agent ("" | "unassigned" |
+ * agent id), search and type; more pages load as the list scrolls.
+ */
+export const useUnionChats = (params: { search: string; agent: string; type: UnionChatType }) => {
+  // The tab refreshes on socket events; polling is the fallback
+  const { connected } = useSocket();
+  return useInfiniteQuery({
+    queryKey: [...UNION_CHATS_KEY, params],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const { data } = await axiosInstance.get("/admin/university-union/chats", {
+        params: {
+          page: pageParam,
+          limit: 20,
+          ...(params.search ? { search: params.search } : {}),
+          ...(params.agent ? { agent: params.agent } : {}),
+          ...(params.type !== "all" ? { type: params.type } : {}),
+        },
+      });
+      return data?.data as {
+        data: InboxChat[];
+        counts: { model: number; group: number };
+        pagination: { page: number; total: number; totalPages: number; hasMore: boolean };
+      };
+    },
+    getNextPageParam: (last) =>
+      last?.pagination?.hasMore ? last.pagination.page + 1 : undefined,
+    placeholderData: (previous) => previous,
+    refetchInterval: connected ? 30000 : 10000,
+    refetchOnWindowFocus: true,
+  });
+};
 
 /** PUT /admin/university-union/calls/:id/approve | reject */
 export const useRespondUnionCall = () => {

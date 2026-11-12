@@ -9,13 +9,14 @@ import { Search, ChevronsUpDown } from "lucide-react";
 import eyeimg from "../../../assets/icons/Eye.png";
 import { useRouter } from "next/navigation";
 import { useDebouncedValue } from "@/hooks/useDebounce";
-import MessagesPage from "@/app/components/chatUi";
+import UnionMessages from "./UnionMessages";
 import ApproveCallRequestModal from "@/app/components/ApproveCallRequestModal";
 import { Link } from "iconoir-react";
 import { useGetModelMansionAgents } from "@/hooks/useModelMansion";
 import { apiErrorMessage } from "@/hooks/useAgentAccount";
 import {
   UnionCallRow,
+  UnionChatType,
   UnionModelRow,
   useRespondUnionCall,
   useUnionCalls,
@@ -56,6 +57,12 @@ interface TabProps {
 }
 
 const callTabs = ["Scheduled Calls", "Call Requests"];
+const messageTabs = ["All", "Individual", "Groups"];
+const messageTypeOf: Record<string, UnionChatType> = {
+  All: "all",
+  Individual: "model",
+  Groups: "group",
+};
 
 const Tabs = ({ tabs, activeTab, onChange, variant = "pill" }: TabProps) => {
   if (variant === "underline") {
@@ -107,6 +114,7 @@ const UniversityUnion: React.FC = () => {
   const [activeTab, setActiveTab] = useState("Tasks");
   const [agent, setAgent] = useState("");
   const [activeCallTab, setActiveCallTab] = useState("Scheduled Calls");
+  const [activeMessageTab, setActiveMessageTab] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -402,7 +410,23 @@ const UniversityUnion: React.FC = () => {
             </>
           )}
 
-          {activeTab === "Messages" && <MessagesPage />}
+          {activeTab === "Messages" && (
+            <>
+              <div className="p-2">
+                <Tabs
+                  tabs={messageTabs}
+                  activeTab={activeMessageTab}
+                  onChange={setActiveMessageTab}
+                  variant="underline"
+                />
+              </div>
+              <UnionMessages
+                search={debouncedSearch}
+                agent={agent}
+                type={messageTypeOf[activeMessageTab] ?? "all"}
+              />
+            </>
+          )}
         </div>
       </div>
       <ApproveCallRequestModal

@@ -1,31 +1,12 @@
 import { axiosInstance } from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
 import { useSocket } from "@/app/components/SocketContext";
+import type { InboxChat } from "@/app/components/ChatInbox";
 
 export const AGENT_CHATS_KEY = ["agentChats"];
 
-export type AgentChat = {
-  type: "model" | "group";
-  // model: the model's user id; group: the chat id
-  id: string;
-  // group only: booking id used by /agent/model-market/:id/chat/...
-  projectId: string | null;
-  name: string;
-  image: string | null;
-  participants: string[];
-  lastMessage: {
-    content: string;
-    type: string;
-    senderName: string | null;
-    isMine: boolean;
-    createdAt: string;
-  } | null;
-  lastMessageAt: string | null;
-  unreadCount: number;
-  // model only
-  isOnline?: boolean;
-  lastSeenAt?: string | null;
-};
+// Same shape as the shared inbox (agentName is admin-only)
+export type AgentChat = InboxChat;
 
 // Agent's Messages inbox (GET /agent/chats), polled for new messages
 export const useAgentChats = () => {

@@ -74,8 +74,9 @@ const validate = (values: Form) => {
   if (values.phone && !/^\d{6,15}$/.test(values.phone)) errors.phone = "Enter 6 to 15 digits";
   if (values.phone && !values.countryCode) errors.countryCode = "Select a country code";
 
-  // All three empty keeps the current password
-  if (values.oldPassword || values.password || values.confirmPassword) {
+  // No new password keeps the current one. Current Password on its own (e.g.
+  // filled by the browser's autofill) is ignored and never sent.
+  if (values.password || values.confirmPassword) {
     if (!values.oldPassword) errors.oldPassword = "Enter your current password";
     if (!values.password) errors.password = "Enter a new password";
     else if (!PASSWORD_REGEX.test(values.password))
@@ -258,7 +259,8 @@ const AccountSettings = () => {
           type={showPassword[id] ? "text" : "password"}
           value={form[id]}
           disabled={saving}
-          autoComplete={id === "oldPassword" ? "current-password" : "new-password"}
+          // "new-password" stops the browser autofilling the saved login password
+          autoComplete="new-password"
           onChange={(e) => setField(id, e.target.value)}
           placeholder="*************"
           aria-invalid={Boolean(errors[id])}
@@ -360,7 +362,7 @@ const AccountSettings = () => {
           {passwordField("confirmPassword", "Confirm New Password")}
 
           <p className="text-[11px] text-neutral-500 md:col-span-2">
-            Leave the password fields empty to keep your current password.
+            Leave New Password empty to keep your current password.
           </p>
 
           <div className="self-stretch md:col-span-2">

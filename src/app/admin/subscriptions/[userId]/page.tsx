@@ -129,6 +129,17 @@ export default function UserAccessPage() {
           <h1 className="mt-1 text-xl font-semibold text-stone-100">{data.user?.fullName ?? "User"}</h1>
           <p className="text-xs text-stone-400">
             {data.user?.email} · {data.user?.userMode}
+            {data.user?.country ? ` · ${data.user.country}` : ""}
+          </p>
+          <p className="mt-1 text-xs text-stone-400">
+            Stripe account:{" "}
+            <span className="text-stone-200">
+              {data.user?.stripeRegion === "US"
+                ? "US"
+                : data.user?.stripeRegion === "DEFAULT"
+                  ? "Default (EU / UK)"
+                  : "Not decided yet (set at the first payment or payout setup)"}
+            </span>
           </p>
         </div>
       </div>

@@ -62,7 +62,7 @@ export function AppHeader() {
   } else if(
     pathname.startsWith("/agent/dashboard")
   ){
-    pageName = "DashBoard";
+    pageName = "Dashboard";
   } else if(
     pathname.startsWith("/agent/account-settings") 
   ){

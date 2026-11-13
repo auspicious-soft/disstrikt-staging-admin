@@ -79,7 +79,7 @@ const JobJunction: React.FC = () => {
   const [status, setStatus] = useState(filterOptions.status[0].value);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(12);
   // Ignore leading/trailing spaces and collapse repeated spaces in the search term
   const debouncedSearch = useDebouncedValue(search.trim().replace(/\s+/g, " "), 500);
   const { country } = useCountry();

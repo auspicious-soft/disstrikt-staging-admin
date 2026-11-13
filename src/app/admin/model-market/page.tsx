@@ -21,6 +21,7 @@ import { formatMoney, titleCase } from "../model-mansion/[id]/format";
 import Loader from "../components/ui/Loader";
 import { formatName } from "@/lib/media";
 import { usePanel } from "@/app/components/PanelContext";
+import CollabRequestsTab from "./CollabRequestsTab";
 
 interface TableHeader {
   label: string;
@@ -133,7 +134,8 @@ const ModelMarket: React.FC = () => {
         <div className="flex flex-wrap justify-between items-end gap-2.5 w-full">
           <div className="w-fit max-w-full overflow-x-auto">
             <div className="flex min-w-max rounded-full bg-white/10 p-1">
-              {TABS.map((tab) => (
+              {/* Collab requests come from an admin-only API */}
+              {TABS.filter((tab) => kind === "admin" || tab.value !== "collab").map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
@@ -190,12 +192,7 @@ const ModelMarket: React.FC = () => {
         </div>
 
         {activeTab === "collab" ? (
-          <div className="self-stretch rounded-md border border-stone-800 bg-black/10 px-4 py-10 text-center">
-            <p className="text-sm text-stone-300">Collabs aren&apos;t available yet.</p>
-            <p className="mt-1 text-xs text-stone-500">
-              There is no collab data in the app to show here.
-            </p>
-          </div>
+          <CollabRequestsTab />
         ) : isPending ? (
           <div className="self-stretch">
             <Loader />

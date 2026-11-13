@@ -17,7 +17,7 @@ export default function ShoutoutsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search, 400);
-  const { data, isLoading, isError } = useShoutouts({ page, status, search: debounced });
+  const { data, isLoading, isError } = useShoutouts({ page, status, search: String(debounced ?? "").trim() });
   const review = useReviewShoutout();
   const rows: any[] = data?.rows ?? [];
 
@@ -61,7 +61,10 @@ export default function ShoutoutsPage() {
         </div>
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value.replace(/^\s+/, ""));
+            setPage(1);
+          }}
           placeholder="Name, email or Instagram"
           className="h-[34px] w-full max-w-[280px] rounded-[6px] border border-[#332C2D] bg-[#111111] px-3 text-sm"
         />

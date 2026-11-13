@@ -22,7 +22,7 @@ export default function SubscriptionUsersPage() {
   const [userMode, setUserMode] = useState("MODEL");
   const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search, 400);
-  const { data, isLoading, isError } = useSubscriptionUsers({ page, limit: 20, search: String(debounced ?? ""), userMode });
+  const { data, isLoading, isError } = useSubscriptionUsers({ page, limit: 20, search: String(debounced ?? "").trim(), userMode });
   const users: any[] = data?.users ?? [];
   const pagination = data?.pagination;
 
@@ -33,7 +33,8 @@ export default function SubscriptionUsersPage() {
         <input
           value={search}
           onChange={(e) => {
-            setSearch(e.target.value);
+            // Leading spaces are dropped; a search of only spaces is no search
+            setSearch(e.target.value.replace(/^\s+/, ""));
             setPage(1);
           }}
           placeholder="Search by name or email"

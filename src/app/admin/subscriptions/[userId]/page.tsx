@@ -63,6 +63,23 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
   </section>
 );
 
+// Grant form: every field has a label above it and the same control height
+const fieldLabel = "flex flex-col gap-1 text-xs text-stone-400";
+const fieldControl =
+  "h-[38px] w-full rounded-[6px] border border-[#332C2D] bg-black px-3 text-sm text-stone-200 outline-none focus:border-[#EF476F]";
+// Dark color scheme makes the native calendar icon visible on the black field
+const dateControl =
+  "[color-scheme:dark] cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-80 hover:[&::-webkit-calendar-picker-indicator]:opacity-100";
+
+// Opens the calendar when the field itself is clicked, not only the icon
+const openPicker = (e: React.MouseEvent<HTMLInputElement>) => {
+  try {
+    e.currentTarget.showPicker?.();
+  } catch {
+    // Some browsers refuse showPicker; the icon still works
+  }
+};
+
 const addonState = (row: any) => {
   const now = Date.now();
   if (row.status === "PENDING") return { label: "Payment pending", cls: "text-amber-300" };
@@ -253,61 +270,72 @@ export default function UserAccessPage() {
 
       {isModel && (
         <Card title="Grant add-on credits">
-          <div className="grid gap-3 md:grid-cols-5">
-            <select
-              value={form.addon}
-              onChange={(e) => setForm({ ...form, addon: e.target.value as AddonKey })}
-              className="h-[38px] rounded-[6px] border border-[#332C2D] bg-black px-3 text-sm"
-            >
-              {ADDON_KEYS.map((k) => (
-                <option key={k} value={k}>
-                  {ADDON_LABELS[k]}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={form.quantity}
-              onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-              className="h-[38px] rounded-[6px] border border-[#332C2D] bg-black px-3 text-sm"
-              aria-label="Quantity"
-            />
-            <label className="text-xs text-stone-400">
+          <div className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.6fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <label className={fieldLabel}>
+              Add-on
+              <select
+                value={form.addon}
+                onChange={(e) => setForm({ ...form, addon: e.target.value as AddonKey })}
+                className={fieldControl}
+              >
+                {ADDON_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {ADDON_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={fieldLabel}>
+              Quantity
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+                className={fieldControl}
+              />
+            </label>
+            <label className={fieldLabel}>
               Starts (optional)
               <input
                 type="datetime-local"
                 value={form.startsAt}
                 onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                className="mt-1 h-[34px] w-full rounded-[6px] border border-[#332C2D] bg-black px-2 text-sm text-stone-200"
+                onClick={openPicker}
+                className={`${fieldControl} ${dateControl}`}
               />
             </label>
-            <label className="text-xs text-stone-400">
+            <label className={fieldLabel}>
               Expires (optional)
               <input
                 type="datetime-local"
                 value={form.expiresAt}
+                min={form.startsAt || undefined}
                 onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
-                className="mt-1 h-[34px] w-full rounded-[6px] border border-[#332C2D] bg-black px-2 text-sm text-stone-200"
+                onClick={openPicker}
+                className={`${fieldControl} ${dateControl}`}
               />
             </label>
             <button
               onClick={submitGrant}
               disabled={grant.isPending}
-              className="inline-flex h-[38px] items-center justify-center gap-2 self-end rounded-[6px] bg-[#EF476F] text-xs font-medium uppercase text-white hover:bg-rose-400 disabled:opacity-60"
+              className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-[6px] bg-[#EF476F] px-4 text-xs font-medium uppercase text-white hover:bg-rose-400 disabled:opacity-60"
             >
               {grant.isPending && <ButtonSpinner />}
               Grant
             </button>
           </div>
-          <input
-            value={form.note}
-            onChange={(e) => setForm({ ...form, note: e.target.value })}
-            maxLength={500}
-            placeholder="Internal note (why this was granted)"
-            className="mt-3 h-[38px] w-full rounded-[6px] border border-[#332C2D] bg-black px-3 text-sm"
-          />
+          <label className={`${fieldLabel} mt-3`}>
+            Internal note (optional)
+            <input
+              value={form.note}
+              onChange={(e) => setForm({ ...form, note: e.target.value })}
+              maxLength={500}
+              placeholder="Why this was granted"
+              className={fieldControl}
+            />
+          </label>
           <p className="mt-2 text-xs text-stone-400">
             One credit = one booking of that type. Credits only work while the model has a valid plan. Dance Bootcamp opens no
             booking yet.

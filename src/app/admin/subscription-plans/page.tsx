@@ -2,6 +2,7 @@
 
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
 import React, { useEffect, useMemo, useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import { InfoCircle } from "iconoir-react";
 import { useGetSubscriptions, useUpdateSubscriptions } from "@/hooks/useAdmin";
 import Loader from "../components/ui/Loader";
@@ -12,6 +13,7 @@ import { PlanEntitlements } from "./PlanEntitlements";
 
 type LocaleKey = "en" | "fr" | "es" | "nl";
 type BillingMode = "flex" | "commitment";
+const BILLING_MODES: BillingMode[] = ["flex", "commitment"];
 
 type Plan = {
   _id?: string;
@@ -297,10 +299,17 @@ const buildEditablePlanPayload = (plan: Plan) => {
 const SubscriptionPlans = () => {
   const { data, isLoading } = useGetSubscriptions();
   const updateSubscriptionPlan = useUpdateSubscriptions();
-  const [billingMode, setBillingMode] = useState<BillingMode>("commitment");
+  // Billing mode and selected plan are kept across refreshes
+  const [billingMode, setBillingMode, savedBillingMode] = usePersistedTab<BillingMode>(
+    "billingMode",
+    "commitment",
+    BILLING_MODES,
+  );
   const [plans, setPlans] = useState<Plan[]>([]);
-  // index into `plans` (not into the filtered list)
-  const [activeIndex, setActiveIndex] = useState(0);
+  // index into `plans` (not into the filtered list); stored as text
+  const [planIndex, setPlanIndex, savedPlanIndex] = usePersistedTab<string>("plan", "0");
+  const activeIndex = Number(planIndex) || 0;
+  const setActiveIndex = (index: number) => setPlanIndex(String(index));
 
   const normalizePlanKey = (key: string) =>
     key.toLowerCase().replace(/\s+/g, "-").replace(/-commitment$/, "");
@@ -320,14 +329,29 @@ const SubscriptionPlans = () => {
 
     setPlans(mapped);
 
+    const inMode = (mode: BillingMode) => (plan: Plan) =>
+      mode === "commitment" ? plan.isCommitment : !plan.isCommitment;
+
+    // Keep the saved mode and plan (refresh, or reload after saving) when
+    // they still exist; otherwise the first plan of the default mode
     const hasCommitment = mapped.some((plan) => plan.isCommitment);
-    const initialMode: BillingMode = hasCommitment ? "commitment" : "flex";
+    const savedMode = savedBillingMode.current;
+    const initialMode: BillingMode = mapped.some(inMode(savedMode))
+      ? savedMode
+      : hasCommitment
+        ? "commitment"
+        : "flex";
     setBillingMode(initialMode);
 
-    const firstIndex = mapped.findIndex((plan) =>
-      initialMode === "commitment" ? plan.isCommitment : !plan.isCommitment,
+    const savedIndex = Number(savedPlanIndex.current);
+    const firstIndex = mapped.findIndex(inMode(initialMode));
+    setActiveIndex(
+      mapped[savedIndex] && inMode(initialMode)(mapped[savedIndex])
+        ? savedIndex
+        : firstIndex >= 0
+          ? firstIndex
+          : 0,
     );
-    setActiveIndex(firstIndex >= 0 ? firstIndex : 0);
   }, [data]);
 
   // Plans for the current billing mode, keeping their original index

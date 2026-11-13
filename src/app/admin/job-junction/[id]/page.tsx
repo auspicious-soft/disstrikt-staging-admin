@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import {
   ChevronsUpDown,
   Link2,
@@ -104,6 +105,7 @@ const postedByText = (job: any) => {
 // SELECTED is shown as "Shortlisted" (the app's name for it)
 type ApplicantStatus = "PENDING" | "SELECTED" | "ACCEPTED" | "REJECTED";
 type ApplicantFilter = "ALL" | "PENDING" | "SELECTED" | "REJECTED";
+const FILTER_KEYS: ApplicantFilter[] = ["ALL", "PENDING", "SELECTED", "REJECTED"];
 
 const filters: { label: string; value: ApplicantFilter }[] = [
   { label: "All", value: "ALL" },
@@ -242,7 +244,7 @@ const SectionPanel = ({
 };
 
 const JobJunctionDetailsPage = () => {
-  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
+  const [activeFilter, setActiveFilter] = usePersistedTab<ApplicantFilter>("filter", "ALL", FILTER_KEYS);
   const [currentPage, setCurrentPage] = useState(1);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();

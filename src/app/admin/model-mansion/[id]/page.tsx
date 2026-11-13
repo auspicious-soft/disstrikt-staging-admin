@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import { useParams } from "next/navigation";
 import ModelMansionTabContent from "./model-mansion-tab-content";
 import Loader from "../../components/ui/Loader";
@@ -22,7 +22,7 @@ const TABS = [
 
 const ModelMansionDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [activeTab, setActiveTab] = usePersistedTab("tab", TABS[0], TABS);
   const { data: model, isPending, isError, error } = useGetModelMansionDetails(id);
 
   if (isPending) return <Loader />;

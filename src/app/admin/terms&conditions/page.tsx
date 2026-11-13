@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import MultiTextEditors from "../components/policies/txtEditor";
 import {
   useGetPlatformInfo,
@@ -67,7 +68,7 @@ const PrivacyPolicyPage: React.FC = () => {
     terms: null as string | null,
     contact: null as string | null,
   });
-  const [activeTab, setActiveTab] = useState("privacy");
+  const [activeTab, setActiveTab] = usePersistedTab("tab", "privacy", ["privacy", "terms", "contact"]);
 
   const {
     data: platformInfo,

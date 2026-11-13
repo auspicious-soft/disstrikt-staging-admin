@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import { ArrowSeparateVertical } from "iconoir-react";
 
 type RangeKey = "3" | "6" | "12";
 type TabKey = "revenue" | "subscription";
+const RANGE_KEYS: RangeKey[] = ["3", "6", "12"];
+const TAB_KEYS: TabKey[] = ["revenue", "subscription"];
 type BarSeries = {
   label: string;
   color: string;
@@ -326,8 +329,8 @@ const GroupedBarChart = ({
 };
 
 export default function Dashboard() {
-  const [selectedRange, setSelectedRange] = useState<RangeKey>("3");
-  const [activeRevenueTab, setActiveRevenueTab] = useState<TabKey>("revenue");
+  const [selectedRange, setSelectedRange] = usePersistedTab<RangeKey>("range", "3", RANGE_KEYS);
+  const [activeRevenueTab, setActiveRevenueTab] = usePersistedTab<TabKey>("revenueTab", "revenue", TAB_KEYS);
   const months = useMemo(() => monthLabels[selectedRange], [selectedRange]);
 
   // Only the 3-month view is compact enough to place charts side by side.

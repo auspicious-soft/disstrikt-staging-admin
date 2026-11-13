@@ -1,6 +1,7 @@
 "use client";
 
 import React, { ReactElement, useEffect, useMemo, useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import CustomInput from "@/app/components/CustomInput";
 import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
@@ -36,6 +37,7 @@ interface TableHeader {
   fontWeight?: string;
 }
 type ApplicantFilter = "ALL" | "ACTIVE" | "CLOSED" | "UPCOMING";
+const FILTER_KEYS: ApplicantFilter[] = ["ALL", "ACTIVE", "CLOSED", "UPCOMING"];
 
 // The API's status, to the minute (CLOSED = past)
 const statusLabels: Record<string, string> = {
@@ -47,7 +49,7 @@ const statusLabels: Record<string, string> = {
 const CelebrationCruise: React.FC = () => {
   const [sort, setSort] = useState("");
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ApplicantFilter>("ALL");
+  const [activeFilter, setActiveFilter] = usePersistedTab<ApplicantFilter>("filter", "ALL", FILTER_KEYS);
   const [currentPage, setCurrentPage] = useState(1);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);

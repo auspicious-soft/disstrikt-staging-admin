@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import SafeImage from "@/app/components/SafeImage";
 import { useGetModelMansionLikesSaves } from "@/hooks/useModelMansion";
 import { formatName } from "@/lib/media";
@@ -19,6 +19,7 @@ const filterTabs: { label: string; value: string }[] = [
   { label: "Photographer", value: "PHOTOGRAPHER" },
   { label: "Content Creator", value: "CREATOR" },
 ];
+const FILTER_VALUES = filterTabs.map((tab) => tab.value);
 
 const ActivityList = ({
   title,
@@ -73,7 +74,7 @@ const ActivityList = ({
 );
 
 const LikesSavesContent = ({ modelId }: { modelId: string }) => {
-  const [activeFilter, setActiveFilter] = useState("");
+  const [activeFilter, setActiveFilter] = usePersistedTab("filter", "", FILTER_VALUES);
   const { data, isPending, isError } = useGetModelMansionLikesSaves(
     modelId,
     activeFilter,

@@ -22,6 +22,7 @@ import Loader from "../components/ui/Loader";
 import { formatName } from "@/lib/media";
 import { usePanel } from "@/app/components/PanelContext";
 import CollabRequestsTab from "./CollabRequestsTab";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 
 interface TableHeader {
   label: string;
@@ -38,6 +39,9 @@ const TABS: { label: string; value: MarketTab }[] = [
   { label: "Market", value: "market" },
   { label: "Collab", value: "collab" },
 ];
+
+const ADMIN_TABS: MarketTab[] = ["market", "collab"];
+const AGENT_TABS: MarketTab[] = ["market"];
 
 const COUNTRY_NAMES: Record<string, string> = {
   NL: "Netherlands",
@@ -86,7 +90,6 @@ type ProjectRow = {
 };
 
 const ModelMarket: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<MarketTab>("market");
   const [search, setSearch] = useState("");
   const [agent, setAgent] = useState("");
   const [status, setStatus] = useState("");
@@ -94,6 +97,12 @@ const ModelMarket: React.FC = () => {
   const [limit] = useState(10);
   const router = useRouter();
   const { kind, marketPath } = usePanel();
+  // Kept across refreshes; agents have no Collab tab
+  const [activeTab, setActiveTab] = usePersistedTab<MarketTab>(
+    "tab",
+    "market",
+    kind === "admin" ? ADMIN_TABS : AGENT_TABS,
+  );
   const { country } = useCountry();
 
   const debouncedSearch = useDebouncedValue(search, 500);

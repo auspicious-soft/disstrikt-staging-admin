@@ -1,6 +1,7 @@
 "use client";
 
 import React, { ReactElement, useEffect, useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import CustomInput from "@/app/components/CustomInput";
 import CustomSelect from "@/app/components/CustomSelect";
 import DynamicTable from "@/app/components/DynamicTable";
@@ -56,6 +57,7 @@ interface TabProps {
   variant?: "pill" | "underline";
 }
 
+const MAIN_TABS = ["Tasks", "Calls", "Messages"];
 const callTabs = ["Scheduled Calls", "Call Requests"];
 const messageTabs = ["All", "Individual", "Groups"];
 const messageTypeOf: Record<string, UnionChatType> = {
@@ -111,10 +113,10 @@ const Tabs = ({ tabs, activeTab, onChange, variant = "pill" }: TabProps) => {
 };
 
 const UniversityUnion: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("Tasks");
+  const [activeTab, setActiveTab] = usePersistedTab("tab", "Tasks", MAIN_TABS);
   const [agent, setAgent] = useState("");
-  const [activeCallTab, setActiveCallTab] = useState("Scheduled Calls");
-  const [activeMessageTab, setActiveMessageTab] = useState("All");
+  const [activeCallTab, setActiveCallTab] = usePersistedTab("callTab", "Scheduled Calls", callTabs);
+  const [activeMessageTab, setActiveMessageTab] = usePersistedTab("messageTab", "All", messageTabs);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -302,7 +304,7 @@ const UniversityUnion: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-end items-end gap-2.5 w-full">
           <div className="flex flex-wrap justify-between gap-3 w-full">
             <Tabs
-              tabs={["Tasks", "Calls", "Messages"]}
+              tabs={MAIN_TABS}
               activeTab={activeTab}
               onChange={setActiveTab}
             />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { ReactElement, useEffect, useState } from "react";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 import CustomInput from "@/app/components/CustomInput";
 import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
@@ -92,7 +93,7 @@ const formatCallDate = (call: AgentCall) => {
 };
 
 const AgentCalls: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("Upcoming Calls");
+  const [activeTab, setActiveTab] = usePersistedTab("tab", "Upcoming Calls", Object.keys(TABS));
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);

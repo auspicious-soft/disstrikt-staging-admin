@@ -77,14 +77,15 @@ export function NavMain({
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    className={`px-[30px] py-[10px] h-auto cursor-pointer ${
+                    // Collapsed sidebar: only the centred icon (the tooltip names it)
+                    className={`px-[30px] py-[10px] h-auto cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 ${
                       isActive ? "bg-rose-500 text-neutral-900" : "font-normal"
                     }`}
                   >
                     {item.icon && <item.icon />}
-                    <span>{item.title}</span>
+                    <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                     <ChevronRight
-                      className={`ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-270 ${
+                      className={`ml-auto group-data-[collapsible=icon]:hidden transition-transform duration-200 group-data-[state=open]/collapsible:rotate-270 ${
                         isActive ? "rotate-[-0deg]" : "rotate-90"
                       }`}
                     />
@@ -125,7 +126,8 @@ export function NavMain({
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link
                   href={item.url}
-                 className={`custom-madeTommy px-[20px] py-[10px] h-auto flex items-center gap-2  ${
+                 // Collapsed sidebar: only the centred icon (the tooltip names it)
+                 className={`custom-madeTommy px-[20px] py-[10px] h-auto flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 ${
     isActive ? "bg-rose-500 text-white" : "font-normal"
   }`}
   onClick={(e) => {
@@ -134,7 +136,7 @@ export function NavMain({
   }}
 >
                   {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

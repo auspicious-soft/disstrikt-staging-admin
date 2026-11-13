@@ -150,7 +150,7 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
     <>
       <Link
         href={href}
-        className="rounded-[14px] bg-[#111115] p-3 text-stone-100 max-h-[500px]"
+        className="block h-full rounded-[14px] bg-[#111115] p-3 text-stone-100 max-h-[500px]"
       >
         {isjob && (
           <>

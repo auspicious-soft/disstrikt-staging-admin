@@ -245,7 +245,8 @@ const CollabRequestsTab: React.FC = () => {
                 return row[key];
               }}
             />
-            {!rows.length && (
+            {!rows.length &&
+              (String(debouncedSearch ?? "").trim() || status || country) && (
               <p className="py-8 text-center text-sm text-stone-500">No collab requests match your filters.</p>
             )}
           </div>

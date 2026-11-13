@@ -309,7 +309,7 @@ export default function UserAccessPage() {
             className="mt-3 h-[38px] w-full rounded-[6px] border border-[#332C2D] bg-black px-3 text-sm"
           />
           <p className="mt-2 text-xs text-stone-400">
-            One credit = one booking of that type. Credits only work while the model has a valid plan. Skill Bootcamp opens no
+            One credit = one booking of that type. Credits only work while the model has a valid plan. Dance Bootcamp opens no
             booking yet.
           </p>
         </Card>

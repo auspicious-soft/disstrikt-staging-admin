@@ -5,14 +5,14 @@
 import { axiosInstance } from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const ADDON_KEYS = ["PORTFOLIO_SHOOT", "CUSTOM_SHOOT", "CATWALK_BOOTCAMP", "SKILL_BOOTCAMP"] as const;
+export const ADDON_KEYS = ["PORTFOLIO_SHOOT", "CUSTOM_SHOOT", "CATWALK_BOOTCAMP", "DANCE_BOOTCAMP"] as const;
 export type AddonKey = (typeof ADDON_KEYS)[number];
 
 export const ADDON_LABELS: Record<AddonKey, string> = {
   PORTFOLIO_SHOOT: "Portfolio Shoot",
   CUSTOM_SHOOT: "Custom Shoot",
   CATWALK_BOOTCAMP: "Catwalk Bootcamp",
-  SKILL_BOOTCAMP: "Skill Bootcamp",
+  DANCE_BOOTCAMP: "Dance Bootcamp",
 };
 
 export type FeatureStatus = "FULL" | "RESTRICTED" | "ADDON" | "BLURRED" | "NOT_YET_AVAILABLE" | "NEXT_UPDATE";

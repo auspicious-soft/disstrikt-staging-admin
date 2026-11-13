@@ -182,9 +182,11 @@ const SubTaskCard = ({
       )}
 
       {subTask.status === "IN_REVIEW" && <ReviewBox modelId={modelId} subTask={subTask} />}
-      {subTask.key === "9.3" && !bootcampAttended && subTask.status !== "COMPLETED" && (
-        <BootcampAttendanceBox modelId={modelId} />
-      )}
+      {/* Only once 9.2 is done (9.3 is next): before that there's nothing to confirm */}
+      {subTask.key === "9.3" &&
+        !bootcampAttended &&
+        subTask.status !== "COMPLETED" &&
+        subTask.status !== "LOCKED" && <BootcampAttendanceBox modelId={modelId} />}
     </div>
   );
 };

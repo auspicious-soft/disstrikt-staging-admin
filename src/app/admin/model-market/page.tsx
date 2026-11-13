@@ -238,7 +238,8 @@ const ModelMarket: React.FC = () => {
                   );
                 }}
               />
-              {!rows.length && (
+              {!rows.length &&
+                (debouncedSearch.trim() || agent || status || country) && (
                 <p className="py-8 text-center text-sm text-stone-500">
                   No bookings match your filters.
                 </p>

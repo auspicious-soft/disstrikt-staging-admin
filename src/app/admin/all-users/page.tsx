@@ -141,12 +141,14 @@ const AllUsersPage: React.FC = () => {
                         >
                           {user.userMode === "MODEL" ? "Model Mansion" : "View Profile"}
                         </Link>
-                        <Link
-                          href={`/admin/subscriptions/${user._id}`}
-                          className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
-                        >
-                          Subscription
-                        </Link>
+                        {user.userMode === "MODEL" && (
+                          <Link
+                            href={`/admin/subscriptions/${user._id}`}
+                            className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
+                          >
+                            Subscription
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>

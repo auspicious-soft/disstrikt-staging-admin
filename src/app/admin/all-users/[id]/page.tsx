@@ -156,19 +156,21 @@ export default function UserProfilePage() {
           </div>
           <div className="flex gap-2">
             {isModel && (
-              <Link
-                href={`/admin/model-mansion/${account._id}`}
-                className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
-              >
-                Model Mansion
-              </Link>
+              <>
+                <Link
+                  href={`/admin/model-mansion/${account._id}`}
+                  className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
+                >
+                  Model Mansion
+                </Link>
+                <Link
+                  href={`/admin/subscriptions/${account._id}`}
+                  className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
+                >
+                  Subscription
+                </Link>
+              </>
             )}
-            <Link
-              href={`/admin/subscriptions/${account._id}`}
-              className="rounded-[6px] border border-[#2A2A2E] px-3 py-1.5 text-xs hover:border-[#EF476F]"
-            >
-              Subscription
-            </Link>
           </div>
         </div>
       </section>

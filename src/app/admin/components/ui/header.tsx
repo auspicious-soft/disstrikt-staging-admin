@@ -148,6 +148,8 @@ export function AppHeader() {
     pathSegments.length > 2
   ) {
     pageName = "Model Mansion";
+  } else if (pathname.startsWith("/admin/all-users")) {
+    pageName = "All Users";
   } else if (pathname.startsWith("/admin/training-theater")) {
     pageName = "Training Theater";
   } else if (pathname.startsWith("/admin/terms&conditions")) {
@@ -179,6 +181,7 @@ export function AppHeader() {
     "/admin/user-management",
     "/admin/job-junction",
     "/admin/model-mansion",
+    "/admin/all-users",
     "/admin/shoot-studio",
     "/admin/university-union",
     "/admin/model-market",

@@ -9,7 +9,8 @@ import { UNION_CHATS_KEY, UnionChatType, useUnionChats } from "@/hooks/useUniver
 /**
  * University Union → Messages: the models' threads with the Disstrikt team
  * and the project / collab group chats, filtered on the server by the page's
- * search and agent filter. Admins read them; the model's agent replies.
+ * search and agent filter. Model threads: admins and the model's agent both
+ * reply. Group chats: admins read, the models' agents reply.
  */
 export default function UnionMessages({
   search,

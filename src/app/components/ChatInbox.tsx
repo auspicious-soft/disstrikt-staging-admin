@@ -4,8 +4,8 @@
  * Two-pane Messages inbox (conversation list + open chat), shared by the
  * agent panel's Messages page and the admin's University Union → Messages
  * tab. Model threads open in ModelChatContent, group chats in
- * ProjectGroupChat; both follow the surrounding PanelProvider (admins only
- * read, agents reply). The parent loads and filters `chats`; this component
+ * ProjectGroupChat; both follow the surrounding PanelProvider (model threads:
+ * admins and agents reply; group chats: admins read, agents reply). The parent loads and filters `chats`; this component
  * refreshes them on socket events through `onRefresh`.
  */
 import React from "react";

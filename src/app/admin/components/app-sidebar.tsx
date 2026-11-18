@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import SettingsModal from "../../components/SettingsModal";
 import { LogOutIcon } from "lucide-react";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
-import { Building, Camera, ColorWheel, CreditCard, Gift, GraduationCap, Group, HomeSimple, ListSelect, ShoppingBag, ShopWindow } from "iconoir-react";
+import { Building, Camera, ChatLines, ColorWheel, CreditCard, Gift, GraduationCap, Group, HomeSimple, ListSelect, ShoppingBag, ShopWindow } from "iconoir-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -80,6 +80,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "University Union",
             url: "/admin/university-union",
             icon: () => <GraduationCap />,
+          },
+          {
+            // Models' "Chat with your agent" threads: read and reply (4.7.3)
+            title: "Agent Conversations",
+            url: "/admin/agent-conversations",
+            icon: () => <ChatLines />,
           },
           {
             title: "Model Market",

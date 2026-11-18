@@ -1,7 +1,36 @@
 "use client"
+/**
+ * Admin panel → Notifications: a message to every app user or one plan
+ * group, optionally only users with one app language. Stored in each user's
+ * Notifications tab and pushed (POST /api/admin/notifications).
+ */
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 import { ArrowSeparateVertical, Copy, NavArrowDownSolid } from "iconoir-react";
+import { useMutation } from "@tanstack/react-query";
+import { axiosInstance } from "@/lib/axios";
+import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
+
+const TITLE_MAX = 100;
+const DESCRIPTION_MAX = 1000;
+
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "French" },
+  { value: "es", label: "Spanish" },
+  { value: "nl", label: "Dutch" },
+];
+
+const AUDIENCES = [
+  { value: "ALL", label: "All Users" },
+  { value: "RSP", label: "Rising Star Users" },
+  { value: "NFP", label: "New Face Users" },
+  { value: "AMP", label: "Aspire Model Users" },
+];
+
+// recipientLanguage, not language: the API's auth replaces body.language
+type BroadcastPayload = { title: string; description: string; audience: string; recipientLanguage?: string };
 
 const inputClass =
   "h-11 w-full rounded-md border border-stone-700 bg-transparent px-3 text-xs font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-400";
@@ -17,25 +46,73 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 
 const NotificationsPage = () => {
   const [sendToSpecificPeople, setSendToSpecificPeople] = useState(false);
+  const [language, setLanguage] = useState("");
+  const [audience, setAudience] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { mutate: send, isPending } = useMutation({
+    mutationFn: async (payload: BroadcastPayload) => {
+      const { data } = await axiosInstance.post("/admin/notifications", payload);
+      return data?.data as { recipients: number };
+    },
+  });
+
+  const canSend =
+    !!title.trim() && !!description.trim() && (!sendToSpecificPeople || !!audience) && !isPending;
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canSend) return;
+    send(
+      {
+        title: title.trim(),
+        description: description.trim(),
+        audience: sendToSpecificPeople ? audience : "ALL",
+        ...(language ? { recipientLanguage: language } : {}),
+      },
+      {
+        onSuccess: (result) => {
+          const count = result?.recipients ?? 0;
+          if (count) {
+            toast.success(`Notification sent to ${count} ${count === 1 ? "user" : "users"}`);
+            setTitle("");
+            setDescription("");
+          } else {
+            toast.error("No users match this audience and language, nothing was sent");
+          }
+        },
+        onError: (error) => {
+          toast.error(
+            axios.isAxiosError(error)
+              ? error.response?.data?.message || "Couldn't send the notification"
+              : "Couldn't send the notification",
+          );
+        },
+      },
+    );
+  };
 
   return (
     <main className="w-full text-stone-200">
       <section className="w-full rounded-md border border-stone-700 bg-black/10 p-4">
-        <form className="flex flex-col gap-3">
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-sm font-medium leading-none text-stone-100">
               Notification
             </h1>
 
             <label className="relative w-full sm:w-[295px]" aria-label="Preferred Language">
-              <select className={selectClass}>
-                <option value="" disabled className="bg-stone-900">
-                  Preferred Language
+              {/* Only users with this app language; none = every language */}
+              <select className={selectClass} value={language} onChange={(e) => setLanguage(e.target.value)}>
+                <option value="" className="bg-stone-900">
+                  Preferred Language: all
                 </option>
-                <option className="bg-stone-900">English</option>
-                <option className="bg-stone-900">French</option>
-                <option className="bg-stone-900">Spanish</option>
-                <option className="bg-stone-900">Dutch</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value} className="bg-stone-900">
+                    {l.label}
+                  </option>
+                ))}
               </select>
               <ArrowSeparateVertical className="pointer-events-none absolute right-3 top-1/2 h-2.5 w-3.5 -translate-y-1/2 text-stone-500" />
             </label>
@@ -47,6 +124,9 @@ const NotificationsPage = () => {
               className={inputClass}
               placeholder="Rising Star Plan"
               type="text"
+              value={title}
+              maxLength={TITLE_MAX}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </label>
 
@@ -56,6 +136,9 @@ const NotificationsPage = () => {
             <textarea
               className="h-44 w-full resize-none rounded-md border border-stone-700 bg-transparent px-3 py-3 text-xs font-normal text-stone-200 outline-none transition-colors placeholder:text-stone-500 focus:border-rose-400 md:h-[174px]"
               placeholder="Description of the notification goes here"
+              value={description}
+              maxLength={DESCRIPTION_MAX}
+              onChange={(e) => setDescription(e.target.value)}
             />
             <Copy className="pointer-events-none absolute right-2 bottom-4 h-3.5 w-3.5 text-stone-500" />
             </div>
@@ -75,14 +158,19 @@ const NotificationsPage = () => {
             <label className="block">
               <FieldLabel>Select People</FieldLabel>
               <div className="relative">
-                <select className={inputClass + " appearance-none pr-9"}>
+                <select
+                  className={inputClass + " appearance-none pr-9"}
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                >
                   <option value="" disabled className="bg-stone-900">
                     Select
                   </option>
-                  <option className="bg-stone-900">All Users</option>
-                  <option className="bg-stone-900">Rising Star Users</option>
-                  <option className="bg-stone-900">New Face Users</option>
-                  <option className="bg-stone-900">Aspire Model Users</option>
+                  {AUDIENCES.map((a) => (
+                    <option key={a.value} value={a.value} className="bg-stone-900">
+                      {a.label}
+                    </option>
+                  ))}
                 </select>
                 <NavArrowDownSolid className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-500" />
               </div>
@@ -92,8 +180,10 @@ const NotificationsPage = () => {
           <div className="flex justify-end pt-1">
             <button
               type="submit"
-              className="h-10 w-full rounded-md bg-[#EF476F] px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600 sm:w-auto"
+              disabled={!canSend}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#EF476F] px-5 text-sm font-medium text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
+              {isPending && <ButtonSpinner />}
               Send Notification
             </button>
           </div>

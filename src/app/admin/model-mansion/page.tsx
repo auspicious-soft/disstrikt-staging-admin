@@ -6,6 +6,7 @@ import { ArrowSeparateVertical } from "iconoir-react";
 import { useDebouncedValue } from "@/hooks/useDebounce";
 import { JobCard } from "@/app/components/JobCard";
 import Pagination from "@/app/components/Pagination";
+import { profileShareUrl } from "@/lib/share";
 import { useCountry } from "@/app/components/CountryContext";
 import Loader from "../components/ui/Loader";
 import {
@@ -131,6 +132,7 @@ const ModelMansion: React.FC = () => {
                 }}
                 href={`${mansionPath}/${model._id}`}
                 isjob={false}
+                shareUrl={profileShareUrl("model", model._id)}
               />
               {model.unionPendingKey && (
                 <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-medium text-black">

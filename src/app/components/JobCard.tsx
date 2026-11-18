@@ -16,6 +16,7 @@ import { useCompleteJobById, useRemoveJobById } from "@/hooks/useAdmin";
 import { toast } from "sonner";
 import axios from "axios";
 import { ConfirmModal } from "./ConfirmModal";
+import { copyText, shareLink } from "@/lib/share";
 import SafeImage from "./SafeImage";
 import {
   jobPostedByLabel,
@@ -39,6 +40,8 @@ type JobCardProps = {
   isjob: boolean;
   // Agent panel: shows the job status without the Complete / Remove actions
   readOnly?: boolean;
+  // Profile cards: the public link for "Share Profile" / "Copy link"
+  shareUrl?: string;
 };
 type JobStatus = "OPEN" | "COMPLETED" | "REMOVED";
 
@@ -67,7 +70,7 @@ const StatusPill = ({ status }: { status: JobStatus }) => {
 };
 
 
-export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) => {
+export const JobCard = ({ job, href, isjob, readOnly = false, shareUrl }: JobCardProps) => {
   const [status, setStatus] = useState<JobStatus>(job?.status || "Pending");
   const [removed, setRemoved] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
@@ -142,6 +145,24 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
         setConfirmAction(null);
       },
     });
+  };
+
+  // The buttons sit inside the card's Link: stop the click from opening it
+  const handleCopyClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!shareUrl) return;
+    if (await copyText(shareUrl)) toast.success("Profile link copied");
+    else toast.error("Couldn't copy the link");
+  };
+
+  const handleShareClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!shareUrl) return;
+    const result = await shareLink(shareUrl, job?.name);
+    if (result === "copied") toast.success("Profile link copied");
+    else if (result === "failed") toast.error("Couldn't share the link");
   };
 
   if (removed) return null;
@@ -257,10 +278,20 @@ export const JobCard = ({ job, href, isjob, readOnly = false }: JobCardProps) =>
           </div>
         ) : (
           <div className="flex items-center gap-2 border-t border-[#232327] pt-3">
-            <button className="flex items-center gap-1 bg-[#212121] py-2 px-3 rounded-lg text-xs font-medium text-white hover:text-stone-300">
+            <button
+              type="button"
+              onClick={handleShareClick}
+              disabled={!shareUrl}
+              className="flex items-center gap-1 bg-[#212121] py-2 px-3 rounded-lg text-xs font-medium text-white hover:text-stone-300 disabled:opacity-50"
+            >
               Share Profile
             </button>
-            <button className="flex items-center gap-1 border border-[#212121] py-2 px-3 rounded-lg text-xs font-medium text-white hover:text-stone-300">
+            <button
+              type="button"
+              onClick={handleCopyClick}
+              disabled={!shareUrl}
+              className="flex items-center gap-1 border border-[#212121] py-2 px-3 rounded-lg text-xs font-medium text-white hover:text-stone-300 disabled:opacity-50"
+            >
               Copy link
             </button>
           </div>

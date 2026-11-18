@@ -40,7 +40,7 @@ const ActivityList = ({
     </div>
     <div className="px-3 text-xs font-light mb-2">{children}</div>
 
-    <div className="flex flex-col px-2">
+    <div className="flex flex-col px-2 overflow-auto max-h-[400px]">
       {items.length ? (
         items.map((item, index) => (
           <div

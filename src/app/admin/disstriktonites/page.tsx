@@ -10,6 +10,7 @@ import DynamicTable from "@/app/components/DynamicTable";
 import Pagination from "@/app/components/Pagination";
 import { NavArrowDownSolid } from "iconoir-react";
 import { useGetEmployees } from "@/hooks/useAdmin";
+import DeleteDisstriktoniteModal from "./DeleteDisstriktoniteModal";
 import Loader from "../components/ui/Loader";
 
 interface DisstriktoniteRow {
@@ -86,6 +87,13 @@ const DisstriktonitesPage = () => {
   );
 }, [data]);
 const totalPages = data?.pagination?.totalPages ?? 1;
+  const [toDelete, setToDelete] = useState<DisstriktoniteRow | null>(null);
+
+  const handleDeleted = () => {
+    setToDelete(null);
+    // Step back when the last row of the page is gone
+    if (rows.length === 1 && page > 1) setPage(page - 1);
+  };
 
   useEffect(() => {
     setPage(1);
@@ -161,6 +169,7 @@ const totalPages = data?.pagination?.totalPages ?? 1;
                   type="button"
                   className="flex h-8 w-8 items-center justify-center rounded-md bg-neutral-800 text-stone-300 transition-colors hover:bg-neutral-700 hover:text-white"
                   aria-label="Delete"
+                  onClick={() => setToDelete(row)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -178,6 +187,12 @@ const totalPages = data?.pagination?.totalPages ?? 1;
         </>
         )}
       </div>
+
+      <DeleteDisstriktoniteModal
+        employee={toDelete}
+        onClose={() => setToDelete(null)}
+        onDeleted={handleDeleted}
+      />
     </main>
   );
 };

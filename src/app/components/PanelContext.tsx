@@ -6,7 +6,8 @@ import { createContext, useContext } from "react";
  * The Model Mansion / Model Market / Job Junction screens are shared by the
  * admin and agent panels. This says which API and which page routes the
  * current panel uses; the agent API returns only the agent's own models,
- * projects and job applicants, and Job Junction is read-only for agents.
+ * projects and job applicants. In Job Junction agents can post jobs and manage
+ * the ones they posted (`job.isMine`); other jobs are read-only for them.
  */
 export type PanelConfig = {
   kind: "admin" | "agent";
@@ -14,6 +15,10 @@ export type PanelConfig = {
   marketApi: string;
   jobsApi: string;
   jobByIdApi: string;
+  // Post (POST), edit (PUT, id in the body), `/:id/complete` and `/:id/remove`
+  jobsWriteApi: string;
+  // PUT `/:appliedJobId` sets an applicant's status
+  applicantStatusApi: string;
   mansionPath: string;
   marketPath: string;
   jobsPath: string;
@@ -25,6 +30,8 @@ export const ADMIN_PANEL: PanelConfig = {
   marketApi: "/admin/model-market",
   jobsApi: "/admin/jobs",
   jobByIdApi: "/admin/jobsById",
+  jobsWriteApi: "/admin/jobs",
+  applicantStatusApi: "/admin/jobsById",
   mansionPath: "/admin/model-mansion",
   marketPath: "/admin/model-market",
   jobsPath: "/admin/job-junction",
@@ -36,6 +43,8 @@ export const AGENT_PANEL: PanelConfig = {
   marketApi: "/agent/model-market",
   jobsApi: "/agent/job-junction",
   jobByIdApi: "/agent/job-junction",
+  jobsWriteApi: "/agent/job-junction",
+  applicantStatusApi: "/agent/job-junction/applicants",
   mansionPath: "/agent/assigned-models",
   marketPath: "/agent/model-market",
   jobsPath: "/agent/job-junction",

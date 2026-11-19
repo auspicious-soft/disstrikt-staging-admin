@@ -308,7 +308,14 @@ const ATTENTION: {
     tab: [["tab", "Messages"]],
     icon: <MessageCircle className="h-4 w-4" />,
   },
-  { key: "unassignedModels", label: "Models without an agent", href: "/admin/model-mansion", icon: <UserX className="h-4 w-4" /> },
+  {
+    key: "unassignedModels",
+    label: "Models without an agent",
+    href: "/admin/model-mansion",
+    // Opens Model Mansion filtered on Unassigned
+    tab: [["agent", "unassigned"]],
+    icon: <UserX className="h-4 w-4" />,
+  },
   { key: "shoutouts", label: "Shoutout requests pending", href: "/admin/subscriptions/shoutouts", icon: <Megaphone className="h-4 w-4" /> },
   {
     key: "studioAttendance",

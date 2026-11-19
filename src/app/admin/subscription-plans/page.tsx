@@ -27,6 +27,9 @@ type Plan = {
   description: Record<LocaleKey, string>;
   moduleSections: ModuleSection[];
   isCommitment: boolean;
+  // Portfolio Book pages (1-6) open on this plan; null = never set, the
+  // plan group's default applies
+  portfolioBookPages: number[] | null;
 };
 
 type ModuleRow =
@@ -163,9 +166,12 @@ const mapPlanToForm = (apiPlan: any): Plan => {
     },
   ];
 
+  const savedPages = modelMansion.portfolioBookPages;
+
   return {
     _id: apiPlan?._id ?? "",
     key: apiPlan?.key ?? "",
+    portfolioBookPages: Array.isArray(savedPages) ? savedPages.map(Number) : null,
     name: {
       en: apiPlan?.name?.en ?? "",
       fr: apiPlan?.name?.fr ?? "",
@@ -290,8 +296,10 @@ const buildEditablePlanPayload = (plan: Plan) => {
         achievementCabinet: Boolean(modelMansionSection?.rows[0]?.type === "toggle" && modelMansionSection.rows[0].enabled),
         professionalModelContract: Boolean(modelMansionSection?.rows[1]?.type === "toggle" && modelMansionSection.rows[1].enabled),
         portfolioBookTier: getOptionArray(portfolioTierRow, []),
+        // Left out until set once, so the plan keeps its group's default
+        ...(plan.portfolioBookPages ? { portfolioBookPages: plan.portfolioBookPages } : {}),
         modelFeeCalculator: Boolean(modelMansionSection?.rows[3]?.type === "toggle" && modelMansionSection.rows[3].enabled),
-      },   
+      },
     },
   };
 };
@@ -598,8 +606,15 @@ const SubscriptionPlans = () => {
             </div>
           </SectionShell>
 
-          {/* Module switches are no longer used for access; the real matrix is shown read-only */}
-          <PlanEntitlements planKey={activePlan.key} />
+          {/* Module switches are no longer used for access; the real matrix is
+              shown read-only, except the Portfolio Book pages, set per plan */}
+          <PlanEntitlements
+            planKey={activePlan.key}
+            portfolioBookPages={activePlan.portfolioBookPages}
+            onPortfolioBookPagesChange={(pages) =>
+              updateActivePlan((plan) => ({ ...plan, portfolioBookPages: pages }))
+            }
+          />
 
           <button
             type="submit"

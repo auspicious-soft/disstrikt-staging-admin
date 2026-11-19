@@ -89,7 +89,7 @@ const formatSchedule = (job: any) => {
 };
 
 // Dome user: "Studio (Brand)", with their name when the studio has one.
-// Admin-panel job: the company name, else "Distrikt".
+// Admin-panel job: the company name, else "Disstrikt".
 const postedByText = (job: any) => {
   const poster = job?.poster;
   if (poster?.type === "USER") {
@@ -102,17 +102,29 @@ const postedByText = (job: any) => {
   return job?.postedBy ? jobPostedByLabel(job.postedBy) : "N/A";
 };
 
-// SELECTED is shown as "Shortlisted" (the app's name for it)
+// SELECTED is shown as "Shortlisted" (the app's name for it): through to the
+// next and final stage. ACCEPTED means the applicant got the job.
 type ApplicantStatus = "PENDING" | "SELECTED" | "ACCEPTED" | "REJECTED";
-type ApplicantFilter = "ALL" | "PENDING" | "SELECTED" | "REJECTED";
-const FILTER_KEYS: ApplicantFilter[] = ["ALL", "PENDING", "SELECTED", "REJECTED"];
+type SettableStatus = Exclude<ApplicantStatus, "PENDING">;
+type ApplicantFilter = "ALL" | ApplicantStatus;
+const FILTER_KEYS: ApplicantFilter[] = ["ALL", "PENDING", "SELECTED", "ACCEPTED", "REJECTED"];
 
 const filters: { label: string; value: ApplicantFilter }[] = [
   { label: "All", value: "ALL" },
   { label: "Pending Applications", value: "PENDING" },
   { label: "Shortlisted", value: "SELECTED" },
+  { label: "Accepted", value: "ACCEPTED" },
   { label: "Rejected", value: "REJECTED" },
 ];
+
+// The options in the status dropdown, in pipeline order
+const STATUS_OPTIONS: SettableStatus[] = ["REJECTED", "SELECTED", "ACCEPTED"];
+
+const statusToast: Record<SettableStatus, string> = {
+  SELECTED: "Applicant shortlisted",
+  ACCEPTED: "Applicant accepted",
+  REJECTED: "Applicant rejected",
+};
 
 const statusLabel: Record<ApplicantStatus, string> = {
   PENDING: "Pending",
@@ -248,7 +260,7 @@ const JobJunctionDetailsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { kind } = usePanel();
+  const { kind, jobsPath } = usePanel();
   const isAgent = kind === "agent";
   const { data, isPending } = useGetJobById({
     id,
@@ -261,6 +273,8 @@ const JobJunctionDetailsPage = () => {
   const { mutate: downloadCSV, isPending: isDownloading } = useDownloadJobCSV();
 
   const job = data?.data?.revisedData;
+  // Founders manage every job; agents only the ones they posted
+  const canManage = !isAgent || Boolean(job?.isMine);
   const appliedJobs = data?.data?.appliedJobs ?? [];
   const pagination = data?.data?.pagination;
   const counts = data?.data?.counts ?? {};
@@ -271,17 +285,11 @@ const JobJunctionDetailsPage = () => {
     );
   };
 
-  const handleStatusChange = (
-    appliedJobId: string,
-    status: "SELECTED" | "REJECTED",
-  ) => {
+  const handleStatusChange = (appliedJobId: string, status: SettableStatus) => {
     updateApplicantStatus(
       { appliedJobId, status },
       {
-        onSuccess: () =>
-          toast.success(
-            status === "SELECTED" ? "Applicant shortlisted" : "Applicant rejected",
-          ),
+        onSuccess: () => toast.success(statusToast[status]),
         onError: (error) => toastError(error, "Could not update the status"),
       },
     );
@@ -341,8 +349,8 @@ const JobJunctionDetailsPage = () => {
     if (key === "status") {
       const status = (row[key] as ApplicantStatus) || "PENDING";
 
-      // Agents can't change statuses; ACCEPTED is set by the model, not here
-      if (isAgent || status === "ACCEPTED") {
+      // Agents change statuses only on jobs they posted
+      if (!canManage) {
         return (
           <span
             className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium ${statusClassName(
@@ -354,7 +362,7 @@ const JobJunctionDetailsPage = () => {
         );
       }
 
-      // The API only accepts SELECTED or REJECTED, so Pending can't be picked
+      // Pending can't be picked: an applicant can't be moved back to it
       return (
         <select
           value={status}
@@ -362,7 +370,7 @@ const JobJunctionDetailsPage = () => {
           onChange={(event) =>
             handleStatusChange(
               String(row._id),
-              event.target.value as "SELECTED" | "REJECTED",
+              event.target.value as SettableStatus,
             )
           }
           aria-label="Applicant status"
@@ -375,8 +383,11 @@ const JobJunctionDetailsPage = () => {
               Pending
             </option>
           )}
-          <option value="SELECTED" className="bg-neutral-900 text-stone-100">Shortlisted</option>
-          <option value="REJECTED" className="bg-neutral-900 text-stone-100">Rejected</option>
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option} value={option} className="bg-neutral-900 text-stone-100">
+              {statusLabel[option]}
+            </option>
+          ))}
         </select>
       );
     }
@@ -519,11 +530,11 @@ const JobJunctionDetailsPage = () => {
                 <span className="rounded-full bg-[#256533] px-4 py-1 text-base font-medium text-white">
                   {jobUserModeLabel(job?.userMode)}
                 </span>
-                {!isAgent && (
+                {canManage && (
                   <button
                     type="button"
                     aria-label="Edit job"
-                    onClick={() => router.push(`/admin/job-junction/edit/${id}`)}
+                    onClick={() => router.push(`${jobsPath}/edit/${id}`)}
                     className="rounded-md border border-stone-700 bg-stone-800 px-3 py-2 text-xs font-medium text-stone-300 transition-colors hover:bg-stone-700 hover:text-white"
                   >
                     Edit

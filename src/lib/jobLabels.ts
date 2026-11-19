@@ -34,7 +34,7 @@ export const JOB_POSTED_BY_OPTIONS: JobOption[] = [
   { label: "Designer", value: "DESIGNER" },
   { label: "Photographer", value: "PHOTOGRAPHER" },
   { label: "MUA/Hairstylist", value: "STYLIST" },
-  { label: "Distrikt", value: "FOUNDER" },
+  { label: "Disstrikt", value: "FOUNDER" },
 ];
 
 const labelOf = (options: JobOption[], value?: string | null) => {
@@ -74,13 +74,13 @@ export type JobPoster = {
   logo?: string | null;
 } | null;
 
-/** Studio name, else the user's name; "Distrikt" for admin-panel jobs. */
+/** Studio name, else the user's name; "Disstrikt" for admin-panel jobs. */
 export const jobPosterName = (poster?: JobPoster) => {
   if (poster === null) return "Deleted account";
-  if (!poster || poster.type === "DISSTRIKT") return "Distrikt";
+  if (!poster || poster.type === "DISSTRIKT") return "Disstrikt";
   return poster.studioName || formatName(poster.fullName || "") || "N/A";
 };
 
-/** Studio logo, else the user's photo (null for Distrikt). */
+/** Studio logo, else the user's photo (null for Disstrikt). */
 export const jobPosterImage = (poster?: JobPoster) =>
   poster?.type === "USER" ? poster.logo || poster.image || null : null;

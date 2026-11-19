@@ -126,6 +126,40 @@ export const useGetEmployees = ({
     },
   });
 };
+// What deleting a staff account changes (counts for each warning), whether
+// it's allowed, and the agents its models can move to
+export const useGetEmployeeDeletePreview = (id?: string) => {
+  return useQuery({
+    queryKey: ["employeeDeletePreview", id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/employee/${id}/delete-preview`);
+      return data?.data ?? data;
+    },
+    enabled: Boolean(id),
+    // Counts must be current each time the modal opens
+    staleTime: 0,
+    gcTime: 0,
+  });
+};
+
+// Deletes a staff account, optionally moving its models to another agent;
+// the list refreshes afterwards
+export const useDeleteEmployee = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reassignTo }: { id: string; reassignTo?: string }) => {
+      const { data } = await axiosInstance.delete(`/admin/employee/${id}`, {
+        params: reassignTo ? { reassignTo } : undefined,
+      });
+      return data;
+    },
+    onSuccess: (_data, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: ["employees"] });
+      queryClient.removeQueries({ queryKey: ["employeById", id] });
+    },
+  });
+};
+
 export const useGetEmployeesById = (id: any) => {
   return useQuery({
     queryKey: ["employeById", id],
@@ -333,10 +367,12 @@ export const useGetCelebrationCruiseTickets = ({
     enabled: !!id,
   });
 };
+// Posts a job: /admin/jobs, or /agent/job-junction from the agent panel
 export const CreateJobAdmin = () => {
+  const { jobsWriteApi } = usePanel();
   return useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await axiosInstance.post("/admin/jobs", payload);
+      const { data } = await axiosInstance.post(jobsWriteApi, payload);
       return data;
     },
   });
@@ -352,6 +388,7 @@ export const useGetJobJunction = ({
   status,
   role,
   applied = false,
+  mine = false,
 }: {
   page: number;
   limit: number;
@@ -361,10 +398,12 @@ export const useGetJobJunction = ({
   status: string;
   role: string;
   applied?: boolean;
+  // Agent panel: only jobs the agent posted
+  mine?: boolean;
 }) => {
   const { jobsApi } = usePanel();
   return useQuery({
-    queryKey: ["getjobJunction", jobsApi, search, postedBy, status, role, country, applied, page, limit],
+    queryKey: ["getjobJunction", jobsApi, search, postedBy, status, role, country, applied, mine, page, limit],
     queryFn: async () => {
       const { data } = await axiosInstance.get(jobsApi, {
         params: {
@@ -376,6 +415,7 @@ export const useGetJobJunction = ({
           ...(role ? { role } : {}),
           ...(country ? { country } : {}),
           ...(applied ? { applied: true } : {}),
+          ...(mine ? { mine: true } : {}),
         },
       });
       return data;
@@ -408,20 +448,22 @@ export const useGetJobById = ({
     placeholderData: (previous) => previous,
   });
 };
-// Shortlist (SELECTED) or reject one application; notifies the applicant.
+// Shortlist (SELECTED), accept or reject one application; notifies the applicant.
 // The id is the application's _id, not the job's.
 export const useUpdateJobApplicantStatus = () => {
   const queryClient = useQueryClient();
+  // Agents: only applicants on jobs they posted
+  const { applicantStatusApi } = usePanel();
   return useMutation({
     mutationFn: async ({
       appliedJobId,
       status,
     }: {
       appliedJobId: string;
-      status: "SELECTED" | "REJECTED";
+      status: "SELECTED" | "ACCEPTED" | "REJECTED";
     }) => {
       const { data } = await axiosInstance.put(
-        `/admin/jobsById/${appliedJobId}`,
+        `${applicantStatusApi}/${appliedJobId}`,
         { status },
       );
       return data;
@@ -452,11 +494,12 @@ export const useDownloadJobCSV = () => {
   });
 };
 export const useUpdateJobAdmin = () => {
-   const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
+  const { jobsWriteApi } = usePanel();
 
   return useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await axiosInstance.put("/admin/jobs", payload);
+      const { data } = await axiosInstance.put(jobsWriteApi, payload);
       return data;
     },
     onSuccess: () => {
@@ -471,10 +514,11 @@ export const useUpdateJobAdmin = () => {
 
 };
 export const useCompleteJobById = (id: string) => {
+  const { jobsWriteApi } = usePanel();
   return useMutation({
     mutationFn: async () => {
       const { data } = await axiosInstance.patch(
-        `/admin/jobs/${id}/complete`
+        `${jobsWriteApi}/${id}/complete`
       );
 
       return data;
@@ -483,10 +527,11 @@ export const useCompleteJobById = (id: string) => {
 };
 
 export const useRemoveJobById = (id: string) => {
+  const { jobsWriteApi } = usePanel();
   return useMutation({
     mutationFn: async () => {
       const { data } = await axiosInstance.patch(
-        `/admin/jobs/${id}/remove`
+        `${jobsWriteApi}/${id}/remove`
       );
 
       return data;

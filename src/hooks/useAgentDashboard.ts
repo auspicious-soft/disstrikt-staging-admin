@@ -54,7 +54,13 @@ export type AgentDashboard = {
     joinedThisMonth: number;
     activeThisWeek: number;
     byCountry: { country: string; count: number }[];
-    plans: { active: number; expired: number; none: number };
+    plans: {
+      active: number;
+      expired: number;
+      none: number;
+      // NFP = New Face, AMP = Aspire Model, RSP = Rising Star
+      byPlan: { group: "NFP" | "AMP" | "RSP"; count: number }[];
+    };
     union: {
       totalSteps: number;
       waitingReview: number;

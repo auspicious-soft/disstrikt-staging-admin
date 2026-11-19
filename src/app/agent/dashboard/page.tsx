@@ -217,7 +217,7 @@ const StatTile = ({
   </Link>
 );
 
-type Segment = { label: string; value: number };
+type Segment = { label: string; value: number; color?: string };
 
 /** Part-to-whole bar: 2px gaps, legend with counts, hover tooltip per segment. */
 const SegmentBar = ({ segments, ariaLabel }: { segments: Segment[]; ariaLabel: string }) => {
@@ -232,7 +232,7 @@ const SegmentBar = ({ segments, ariaLabel }: { segments: Segment[]; ariaLabel: s
                 key={s.label}
                 title={`${s.label}: ${s.value} (${Math.round((s.value / total) * 100)}%)`}
                 className="h-full first:rounded-l-[4px] last:rounded-r-[4px] hover:opacity-80"
-                style={{ width: `${(s.value / total) * 100}%`, background: SLOT[i] }}
+                style={{ width: `${(s.value / total) * 100}%`, background: s.color ?? SLOT[i] }}
               />
             ) : null,
           )}
@@ -241,7 +241,7 @@ const SegmentBar = ({ segments, ariaLabel }: { segments: Segment[]; ariaLabel: s
         {segments.map((s, i) => (
           <li key={s.label} className="flex items-center justify-between gap-2 text-xs">
             <span className="flex items-center gap-2 min-w-0 text-stone-400">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: SLOT[i] }} />
+              <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: s.color ?? SLOT[i] }} />
               <span className="truncate">{s.label}</span>
             </span>
             <span className="tabular-nums text-stone-200">{s.value}</span>
@@ -342,11 +342,27 @@ const BookingList = ({ bookings, kind, timeZone }: { bookings: DashboardBooking[
   </ul>
 );
 
+// Stored SELECTED = shortlisted (through to the final stage); ACCEPTED = got
+// the job, shown here as Selected
 const JOB_STATUS_LABEL: Record<string, string> = {
   PENDING: "Pending",
-  SELECTED: "Selected",
-  ACCEPTED: "Accepted",
+  ACCEPTED: "Selected",
+  SELECTED: "Shortlisted",
   REJECTED: "Rejected",
+};
+
+// Chart order and colours
+const JOB_STATUS_SEGMENTS = [
+  { key: "PENDING", color: "#fab219" },
+  { key: "ACCEPTED", color: "#199e70" },
+  { key: "SELECTED", color: "#3987e5" },
+  { key: "REJECTED", color: "#e5484d" },
+] as const;
+
+const PLAN_LABEL: Record<string, string> = {
+  NFP: "New Face Plan",
+  AMP: "Aspire Model Plan",
+  RSP: "Rising Star Plan",
 };
 
 /* ---------------------------------- Page --------------------------------- */
@@ -676,11 +692,10 @@ function Dashboard({ data, refreshing, onRefresh }: { data: AgentDashboard; refr
             </div>
             <SegmentBar
               ariaLabel="Plans of your models"
-              segments={[
-                { label: "Active", value: models.plans.active },
-                { label: "Expired", value: models.plans.expired },
-                { label: "Never subscribed", value: models.plans.none },
-              ]}
+              segments={(models.plans.byPlan ?? []).map((plan) => ({
+                label: PLAN_LABEL[plan.group] ?? plan.group,
+                value: plan.count,
+              }))}
             />
             {models.byCountry.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
@@ -793,9 +808,10 @@ function Dashboard({ data, refreshing, onRefresh }: { data: AgentDashboard; refr
             >
               <SegmentBar
                 ariaLabel="Job applications of your models by status"
-                segments={(["PENDING", "SELECTED", "ACCEPTED", "REJECTED"] as const).map((key) => ({
+                segments={JOB_STATUS_SEGMENTS.map(({ key, color }) => ({
                   label: JOB_STATUS_LABEL[key],
-                  value: jobs.byStatus[key],
+                  value: jobs.byStatus[key] ?? 0,
+                  color,
                 }))}
               />
               <div className="flex flex-col gap-1 border-t border-white/10 pt-3">

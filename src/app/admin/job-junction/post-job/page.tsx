@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import Loader from "../../components/ui/Loader";
 import { CITY_MAP } from "@/config/city";
 import ButtonSpinner from "@/app/admin/components/ui/ButtonSpinner";
+import { usePanel } from "@/app/components/PanelContext";
 import {
   JOB_COMPENSATION_OPTIONS,
   JOB_POST_USER_MODES,
@@ -278,6 +279,8 @@ const PostJobPage = () => {
     limit: 10,
   });
   const router = useRouter();
+  // Back to the panel's own Job Junction (admin or agent)
+  const { jobsPath } = usePanel();
   const [userMode, setUserMode] = useState("MODEL");
   const [title, setTitle] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -847,7 +850,7 @@ const PostJobPage = () => {
     const requestOptions = {
       onSuccess: () => {
         toast.success("Job Created Successfully");
-        router.replace("/admin/job-junction");
+        router.replace(jobsPath);
       },
       onError: (err) => {
         if (axios.isAxiosError(err)) {
@@ -860,7 +863,7 @@ const PostJobPage = () => {
       try {
         await updateJob(payload);
         toast.success("Job Updated Successfully");
-        router.replace("/admin/job-junction");
+        router.replace(jobsPath);
       } catch (err) {
         if (axios.isAxiosError(err)) {
           toast.error(err.response?.data?.message);

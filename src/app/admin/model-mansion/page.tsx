@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useModelMansion";
 import { formatName } from "@/lib/media";
 import { usePanel } from "@/app/components/PanelContext";
+import { usePersistedTab } from "@/hooks/usePersistedTab";
 
 type Option = { label: string; value: string };
 
@@ -58,7 +59,9 @@ const FilterSelect = ({
 
 const ModelMansion: React.FC = () => {
   const { kind, mansionPath } = usePanel();
-  const [agent, setAgent] = useState("");
+  // Kept for the session; the dashboard's "Models without an agent" sets it
+  // to "unassigned" before opening this page
+  const [agent, setAgent] = usePersistedTab<string>("agent", "");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(12);

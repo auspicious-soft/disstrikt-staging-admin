@@ -23,12 +23,13 @@ const filterOptions: Record<"postedBy" | "role" | "status" | "applied", Option[]
   applied: [
     { label: "All Jobs", value: "" },
     { label: "My Models Applied", value: "true" },
+    { label: "Posted By Me", value: "mine" },
   ],
-  // "DISTRIKT" = posted from the admin panel (the API filters on no app user),
+  // "DISTRIKT" (the API's value; shown as DISSTRIKT) = posted from the admin panel (the API filters on no app user),
   // "DOME" = posted by any app user
   postedBy: [
     { label: "Posted By", value: "" },
-    { label: "DISTRIKT", value: "DISTRIKT" },
+    { label: "DISSTRIKT", value: "DISTRIKT" },
     { label: "DOME USERS", value: DOME_POSTED_BY },
     ...JOB_POSTED_BY_OPTIONS.filter((option) => option.value !== "FOUNDER").map(upperLabel),
   ],
@@ -92,6 +93,7 @@ const JobJunction: React.FC = () => {
     role,
     postedBy,
     applied: isAgent && applied === "true",
+    mine: isAgent && applied === "mine",
   });
   const jobs = data?.data?.data ?? [];
   const pagination = data?.data?.pagination;
@@ -135,15 +137,13 @@ const JobJunction: React.FC = () => {
           <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
         </label>
         {/* </div> */}
-        {!isAgent && (
-          <button
-            className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
-            onClick={() => router.push("/admin/job-junction/post-job")}
-          >
-            <Plus className="h-4 w-4" />
-            Post A New Job
-          </button>
-        )}
+        <button
+          className="flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] bg-[#EF476F] px-4 text-sm font-medium text-white hover:bg-[#e13a63]"
+          onClick={() => router.push(`${jobsPath}/post-job`)}
+        >
+          <Plus className="h-4 w-4" />
+          Post A New Job
+        </button>
       </div>
 
       {isPending ? (
@@ -157,7 +157,8 @@ const JobJunction: React.FC = () => {
                 job={job}
                 href={`${jobsPath}/${job._id}`}
                 isjob={true}
-                readOnly={isAgent}
+                // Agents manage only the jobs they posted
+                readOnly={isAgent && !job.isMine}
               />
             ))}
           </div>

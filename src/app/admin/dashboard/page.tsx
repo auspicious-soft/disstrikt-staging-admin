@@ -308,14 +308,14 @@ const ATTENTION: {
     tab: [["tab", "Messages"]],
     icon: <MessageCircle className="h-4 w-4" />,
   },
-  {
-    key: "unassignedModels",
-    label: "Models without an agent",
-    href: "/admin/model-mansion",
-    // Opens Model Mansion filtered on Unassigned
-    tab: [["agent", "unassigned"]],
-    icon: <UserX className="h-4 w-4" />,
-  },
+  // {
+  //   key: "unassignedModels",
+  //   label: "Models without an agent",
+  //   href: "/admin/model-mansion",
+  //   // Opens Model Mansion filtered on Unassigned
+  //   tab: [["agent", "unassigned"]],
+  //   icon: <UserX className="h-4 w-4" />,
+  // },
   { key: "shoutouts", label: "Shoutout requests pending", href: "/admin/subscriptions/shoutouts", icon: <Megaphone className="h-4 w-4" /> },
   {
     key: "studioAttendance",
@@ -412,7 +412,7 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
         subtitle={waiting.length ? "Work waiting for the team" : undefined}
       >
         {waiting.length ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {ATTENTION.map((item) => {
               const count = attention[item.key];
               const body = (

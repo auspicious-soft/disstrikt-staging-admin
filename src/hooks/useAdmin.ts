@@ -52,6 +52,7 @@ interface CreateStudioPayload {
   }[];
 }
 export const CreateEvent = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: any) => {
       const { data } = await axiosInstance.post(
@@ -60,6 +61,10 @@ export const CreateEvent = () => {
       );
 
       return data;
+    },
+    // The list is cached for a minute; drop it so the new event shows right away
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["celebrationCruise"] });
     },
   });
 };

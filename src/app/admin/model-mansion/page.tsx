@@ -22,6 +22,8 @@ type Option = { label: string; value: string };
 type Agent = { _id: string; fullName: string; modelCount: number };
 
 type MansionModel = {
+  // MODEL here; sent by newer backends, used for the share link's role
+  userMode?: string;
   _id: string;
   fullName: string;
   image?: string;
@@ -135,7 +137,8 @@ const ModelMansion: React.FC = () => {
                 }}
                 href={`${mansionPath}/${model._id}`}
                 isjob={false}
-                shareUrl={profileShareUrl("model", model._id)}
+                // The profile's own role (this list is models only)
+                shareUrl={profileShareUrl(model.userMode ?? "MODEL", model._id) ?? undefined}
               />
               {model.unionPendingKey && (
                 <span className="absolute left-3 top-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-medium text-black">

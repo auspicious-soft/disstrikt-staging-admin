@@ -6,11 +6,10 @@ import Loader from "../../components/ui/Loader";
 import { SubscriptionTabs } from "../SubscriptionTabs";
 import { errorMessage, useReviewShoutout, useShoutouts } from "@/hooks/useSubscriptionAdmin";
 import { useDebouncedValue } from "@/hooks/useDebounce";
-import { BASE_IMG_URL } from "@/constants/apiUrls";
+import SafeImage from "@/app/components/SafeImage";
+import { resolveMediaUrl } from "@/lib/media";
 
 const STATUSES = ["PENDING", "APPROVED", "POSTED", "REJECTED", "CANCELLED", "ALL"] as const;
-
-const imageUrl = (key: string) => (/^https?:\/\//.test(key) ? key : `${BASE_IMG_URL}${key}`);
 
 export default function ShoutoutsPage() {
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("PENDING");
@@ -95,8 +94,13 @@ export default function ShoutoutsPage() {
               {row.images?.length > 0 && (
                 <div className="mt-3 flex gap-2 overflow-x-auto">
                   {row.images.map((img: string) => (
-                    <a key={img} href={imageUrl(img)} target="_blank" rel="noreferrer">
-                      <img src={imageUrl(img)} alt="" className="h-24 w-24 rounded-[6px] object-cover" />
+                    <a key={img} href={resolveMediaUrl(img)} target="_blank" rel="noreferrer" className="shrink-0">
+                      <SafeImage
+                        src={img}
+                        alt="Shoutout image"
+                        className="h-24 w-24 rounded-[6px] object-cover"
+                        placeholder={<div className="h-24 w-24 rounded-[6px] bg-black" />}
+                      />
                     </a>
                   ))}
                 </div>
